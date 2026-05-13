@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+  <title>Plant Simulator</title>
+  <link rel="stylesheet" href="styles/global.css" />
+  <link rel="stylesheet" href="styles/menu.css" />
+  <link rel="stylesheet" href="styles/nursery.css" />
+  <link rel="stylesheet" href="styles/environment.css" />
+  <link rel="stylesheet" href="styles/diagnosis.css" />
+  <link rel="stylesheet" href="styles/minigames.css" />
+  <link rel="stylesheet" href="styles/profile.css" />
+</head>
+<body>
+
+  <!-- ══════════════════════════════════════════════════════
+       PANTALLA: MENÚ PRINCIPAL
+       Sin autenticación: es la pantalla de entrada del juego.
+       ScreenManager.init() la activa al arrancar (class="active"
+       se asigna por JS, no en el HTML).
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-main-menu" class="screen">
+    <div class="main-menu-container">
+      <h1 class="main-menu-title">🌿 Mi Jardín</h1>
+      <p class="main-menu-subtitle" id="menu-day-counter">Día simulado: 1</p>
+
+      <div class="main-menu-grid">
+        <button class="menu-card" id="btn-go-nursery">
+          <span class="menu-card-icon">🌱</span>
+          <span class="menu-card-label">Vivero</span>
+          <span class="menu-card-desc">Explorar y adquirir plantas</span>
+        </button>
+
+        <button class="menu-card" id="btn-go-environment">
+          <span class="menu-card-icon">🏠</span>
+          <span class="menu-card-label">Mi Entorno</span>
+          <span class="menu-card-desc">Cuidar mis plantas</span>
+        </button>
+
+        <button class="menu-card" id="btn-go-minigames">
+          <span class="menu-card-icon">🎮</span>
+          <span class="menu-card-label">Minijuegos</span>
+          <span class="menu-card-desc">Practicar y ganar XP</span>
+        </button>
+
+        <button class="menu-card" id="btn-go-profile">
+          <span class="menu-card-icon">📊</span>
+          <span class="menu-card-label">Mi Perfil</span>
+          <span class="menu-card-desc">Ver estadísticas y logros</span>
+        </button>
+      </div>
+
+      <div class="version-label" id="version-label"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       PANTALLA: VIVERO
+       RF-04, RF-05, RF-06: catálogo, detalle y adquisición.
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-nursery" class="screen">
+    <div class="nursery-header">
+      <button class="btn btn-ghost btn-back" id="btn-nursery-back">← Volver</button>
+      <h2 class="nursery-title">🌿 Vivero</h2>
+      <p class="nursery-subtitle">Selecciona una planta para conocerla</p>
+    </div>
+
+    <div class="nursery-filters">
+      <button class="nursery-filter-btn active" data-filter="TODOS">Todas</button>
+      <button class="nursery-filter-btn" data-filter="FÁCIL">Fácil</button>
+      <button class="nursery-filter-btn" data-filter="MEDIO">Medio</button>
+      <button class="nursery-filter-btn" data-filter="DIFÍCIL">Difícil</button>
+    </div>
+
+    <div class="nursery-main">
+      <div class="nursery-grid" id="nursery-grid">
+        <p class="nursery-loading">Cargando plantas...</p>
+      </div>
+      <div class="nursery-detail" id="nursery-detail">
+        <button class="btn btn-ghost detail-close-btn" id="btn-close-detail">✕</button>
+        <p class="detail-placeholder">Selecciona una planta para ver sus detalles</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       PANTALLA: ENTORNO DOMÉSTICO
+       RF-01, RF-02, RF-03: espacios, colocación, luz/ambiente.
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-environment" class="screen">
+    <div class="env-topbar">
+      <button class="btn btn-ghost btn-back" id="btn-env-back">← Volver</button>
+      <div class="env-tabs">
+        <button class="room-tab active" data-room="SALA">🛋️ Sala</button>
+        <button class="room-tab" data-room="JARDÍN">🌳 Jardín</button>
+        <button class="room-tab" data-room="DORMITORIO">🛏️ Dormitorio</button>
+      </div>
+      <div class="env-controls">
+        <span id="sim-day-counter" class="sim-day">Día 1</span>
+        <button class="btn btn-secondary" id="btn-advance-day">⏩ Avanzar día</button>
+      </div>
+    </div>
+
+    <div class="env-main">
+      <div class="env-room-container">
+        <div id="room-area" class="room-area">
+          <div id="room-plants" class="room-plants"></div>
+        </div>
+      </div>
+      <div id="env-side-panel" class="env-side-panel"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       PANTALLA: MINIJUEGOS
+       HU-13: plagas. HU-14: quiz.
+       La poda ya no es minijuego (RF-09: herramienta de cuidado).
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-minigames" class="screen">
+    <div class="minigames-hub">
+      <div class="minigames-hub-header">
+        <button class="btn btn-ghost btn-back" id="btn-minigames-back">← Volver</button>
+        <h2 class="minigames-hub-title">🎮 Minijuegos</h2>
+        <p class="minigames-hub-subtitle">Practica y gana XP extra</p>
+      </div>
+
+      <div class="minigames-grid">
+
+        <div class="minigame-card">
+          <div class="minigame-card-icon">🐛</div>
+          <h3 class="minigame-card-title">Control de plagas</h3>
+          <p class="minigame-card-desc">
+            Analiza los síntomas de la planta y elige el tratamiento correcto
+            entre las opciones disponibles.
+          </p>
+          <div class="minigame-card-meta">
+            <span class="minigame-card-xp">+20 XP si aciertas</span>
+            <span class="minigame-card-time">🎯 1 escenario</span>
+          </div>
+          <button class="btn btn-primary" id="btn-start-pests">Jugar</button>
+        </div>
+
+        <div class="minigame-card">
+          <div class="minigame-card-icon">❓</div>
+          <h3 class="minigame-card-title">Quiz de plantas</h3>
+          <p class="minigame-card-desc">
+            5 preguntas sobre cuidado de plantas. Una respuesta correcta
+            cuenta para tu racha diaria.
+          </p>
+          <div class="minigame-card-meta">
+            <span class="minigame-card-xp">+8 XP por pregunta</span>
+            <span class="minigame-card-time">❓ 5 preguntas</span>
+          </div>
+          <button class="btn btn-primary" id="btn-start-quiz">Jugar</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+     <!-- ══════════════════════════════════════════════════════
+     PANTALLA: MI PERFIL
+     RF-26: estadísticas, nivel, logros.
+     ══════════════════════════════════════════════════════ -->
+  <div id="screen-profile" class="screen">
+    <div class="profile-container">
+
+      <!-- Cabecera -->
+      <div class="profile-header">
+        <button class="btn btn-ghost btn-back" id="btn-profile-back">← Volver</button>
+        <h2 class="profile-title">📊 Mi Perfil</h2>
+      </div>
+
+      <!-- Pestañas -->
+      <div class="profile-tabs">
+        <button class="profile-tab active" data-tab="progress">⭐ Progreso</button>
+        <button class="profile-tab" data-tab="stats">📈 Estadísticas</button>
+        <button class="profile-tab" data-tab="achievements">🏆 Logros</button>
+      </div>
+
+      <!-- Contenido de pestañas -->
+      <div class="profile-content">
+
+        <!-- ── Pestaña: Progreso ── -->
+        <div class="profile-panel active" id="tab-progress">
+          <div class="progress-hero">
+            <div class="progress-level-badge" id="profile-level-badge">1</div>
+             <div class="progress-level-info">
+                <p class="progress-level-label">Nivel actual</p>
+                <p class="progress-level-title" id="profile-level-title">Aprendiz</p>
+              </div>
+            </div>
+
+          <div class="progress-xp-bar-container">
+            <div class="progress-xp-labels">
+              <span id="profile-xp-current">0 XP</span>
+              <span id="profile-xp-next">100 XP para nivel 2</span>
+            </div>
+            <div class="progress-xp-bar-bg">
+              <div class="progress-xp-bar-fill" id="profile-xp-fill"></div>
+            </div>
+          </div>
+
+          <div class="progress-levels-list" id="profile-levels-list">
+            <!-- generado por JS -->
+          </div>
+        </div>
+
+        <!-- ── Pestaña: Estadísticas ── -->
+        <div class="profile-panel" id="tab-stats">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-card-icon">💧</span>
+              <span class="stat-card-label">Errores de riego</span>
+              <span class="stat-card-value" id="stat-errores-riego">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card-icon">🌿</span>
+              <span class="stat-card-label">Errores de abono</span>
+              <span class="stat-card-value" id="stat-errores-abono">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card-icon">✂️</span>
+              <span class="stat-card-label">Errores de poda</span>
+              <span class="stat-card-value" id="stat-errores-poda">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card-icon">📍</span>
+              <span class="stat-card-label">Errores de ubicación</span>
+              <span class="stat-card-value" id="stat-errores-ubicacion">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card-icon">✅</span>
+              <span class="stat-card-label">Acciones correctas</span>
+              <span class="stat-card-value" id="stat-acciones-correctas">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card-icon">🔍</span>
+              <span class="stat-card-label">Diagnósticos correctos</span>
+              <span class="stat-card-value" id="stat-diagnosticos">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card-icon">☠️</span>
+              <span class="stat-card-label">Plantas perdidas</span>
+              <span class="stat-card-value" id="stat-plantas-muertas">0</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-card-icon">🔥</span>
+              <span class="stat-card-label">Racha actual</span>
+              <span class="stat-card-value" id="stat-racha">0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Pestaña: Logros ── -->
+        <div class="profile-panel" id="tab-achievements">
+          <div class="achievements-list" id="achievements-list">
+          <!-- generado por JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts en orden de dependencia.
+       MiniGamePruning.js eliminado: la poda es herramienta, no minijuego. -->
+  <script src="js/ScreenManager.js"></script>
+  <script src="js/PlayerHUD.js"></script>
+  <script src="js/Nursery.js"></script>
+  <script src="js/Simulation.js"></script>
+  <script src="js/Diagnosis.js"></script>
+  <script src="js/CareActions.js"></script>
+  <script src="js/Environment.js"></script>
+  <script src="js/MiniGamePests.js"></script>
+  <script src="js/MiniGameQuiz.js"></script>
+  <script src="js/WeeklyReview.js"></script>
+  <script src="js/ProfileScreen.js"></script>
+  <script src="index.js"></script>
+
+</body>
+</html>

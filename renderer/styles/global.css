@@ -1,0 +1,221 @@
+/* Reset básico: elimina márgenes y padding por defecto del navegador */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Variables CSS: define los colores del juego en un solo lugar.
+   Si cambias --color-primary aquí, cambia en toda la app */
+:root {
+  --color-primary: #2E7D32;      /* verde oscuro — acción principal */
+  --color-secondary: #81C784;    /* verde claro — acción secundaria */
+  --color-background: #1a1a2e;   /* fondo oscuro de la app */
+  --color-surface: #16213e;      /* superficies de paneles */
+  --color-text: #e8f5e9;         /* texto principal */
+  --color-text-muted: #a5d6a7;   /* texto secundario */
+  --font-game: 'Segoe UI', Tahoma, sans-serif;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  overflow: hidden;              /* sin scroll: es un juego, no una web */
+  background-color: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-game);
+  user-select: none;             /* el jugador no debe poder seleccionar texto */
+}
+
+/* Sistema de pantallas: solo la que tiene clase "active" se ve */
+.screen {
+  display: none;
+  width: 1280px;
+  height: 720px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.screen.active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  /* CAMBIO: usamos el viewport completo en lugar de altura fija */
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Estilos de la pantalla de inicio */
+.splash-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.game-logo {
+  font-size: 80px;
+  line-height: 1;
+}
+
+.game-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+  letter-spacing: 2px;
+}
+
+.game-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+}
+
+.splash-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 260px;
+}
+
+/* Botones del juego */
+.btn {
+  padding: 14px 32px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+  letter-spacing: 1px;
+}
+
+.btn:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--color-secondary);
+  border: 2px solid var(--color-secondary);
+}
+
+/* Etiqueta de versión */
+.version-label {
+  position: absolute;
+  bottom: 16px;
+  right: 20px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+
+/* ── Pantallas de autenticación ─────────────────────────── */
+
+.auth-card {
+  background-color: var(--color-surface);
+  border: 1px solid rgba(129, 199, 132, 0.2);
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.auth-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Grupos de formulario ───────────────────────────────── */
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.form-group input {
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(129, 199, 132, 0.3);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-family: var(--font-game);
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.form-group input:focus {
+  border-color: var(--color-secondary);
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+/* ── Mensajes de error / éxito ─────────────────────────── */
+
+.form-message {
+  min-height: 20px;
+  font-size: 0.85rem;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.form-message.error {
+  color: #ef9a9a;
+  background-color: rgba(239, 83, 80, 0.1);
+  padding: 8px 12px;
+}
+
+.form-message.success {
+  color: #a5d6a7;
+  background-color: rgba(76, 175, 80, 0.1);
+  padding: 8px 12px;
+}
+
+/* ── Variantes de botones adicionales ──────────────────── */
+
+.btn-full {
+  width: 100%;
+  text-align: center;
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-text-muted);
+  border: 1px solid transparent;
+  font-size: 0.85rem;
+}
+
+.btn-ghost:hover {
+  color: var(--color-secondary);
+  border-color: rgba(129, 199, 132, 0.3);
+}

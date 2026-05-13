@@ -1,0 +1,287 @@
+/* ── Vivero ─────────────────────────────────────────────── */
+
+#screen-nursery {
+  flex-direction: column;
+  padding-top: 52px;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.nursery-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1.5rem;
+  border-bottom: 1px solid rgba(129, 199, 132, 0.15);
+  width: 100%;
+}
+
+.nursery-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+}
+
+.nursery-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-left: auto;
+}
+
+.btn-back {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+}
+
+/* ── Filtros ─────────────────────────────────────────── */
+
+.nursery-filters {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  width: 100%;
+}
+
+.nursery-filter-btn {
+  padding: 5px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(129, 199, 132, 0.3);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.nursery-filter-btn.active,
+.nursery-filter-btn:hover {
+  background-color: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+/* ── Área principal ──────────────────────────────────── */
+
+.nursery-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* ── Grid de plantas ─────────────────────────────────── */
+
+.nursery-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  overflow-y: auto;
+  align-content: start;
+}
+
+.nursery-loading,
+.nursery-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 2rem;
+}
+
+/* ── Tarjeta de planta ───────────────────────────────── */
+
+.plant-card {
+  background-color: var(--color-surface);
+  border: 1px solid rgba(129, 199, 132, 0.15);
+  border-radius: 12px;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.plant-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(129, 199, 132, 0.5);
+}
+
+.plant-card-image {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.plant-card-image img {
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+}
+
+.plant-card-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.plant-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.badge {
+  font-size: 0.65rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background-color: rgba(255,255,255,0.07);
+  color: var(--color-text-muted);
+}
+
+/* ── Panel de detalle ────────────────────────────────── */
+
+.nursery-detail {
+  width: 0;
+  overflow: hidden;
+  transition: width 0.25s ease;
+  background-color: var(--color-surface);
+  border-left: 1px solid rgba(129, 199, 132, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0;
+  position: relative;
+}
+
+.nursery-detail.open {
+  width: 320px;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+.detail-close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+}
+
+.detail-placeholder {
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  text-align: center;
+  padding: 2rem;
+}
+
+.detail-image {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255,255,255,0.03);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.detail-image img {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+}
+
+.detail-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-secondary);
+}
+
+.detail-description {
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.detail-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.detail-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background-color: rgba(255,255,255,0.03);
+  border-radius: 8px;
+}
+
+.detail-stat-icon { font-size: 1.1rem; }
+
+.detail-stat-label {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.detail-stat-value {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.detail-message {
+  font-size: 0.82rem;
+  text-align: center;
+  border-radius: 6px;
+  min-height: 16px;
+}
+
+.detail-message.success {
+  color: #a5d6a7;
+  background: rgba(76,175,80,0.1);
+  padding: 6px 10px;
+}
+
+.detail-message.error {
+  color: #ef9a9a;
+  background: rgba(239,83,80,0.1);
+  padding: 6px 10px;
+}
+
+/* ── Nombre científico en panel de detalle ─────────── */
+
+.detail-scientific-name {
+  font-size: 0.78rem;
+  font-style: italic;
+  color: var(--color-text-muted);
+  opacity: 0.75;
+  margin-top: -4px;      /* acerca al nombre principal */
+  margin-bottom: 4px;
+}
+
+/* Agrupa nombre + nombre científico + badge de tipo */
+.detail-header-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Badge de tipo en tarjetas y panel ─────────────── */
+
+.badge-tipo {
+  font-size: 0.68rem;
+  font-weight: 600;
+  background-color: rgba(255, 255, 255, 0.06);
+  letter-spacing: 0.02em;
+}

@@ -1,0 +1,271 @@
+/* ── Contenedor principal ───────────────────────────── */
+.profile-container {
+  display:        flex;
+  flex-direction: column;
+  height:         calc(100vh - 52px);  /* ✅ descuenta el HUD exactamente */
+  margin-top:     52px;                /* ✅ empuja debajo del HUD */
+  overflow:       hidden;
+  box-sizing:     border-box;
+}
+
+.profile-header {
+  display:     flex;
+  align-items: center;
+  gap:         1rem;
+  padding:     1rem 1.5rem 0.5rem;
+  flex-shrink: 0;
+}
+
+.profile-title {
+  font-size:   1.4rem;
+  font-weight: 700;
+  color:       var(--color-secondary);
+}
+
+/* ── Pestañas ───────────────────────────────────────── */
+.profile-tabs {
+  display:       flex;
+  gap:           0.5rem;
+  padding:       0 1.5rem;
+  border-bottom: 1px solid rgba(129, 199, 132, 0.15);
+  margin-bottom: 1rem;
+  flex-shrink:   0;
+}
+
+.profile-tab {
+  padding:       0.6rem 1.2rem;
+  background:    transparent;
+  border:        none;
+  border-bottom: 2px solid transparent;
+  color:         var(--color-text-muted);
+  font-size:     0.9rem;
+  cursor:        pointer;
+  transition:    all 0.2s ease;
+}
+
+.profile-tab:hover  { color: var(--color-text); }
+
+.profile-tab.active {
+  color:        var(--color-secondary);
+  border-color: var(--color-secondary);
+  font-weight:  600;
+}
+
+/* ── Paneles de contenido ───────────────────────────── */
+.profile-content {
+  flex:       1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding:    0 1.5rem 2rem;
+  min-height: 0;          /* ✅ crítico para scroll en flexbox */
+}
+
+/* ✅ Solo el panel activo es visible — los demás no ocupan espacio */
+.profile-panel          { display: none;  }
+.profile-panel.active   { display: block; }
+
+/* ── Pestaña: Progreso ──────────────────────────────── */
+.progress-hero {
+  display:       flex;
+  align-items:   center;
+  gap:           1.5rem;
+  padding:       1.5rem;
+  background:    var(--color-surface);
+  border-radius: 16px;
+  margin-bottom: 1rem;
+}
+
+.progress-level-badge {
+  width:           64px;
+  height:          64px;
+  border-radius:   50%;
+  background:      var(--color-secondary);
+  color:           #0a0e1a;
+  font-size:       2rem;
+  font-weight:     700;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  flex-shrink:     0;
+}
+
+.progress-level-label {
+  font-size: 0.8rem;
+  color:     var(--color-text-muted);
+}
+
+.progress-level-title {
+  font-size:   1.3rem;
+  font-weight: 700;
+  color:       var(--color-secondary);
+}
+
+.progress-xp-bar-container { margin-bottom: 1.5rem; }
+
+.progress-xp-labels {
+  display:         flex;
+  justify-content: space-between;
+  font-size:       0.8rem;
+  color:           var(--color-text-muted);
+  margin-bottom:   0.4rem;
+}
+
+.progress-xp-bar-bg {
+  height:        10px;
+  background:    rgba(255,255,255,0.08);
+  border-radius: 999px;
+  overflow:      hidden;
+}
+
+.progress-xp-bar-fill {
+  height:        100%;
+  background:    var(--color-secondary);
+  border-radius: 999px;
+  transition:    width 0.5s ease;
+  min-width:     4px;
+}
+
+.progress-levels-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.5rem;
+}
+
+.level-row {
+  display:       flex;
+  align-items:   center;
+  gap:           1rem;
+  padding:       0.75rem 1rem;
+  background:    var(--color-surface);
+  border-radius: 10px;
+  border:        1px solid transparent;
+  opacity:       0.5;
+}
+
+.level-row.completed {
+  opacity:      1;
+  border-color: rgba(102, 187, 106, 0.2);
+}
+
+.level-row.current {
+  opacity:      1;
+  border-color: var(--color-secondary);
+  background:   rgba(129, 199, 132, 0.08);
+}
+
+.level-row.locked { opacity: 0.35; }
+
+.level-row-badge {
+  width:           32px;
+  height:          32px;
+  border-radius:   50%;
+  background:      rgba(255,255,255,0.08);
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  font-weight:     700;
+  font-size:       0.9rem;
+  flex-shrink:     0;
+}
+
+.level-row.current .level-row-badge {
+  background: var(--color-secondary);
+  color:      #0a0e1a;
+}
+
+.level-row-info {
+  flex:           1;
+  display:        flex;
+  flex-direction: column;
+  gap:            0.1rem;
+}
+
+.level-row-title {
+  font-size:   0.9rem;
+  font-weight: 600;
+  color:       var(--color-text);
+}
+
+.level-row-xp {
+  font-size: 0.75rem;
+  color:     var(--color-text-muted);
+}
+
+.level-row-status { font-size: 1rem; }
+
+/* ── Pestaña: Estadísticas ──────────────────────────── */
+.stats-grid {
+  display:               grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap:                   0.75rem;
+}
+
+.stat-card {
+  background:     var(--color-surface);
+  border-radius:  12px;
+  padding:        1rem;
+  display:        flex;
+  flex-direction: column;
+  align-items:    center;
+  gap:            0.4rem;
+  text-align:     center;
+}
+
+.stat-card-icon  { font-size: 1.5rem; }
+
+.stat-card-label {
+  font-size: 0.75rem;
+  color:     var(--color-text-muted);
+}
+
+.stat-card-value {
+  font-size:   1.6rem;
+  font-weight: 700;
+  color:       var(--color-secondary);
+}
+
+/* ── Pestaña: Logros ────────────────────────────────── */
+.achievements-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.6rem;
+}
+
+.achievement-card {
+  display:       flex;
+  align-items:   center;
+  gap:           1rem;
+  padding:       0.75rem 1rem;
+  background:    var(--color-surface);
+  border-radius: 12px;
+  border:        1px solid transparent;
+}
+
+.achievement-card.obtained { border-color: rgba(129, 199, 132, 0.25); }
+.achievement-card.locked   { opacity: 0.45; }
+
+.achievement-icon {
+  font-size:   1.8rem;
+  flex-shrink: 0;
+}
+
+.achievement-info { flex: 1; }
+
+.achievement-name {
+  font-size:   0.9rem;
+  font-weight: 600;
+  color:       var(--color-text);
+}
+
+.achievement-desc {
+  font-size:  0.75rem;
+  color:      var(--color-text-muted);
+  margin-top: 0.1rem;
+}
+
+.achievement-tipo {
+  font-size:   0.65rem;
+  font-weight: 600;
+  text-align:  right;
+  flex-shrink: 0;
+}
