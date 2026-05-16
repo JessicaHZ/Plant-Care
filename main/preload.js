@@ -65,6 +65,9 @@ contextBridge.exposeInMainWorld('gameAPI', {
 
   grantQuizPerfectAchievement: () =>
   ipcRenderer.invoke('achievements:grantQuizPerfect'),
+
+  isTutorialCompleted: () => ipcRenderer.invoke('tutorial:isCompleted'),
+  completeTutorial:    () => ipcRenderer.invoke('tutorial:complete'),
   
 
 })

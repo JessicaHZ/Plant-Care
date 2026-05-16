@@ -290,6 +290,24 @@ function registerIpcHandlers() {
     }
   })
 
+  ipcMain.handle('tutorial:isCompleted', async () => {
+  try {
+    const completed = db.isTutorialCompleted()
+    return { success: true, completed }
+  } catch (error) {
+    return { success: true, completed: false }
+  }
+  })
+
+  ipcMain.handle('tutorial:complete', async () => {
+  try {
+    db.completeTutorial()
+    return { success: true }
+  } catch (error) {
+    return { success: false }
+  }
+  })
+
 }
 
 

@@ -88,7 +88,8 @@ function initializeDatabase() {
       nivel          INTEGER NOT NULL DEFAULT 1,
       experiencia    INTEGER NOT NULL DEFAULT 0,
       racha_dias     INTEGER NOT NULL DEFAULT 0,
-      ultimo_cierre  INTEGER DEFAULT NULL   -- ✅ timestamp Unix en ms
+      ultimo_cierre  INTEGER DEFAULT NULL,   -- ✅ timestamp Unix en ms
+      tutorial_completado  INTEGER NOT NULL DEFAULT 0 
     )
   `)
 
@@ -106,6 +107,7 @@ function initializeDatabase() {
     // solo la columna con un DEFAULT y creamos un índice único después.
     `ALTER TABLE logros ADD COLUMN clave_logro TEXT DEFAULT ''`,
     `ALTER TABLE estadisticas ADD COLUMN acciones_correctas_hoy INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE progreso ADD COLUMN tutorial_completado INTEGER NOT NULL DEFAULT 0`,
   ]
   for (const migration of safeMigrations) {
     try { db.exec(migration) } catch (_) { /* columna ya existe */ }
@@ -1049,6 +1051,17 @@ function grantQuizPerfectAchievement() {
   )
 }
 
+// Verifica si el jugador ya completó el tutorial.
+function isTutorialCompleted() {
+  const progress = db.prepare('SELECT tutorial_completado FROM progreso LIMIT 1').get()
+  return progress ? progress.tutorial_completado === 1 : false
+}
+
+// Marca el tutorial como completado.
+function completeTutorial() {
+  db.prepare('UPDATE progreso SET tutorial_completado = 1').run()
+}
+
 
 
 // Exportamos todo lo que necesitan los demás módulos
@@ -1090,4 +1103,6 @@ module.exports = {
   updateStreak,
   checkAndGrantAchievements,
   grantQuizPerfectAchievement,
+  isTutorialCompleted,
+  completeTutorial
 }

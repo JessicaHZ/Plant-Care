@@ -32,7 +32,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Navega directamente al menú principal (sin splash de login)
+  // Navega directamente al menú principal
   ScreenManager.init()
+
+  // ✅ Muestra el tutorial si es la primera vez
+  await Tutorial.checkAndStart()
 
   // ── Eventos globales del juego ────────────────────────────────────────
   // Registrados una sola vez aquí para evitar listeners duplicados.
