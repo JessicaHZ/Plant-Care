@@ -322,3 +322,60 @@ body {
   0%, 100% { outline-color: rgba(129, 199, 132, 0.9); }
   50%       { outline-color: rgba(129, 199, 132, 0.3); }
 }
+
+/* ── Guía contextual (RF-28/29) ─────────────────────── */
+.contextual-guide-modal {
+  max-width: 480px;
+}
+
+.guide-steps {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.75rem;
+  margin:         1rem 0;
+}
+
+.guide-step {
+  display:     flex;
+  align-items: flex-start;
+  gap:         0.75rem;
+  padding:     0.75rem;
+  background:  rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  border-left: 3px solid var(--color-secondary);
+}
+
+.guide-step-num {
+  width:           24px;
+  height:          24px;
+  border-radius:   50%;
+  background:      var(--color-secondary);
+  color:           #0a0e1a;
+  font-size:       0.75rem;
+  font-weight:     700;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  flex-shrink:     0;
+}
+
+.guide-step-text {
+  font-size:   0.85rem;
+  color:       var(--color-text);
+  line-height: 1.5;
+}
+
+.guide-footer {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.75rem;
+}
+
+.guide-reminder {
+  font-size:  0.78rem;
+  color:      var(--color-text-muted);
+  text-align: center;
+  padding:    0.5rem;
+  background: rgba(255, 167, 38, 0.08);
+  border-radius: 8px;
+}
