@@ -47,8 +47,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Verifica si debe activarse la revisión semanal tras avanzar días
   window.addEventListener('simulation:tick', async ({ detail }) => {
-    
-    await WeeklyReview.checkAndRun(detail.day)
+  // ✅ Recarga el progreso para reflejar la racha actualizada
+  const result = await window.gameAPI.getProgress()
+  if (result.success) {
+    const plantsResult = await window.gameAPI.getUserPlants()
+    const count = plantsResult.success ? plantsResult.plants.length : 0
+    PlayerHUD.update(result.progress, count)
+  }
+  await WeeklyReview.checkAndRun(detail.day)
   })
 
   // Actualiza el contador de plantas en el HUD al adquirir una

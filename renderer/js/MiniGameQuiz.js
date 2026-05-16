@@ -246,6 +246,10 @@ const MiniGameQuiz = {
   },
 
   _showFinalResult() {
+
+    if (this._correct === this._questions.length) {
+      window.gameAPI.grantQuizPerfectAchievement()
+    }
     const percentage = Math.round((this._correct / this._questions.length) * 100)
     const message    = percentage >= 80
       ? '¡Excelente dominio del cuidado de plantas!'

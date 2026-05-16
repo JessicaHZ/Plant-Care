@@ -177,7 +177,7 @@ function registerIpcHandlers() {
 
       db.updateStats(
         correct
-          ? { acciones_correctas: 1, acciones_totales: 1 }
+          ? { acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 }
           : { acciones_totales: 1 }
       )
 
@@ -278,6 +278,15 @@ function registerIpcHandlers() {
       return { success: true, achievements }
     } catch (error) {
       return { success: false, achievements: [] }
+    }
+  })
+
+  ipcMain.handle('achievements:grantQuizPerfect', async () => {
+    try {
+      db.grantQuizPerfectAchievement()
+      return { success: true }
+    } catch (error) {
+      return { success: false }
     }
   })
 

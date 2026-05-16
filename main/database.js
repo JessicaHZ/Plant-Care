@@ -75,10 +75,11 @@ function initializeDatabase() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS logros (
       id_logro          INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre_logro      TEXT NOT NULL,
-      descripcion_logro TEXT NOT NULL,
-      fecha_obtencion   TEXT NOT NULL,
-      tipo_logro        TEXT NOT NULL DEFAULT 'PROGRESO'
+      clave_logro       TEXT    UNIQUE NOT NULL DEFAULT '',
+      nombre_logro      TEXT    NOT NULL,
+      descripcion_logro TEXT    NOT NULL,
+      fecha_obtencion   TEXT    NOT NULL,
+      tipo_logro        TEXT    NOT NULL DEFAULT 'PROGRESO'
     )
   `)
 
@@ -100,9 +101,41 @@ function initializeDatabase() {
     `ALTER TABLE plantas_usuario ADD COLUMN pos_x TEXT DEFAULT NULL`,  // ✅ nuevo
     `ALTER TABLE plantas_usuario ADD COLUMN pos_y TEXT DEFAULT NULL`,  // ✅ nuevo
     `ALTER TABLE progreso ADD COLUMN ultimo_cierre INTEGER DEFAULT NULL`,
+    // Agregamos la columna en forma segura: SQLite no permite añadir
+    // restricciones UNIQUE/NOT NULL en ALTER TABLE, así que añadimos
+    // solo la columna con un DEFAULT y creamos un índice único después.
+    `ALTER TABLE logros ADD COLUMN clave_logro TEXT DEFAULT ''`,
+    `ALTER TABLE estadisticas ADD COLUMN acciones_correctas_hoy INTEGER NOT NULL DEFAULT 0`,
   ]
   for (const migration of safeMigrations) {
     try { db.exec(migration) } catch (_) { /* columna ya existe */ }
+  }
+
+  // Asegurar unicidad de `clave_logro` en instalaciones antiguas
+  try {
+    db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_logros_clave_logro ON logros(clave_logro)`)
+  } catch (_) { /* índice ya existe o tabla no tiene la columna */ }
+
+  // Migración de logros existentes para preservar clave_texto
+  const legacyAchievementMap = {
+    'Primer Brote':        'primera_planta',
+    'Pequeño Jardín':      'cinco_plantas',
+    'Cuidador Novato':     'primer_nivel',
+    'Ojo Clínico':         'diagnostico_perfecto',
+    'Constante':           'racha_5',
+    'Dedicado':            'racha_10',
+    'Evaluador Reflexivo': 'evaluacion_correcta',
+    'Semana Perfecta':     'sin_errores_semana',
+    'Verde Experto':       'planta_nivel3',
+    'Maestro Botanista':   'quiz_perfecto'
+  }
+
+  for (const [nombre, clave] of Object.entries(legacyAchievementMap)) {
+    db.prepare(`
+      UPDATE logros
+      SET clave_logro = ?
+      WHERE nombre_logro = ? AND clave_logro = ''
+    `).run(clave, nombre)
   }
 
   seedPlants()
@@ -489,6 +522,7 @@ function placePlantInRoom(id_registro, ubicacion, pos_x = null, pos_y = null) {
 function updateStats(updates) {
   const allowed = [
     'acciones_totales',     'acciones_correctas',
+    'acciones_correctas_hoy',
     'errores_riego',        'errores_abono',
     'errores_poda',         'errores_ubicacion',
     'diagnosticos_correctos', 'plantas_muertas',
@@ -587,6 +621,17 @@ function simulateDays(daysToAdvance) {
     }
   })()
 
+
+  // ✅ Evalúa racha al final de cada día simulado
+  // La racha sube si hubo acciones correctas, baja si no
+  const stats = getStats()
+  const hadCorrectAction = stats && stats.acciones_correctas_hoy > 0
+  updateStreak(hadCorrectAction)
+  db.prepare('UPDATE estadisticas SET acciones_correctas_hoy = 0').run()
+
+  // ✅ Verifica logros después de cada avance
+  checkAndGrantAchievements()
+
   return results
 }
 
@@ -627,7 +672,7 @@ function waterPlant(id_registro) {
     feedback   = `✅ ¡Excelente! Regaste tu ${plant.nombre_planta} en el momento justo. La planta está feliz.`
     xpGained   = 15
     isError    = false
-    updateStats({ acciones_correctas: 1, acciones_totales: 1 })
+    updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
   }
 
   updatePlantState(id_registro, {
@@ -637,6 +682,10 @@ function waterPlant(id_registro) {
   })
 
   const xpResult = addExperience(xpGained)
+  return { success: true, feedback, xpGained, isError, xpResult }
+
+  // ✅ Verifica logros tras cada acción
+  checkAndGrantAchievements()
   return { success: true, feedback, xpGained, isError, xpResult }
 }
 
@@ -664,13 +713,17 @@ function fertilizePlant(id_registro) {
     feedback     = `✅ Abono aplicado correctamente. Tu ${plant.nombre_planta} recibirá los nutrientes que necesita.`
     xpGained     = 12
     healthChange = 15
-    updateStats({ acciones_correctas: 1, acciones_totales: 1 })
+    updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
   }
 
   const newSalud = Math.min(100, Math.max(0, plant.salud + healthChange))
   updatePlantState(id_registro, { salud: newSalud })
   const xpResult = addExperience(xpGained)
 
+  return { success: true, feedback, xpGained, isError, xpResult }
+
+  // ✅ Verifica logros tras cada acción
+  checkAndGrantAchievements()
   return { success: true, feedback, xpGained, isError, xpResult }
 }
 
@@ -726,7 +779,7 @@ function prunePlant(id_registro) {
     salud:               newSalud,
     requiere_poda_activa: 0   // ✅ nombre corregido
   })
-  updateStats({ acciones_correctas: 1, acciones_totales: 1 })
+  updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
   const xpResult = addExperience(20)
 
   return {
@@ -736,6 +789,10 @@ function prunePlant(id_registro) {
     isError:  false,
     xpResult
   }
+
+  // ✅ Verifica logros tras cada acción
+  checkAndGrantAchievements()
+  return { success: true, feedback, xpGained, isError, xpResult }
 }
 
 
@@ -796,8 +853,10 @@ function recordWeeklyReview(wasCorrect) {
 // ── Registra resultado del quiz ───────────────────────────────────────────
 function recordQuizResult(correct) {
   if (correct) {
-    updateStats({ acciones_correctas: 1, acciones_totales: 1 })
-    return addExperience(8)
+    updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
+    const xpResult = addExperience(8)
+    checkAndGrantAchievements()  // ✅
+    return xpResult
   } else {
     updateStats({ acciones_totales: 1 })
     return null
@@ -830,19 +889,35 @@ function fixWeeklyCounter(value) {
 }
 
 function recordWeeklyReview(wasCorrect) {
-  // ✅ Guarda la semana que SE ACABA DE EVALUAR (currentWeek)
-  // Para que la próxima dispare en currentWeek + 1
   const maxDayResult = db.prepare(
     'SELECT MAX(dias_transcurridos) as maxDay FROM plantas_usuario'
   ).get()
-
   const maxDay      = maxDayResult?.maxDay || 0
   const currentWeek = Math.floor(maxDay / 7)
 
   db.prepare(`UPDATE estadisticas SET semana_simulada_actual = ?`)
     .run(currentWeek)
 
-  if (wasCorrect) return addExperience(25)
+  if (wasCorrect) {
+    // ✅ Logro de evaluación correcta
+    const existingIds = db.prepare(`SELECT clave_logro FROM logros WHERE clave_logro != ''`)
+      .all().map(r => r.clave_logro)
+
+    if (!existingIds.includes('evaluacion_correcta')) {
+      const progress = getProgress()
+      db.prepare(`
+        INSERT INTO logros (clave_logro, nombre_logro, descripcion_logro, fecha_obtencion, tipo_logro)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(
+        'evaluacion_correcta',
+        'Evaluador Reflexivo',
+        'Identifica correctamente la decisión más perjudicial en la revisión semanal',
+        String(progress.nivel),
+        'EVALUACION'
+      )
+    }
+    return addExperience(25)
+  }
   return null
 }
 
@@ -881,7 +956,12 @@ function getOfflineDays() {
 
 // Obtiene todos los logros obtenidos por el jugador.
 function getAchievements() {
-  return db.prepare('SELECT * FROM logros ORDER BY fecha_obtencion DESC').all()
+  return db.prepare(`
+    SELECT clave_logro AS id_logro, nombre_logro, descripcion_logro,
+           fecha_obtencion, tipo_logro
+    FROM logros
+    ORDER BY fecha_obtencion DESC
+  `).all()
 }
 
 // Incrementa la racha si el jugador tuvo acciones correctas hoy.
@@ -903,13 +983,13 @@ function checkAndGrantAchievements() {
   const stats        = getStats()
   const plants       = getUserPlants()
   const existingIds  = db.prepare(
-    'SELECT id_logro FROM logros'
-  ).all().map(r => r.id_logro)
+    `SELECT clave_logro FROM logros WHERE clave_logro != ''`
+  ).all().map(r => r.clave_logro)
 
   const grant = (id, nombre, descripcion, tipo) => {
     if (existingIds.includes(id)) return  // ya obtenido
     db.prepare(`
-      INSERT INTO logros (id_logro, nombre_logro, descripcion_logro, fecha_obtencion, tipo_logro)
+      INSERT INTO logros (clave_logro, nombre_logro, descripcion_logro, fecha_obtencion, tipo_logro)
       VALUES (?, ?, ?, ?, ?)
     `).run(
       id, nombre, descripcion,
@@ -948,6 +1028,25 @@ function checkAndGrantAchievements() {
 
   if (progress.racha_dias >= 10)
     grant('racha_10', 'Dedicado', 'Mantén una racha de 10 días', 'RACHA')
+}
+
+function grantQuizPerfectAchievement() {
+  const existingIds = db.prepare(`SELECT clave_logro FROM logros WHERE clave_logro != ''`)
+    .all().map(r => r.clave_logro)
+
+  if (existingIds.includes('quiz_perfecto')) return
+
+  const progress = getProgress()
+  db.prepare(`
+    INSERT INTO logros (clave_logro, nombre_logro, descripcion_logro, fecha_obtencion, tipo_logro)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(
+    'quiz_perfecto',
+    'Maestro Botanista',
+    'Responde correctamente las 5 preguntas del quiz',
+    String(progress.nivel),
+    'EDUCATIVO'
+  )
 }
 
 
@@ -990,4 +1089,5 @@ module.exports = {
   getAchievements,
   updateStreak,
   checkAndGrantAchievements,
+  grantQuizPerfectAchievement,
 }

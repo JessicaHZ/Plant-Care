@@ -62,6 +62,9 @@ contextBridge.exposeInMainWorld('gameAPI', {
   getOfflineDays: () => ipcRenderer.invoke('simulation:getOfflineDays'),
 
   getAchievements: () => ipcRenderer.invoke('achievements:get'),
+
+  grantQuizPerfectAchievement: () =>
+  ipcRenderer.invoke('achievements:grantQuizPerfect'),
   
 
 })
