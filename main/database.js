@@ -1062,6 +1062,20 @@ function completeTutorial() {
   db.prepare('UPDATE progreso SET tutorial_completado = 1').run()
 }
 
+// Reinicia completamente el juego eliminando todo el progreso.
+// Útil para pruebas y como opción de "nueva partida" para el jugador.
+function resetGame() {
+  db.prepare('DELETE FROM plantas_usuario').run()
+  db.prepare('DELETE FROM estadisticas').run()
+  db.prepare('DELETE FROM logros').run()
+  db.prepare('UPDATE progreso SET nivel = 1, experiencia = 0, racha_dias = 0, tutorial_completado = 0, ultimo_cierre = NULL').run()
+}
+
+// Resetea el tutorial para que vuelva a mostrarse.
+// Se usa en "Nueva Partida" y para pruebas de desarrollo.
+function resetTutorial() {
+  db.prepare('UPDATE progreso SET tutorial_completado = 0').run()
+}
 
 
 // Exportamos todo lo que necesitan los demás módulos
@@ -1104,5 +1118,8 @@ module.exports = {
   checkAndGrantAchievements,
   grantQuizPerfectAchievement,
   isTutorialCompleted,
-  completeTutorial
+  completeTutorial,
+  resetGame,
+  resetTutorial
+  
 }

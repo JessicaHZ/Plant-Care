@@ -258,7 +258,7 @@ function registerIpcHandlers() {
       return { success: true }
     } catch (error) {
       console.error('Error regresando planta al panel:', error)
-    return { success: false }
+      return { success: false }
     }
   })
 
@@ -291,21 +291,39 @@ function registerIpcHandlers() {
   })
 
   ipcMain.handle('tutorial:isCompleted', async () => {
-  try {
-    const completed = db.isTutorialCompleted()
-    return { success: true, completed }
-  } catch (error) {
-    return { success: true, completed: false }
-  }
+    try {
+      const completed = db.isTutorialCompleted()
+      return { success: true, completed }
+    } catch (error) {
+      return { success: true, completed: false }
+    }
   })
 
   ipcMain.handle('tutorial:complete', async () => {
-  try {
-    db.completeTutorial()
-    return { success: true }
-  } catch (error) {
-    return { success: false }
-  }
+    try {
+      db.completeTutorial()
+      return { success: true }
+    } catch (error) {
+      return { success: false }
+    }
+  })
+
+  ipcMain.handle('game:reset', async () => {
+    try {
+      db.resetGame()
+      return { success: true }
+    } catch (error) {
+      return { success: false }
+    }
+  })
+
+  ipcMain.handle('tutorial:reset', async () => {
+    try {
+      db.resetTutorial()
+      return { success: true }
+    } catch (error) {
+      return { success: false }
+    }
   })
 
 }

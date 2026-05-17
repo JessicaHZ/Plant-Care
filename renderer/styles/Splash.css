@@ -1,0 +1,65 @@
+/* ── Pantalla de inicio ─────────────────────────────────── */
+#screen-splash {
+  background-image:    url('../../assets/fondo_inicio.png');
+  background-size:     cover;
+  background-position: center;
+  background-repeat:   no-repeat;
+  position:            relative;  /* ✅ necesario para posicionamiento absoluto */
+  overflow:            hidden;
+}
+
+.splash-container {
+  position: absolute;
+  inset:    0;          /* ocupa toda la pantalla */
+}
+
+.splash-buttons {
+  position: absolute;
+  inset:    0;
+}
+
+/* ── Botones posicionados sobre los de la imagen ─────────── */
+/* Cada botón es transparente y cubre exactamente el botón decorativo */
+
+#btn-continue-game {
+  position:   absolute;
+  left:       39.2%;
+  top:        75.3%;
+  transform:  translate(-50%, -50%);
+  width:      22%;      /* ✅ ajusta si necesitas más/menos cobertura */
+  height:     12%;
+  background: transparent;
+  border:     none;
+  cursor:     pointer;
+  font-size:  0;        /* texto invisible — la imagen ya lo tiene */
+  color:      transparent;
+}
+
+#btn-new-game {
+  position:   absolute;
+  left:       65.0%;
+  top:        75.4%;
+  transform:  translate(-50%, -50%);
+  width:      22%;
+  height:     12%;
+  background: transparent;
+  border:     none;
+  cursor:     pointer;
+  font-size:  0;
+  color:      transparent;
+}
+
+/* Hover: sutil brillo sobre el botón de la imagen */
+#btn-continue-game:hover:not(:disabled),
+#btn-new-game:hover:not(:disabled) {
+  background:    rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  transition:    background 0.2s ease;
+}
+
+/* Deshabilitado: oscurece el área del botón */
+#btn-continue-game:disabled {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 8px;
+  cursor:     not-allowed;
+}

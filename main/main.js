@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, Menu } = require('electron')
 const path = require('path')
 const { initializeDatabase, saveLastClose } = require('./database')
 const { registerIpcHandlers } = require('./ipc-handlers')
@@ -8,7 +8,9 @@ function createGameWindow() {
     width:     1280,
     height:    720,
     resizable: false,
-    title:     'Plant Simulator',
+    title:     'My Plant Home',
+    menuBarVisible: false,
+    autoHideMenuBar: true,
     webPreferences: {
       preload:          path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -26,6 +28,9 @@ function createGameWindow() {
 
 app.whenReady().then(() => {
   try {
+    // Elimina el menú de la aplicación para que no aparezca File/Edit/View/Window
+    Menu.setApplicationMenu(null)
+
     // 1. Inicializamos la BD antes de abrir la ventana.
     //    Si falla aquí, no tiene sentido continuar.
     initializeDatabase()

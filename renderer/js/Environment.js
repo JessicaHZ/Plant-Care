@@ -337,6 +337,31 @@ const Environment = {
       .addEventListener('click', () => overlay.remove())
   },
 
+  // Genera barra de humedad con color adaptativo.
+  // Rojo: seca (0-30%) | Azul: óptima (30-75%) | Naranja: saturada (75%+)
+  _getHumidityBarHTML(humedad) {
+  const colorClass =
+    humedad < 30  ? 'diag-bar-water-low'     :
+    humedad <= 75 ? 'diag-bar-water-optimal' :
+                    'diag-bar-water-high'
+
+  const label =
+    humedad < 30  ? '💧 Humedad (baja)'      :
+    humedad <= 75 ? '💧 Humedad (óptima)'    :
+                    '💧 Humedad (saturada)'
+
+  return `
+    <div class="diag-bar-row">
+      <span class="diag-bar-label">${label}</span>
+      <div class="diag-bar-bg">
+        <div class="diag-bar-fill ${colorClass}"
+             style="width: ${humedad}%"></div>
+      </div>
+      <span class="diag-bar-val">${humedad}%</span>
+    </div>
+  `
+  },
+
   async _openCarePanel(plant) {
     const existing = document.querySelector('.care-panel')
     if (existing) existing.remove()
@@ -369,13 +394,7 @@ const Environment = {
         alt="${plant.nombre_planta}"
       />
       <div class="care-panel-bars">
-        <div class="diag-bar-row">
-          <span class="diag-bar-label">💧 Humedad</span>
-          <div class="diag-bar-bg">
-            <div class="diag-bar-fill diag-bar-water" style="width:${plant.humedad}%"></div>
-          </div>
-          <span class="diag-bar-val">${plant.humedad}%</span>
-        </div>
+        ${this._getHumidityBarHTML(plant.humedad)}
         <div class="diag-bar-row">
           <span class="diag-bar-label">❤️ Salud</span>
           <div class="diag-bar-bg">

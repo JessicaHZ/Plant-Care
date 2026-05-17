@@ -68,6 +68,9 @@ contextBridge.exposeInMainWorld('gameAPI', {
 
   isTutorialCompleted: () => ipcRenderer.invoke('tutorial:isCompleted'),
   completeTutorial:    () => ipcRenderer.invoke('tutorial:complete'),
+  resetTutorial: () => ipcRenderer.invoke('tutorial:reset'),
+
+  resetGame: () => ipcRenderer.invoke('game:reset'),
   
 
 })

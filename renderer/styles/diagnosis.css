@@ -101,12 +101,18 @@
 }
 
 .diag-bar-fill {
+  display: block;
   height: 100%;
+  min-width: 1px;
   border-radius: 4px;
   transition: width 0.3s ease;
 }
 
-.diag-bar-water  { background: #42a5f5; }
+/* ✅ Después — color según nivel de humedad */
+.diag-bar-water-low      { background: #ef5350; }   /* rojo    — seca (0-30%)     */
+.diag-bar-water-optimal  { background: #42a5f5; }   /* azul    — óptima (30-75%)  */
+.diag-bar-water-high     { background: #ffa726; }   /* naranja — saturada (75%+)  */
+
 .diag-bar-health { background: #66bb6a; }
 
 .diag-bar-val {

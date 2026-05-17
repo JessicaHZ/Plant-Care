@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
   <title>Plant Simulator</title>
   <link rel="stylesheet" href="styles/global.css" />
   <link rel="stylesheet" href="styles/menu.css" />
@@ -12,8 +13,31 @@
   <link rel="stylesheet" href="styles/diagnosis.css" />
   <link rel="stylesheet" href="styles/minigames.css" />
   <link rel="stylesheet" href="styles/profile.css" />
+  <link rel="stylesheet" href="styles/splash.css" />
 </head>
+
 <body>
+
+
+
+  <!-- ══════════════════════════════════════════════════════
+     PANTALLA: INICIO
+     Punto de entrada del juego. Permite continuar o nueva partida.
+     ══════════════════════════════════════════════════════ -->
+  <div id="screen-splash" class="screen">
+    <div class="splash-container">
+
+      <div class="splash-buttons">
+        <button class="btn-wood" id="btn-continue-game" disabled>
+          🌿 Continuar partida
+        </button>
+        <button class="btn-wood btn-wood-new" id="btn-new-game">
+          ✨ Nueva partida
+        </button>
+      </div>
+
+    </div>
+  </div>
 
   <!-- ══════════════════════════════════════════════════════
        PANTALLA: MENÚ PRINCIPAL
@@ -161,7 +185,7 @@
   </div>
 
 
-     <!-- ══════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════
      PANTALLA: MI PERFIL
      RF-26: estadísticas, nivel, logros.
      ══════════════════════════════════════════════════════ -->
@@ -188,11 +212,11 @@
         <div class="profile-panel active" id="tab-progress">
           <div class="progress-hero">
             <div class="progress-level-badge" id="profile-level-badge">1</div>
-             <div class="progress-level-info">
-                <p class="progress-level-label">Nivel actual</p>
-                <p class="progress-level-title" id="profile-level-title">Aprendiz</p>
-              </div>
+            <div class="progress-level-info">
+              <p class="progress-level-label">Nivel actual</p>
+              <p class="progress-level-title" id="profile-level-title">Aprendiz</p>
             </div>
+          </div>
 
           <div class="progress-xp-bar-container">
             <div class="progress-xp-labels">
@@ -258,7 +282,7 @@
         <!-- ── Pestaña: Logros ── -->
         <div class="profile-panel" id="tab-achievements">
           <div class="achievements-list" id="achievements-list">
-          <!-- generado por JS -->
+            <!-- generado por JS -->
           </div>
         </div>
 
@@ -283,4 +307,5 @@
   <script src="index.js"></script>
 
 </body>
+
 </html>

@@ -61,7 +61,7 @@ const ScreenManager = {
   // Debe llamarse una sola vez al cargar el DOM.
   // Sin autenticación, la pantalla inicial es el menú principal.
   init() {
-    this.show('main-menu')
+    this.show('splash')
   }
 
 }
