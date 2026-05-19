@@ -7,11 +7,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Inicialización global ─────────────────────────────────────────────
   // Sin autenticación: el juego inicia directamente en el menú principal.
   // Todos los módulos se inicializan con el progreso local del jugador.
+  const [progressResult, plantsResult] = await Promise.all([
+    window.gameAPI.getProgress(),
+    window.gameAPI.getUserPlants()
+  ])
 
-  const progressResult = await window.gameAPI.getProgress()
   const progress = progressResult.success ? progressResult.progress : { nivel: 1, experiencia: 0, racha_dias: 0 }
 
-  const plantsResult = await window.gameAPI.getUserPlants()
   const plantCount = plantsResult.success ? plantsResult.plants.length : 0
 
   // Habilita "Continuar" solo si el jugador tiene plantas o progreso real

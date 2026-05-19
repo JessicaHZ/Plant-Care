@@ -1,27 +1,27 @@
 const Environment = {
 
-  _userPlants:  [],
+  _userPlants: [],
   _currentRoom: 'SALA',
   _tickHandler: null,
 
   _rooms: {
-    'SALA':       { label: 'Sala',       icon: '🛋️', luz: 'INDIRECTA', sprite: 'sala'       },
-    'JARDÍN':     { label: 'Jardín',     icon: '🌳', luz: 'DIRECTA',   sprite: 'jardin'     },
+    'SALA': { label: 'Sala', icon: '🛋️', luz: 'INDIRECTA', sprite: 'sala' },
+    'JARDÍN': { label: 'Jardín', icon: '🌳', luz: 'DIRECTA', sprite: 'jardin' },
     'DORMITORIO': { label: 'Dormitorio', icon: '🛏️', luz: 'INDIRECTA', sprite: 'dormitorio' }
   },
 
   // Slots fijos por habitación (coordenadas en % sobre room-area)
   _slots: {
     'JARDÍN': [
-      { id: 'jardin-1',  x: 66.3, y: 30.4 },
-      { id: 'jardin-2',  x: 62.2, y: 28.1 },
-      { id: 'jardin-3',  x: 57.3, y: 24.5 },
-      { id: 'jardin-4',  x: 53.1, y: 35.2 },
-      { id: 'jardin-5',  x: 57.3, y: 40.8 },
-      { id: 'jardin-6',  x: 62.9, y: 46.2 },
-      { id: 'jardin-7',  x: 19.0, y: 42.9 },
-      { id: 'jardin-8',  x: 12.8, y: 49.1 },
-      { id: 'jardin-9',  x: 43.8, y: 69.6 },
+      { id: 'jardin-1', x: 66.3, y: 30.4 },
+      { id: 'jardin-2', x: 62.2, y: 28.1 },
+      { id: 'jardin-3', x: 57.3, y: 24.5 },
+      { id: 'jardin-4', x: 53.1, y: 35.2 },
+      { id: 'jardin-5', x: 57.3, y: 40.8 },
+      { id: 'jardin-6', x: 62.9, y: 46.2 },
+      { id: 'jardin-7', x: 19.0, y: 42.9 },
+      { id: 'jardin-8', x: 12.8, y: 49.1 },
+      { id: 'jardin-9', x: 43.8, y: 69.6 },
       { id: 'jardin-10', x: 63.7, y: 89.8 },
       { id: 'jardin-11', x: 53.5, y: 78.8 },
     ],
@@ -80,20 +80,20 @@ const Environment = {
 
     freshBtn.addEventListener('click', async () => {
       if (freshBtn.disabled) return
-      freshBtn.disabled    = true
+      freshBtn.disabled = true
       freshBtn.textContent = 'Simulando...'
 
       await Simulation.advanceDays(1)
       await this._loadUserPlants()
       this._renderCurrentRoom()
 
-      freshBtn.disabled    = false
+      freshBtn.disabled = false
       freshBtn.textContent = '⏩ Avanzar día'
     })
   },
 
   _renderCurrentRoom() {
-    const room     = this._rooms[this._currentRoom]
+    const room = this._rooms[this._currentRoom]
     const roomArea = document.getElementById('room-area')
     if (!roomArea) return
 
@@ -108,18 +108,18 @@ const Environment = {
     this._renderSlots(plantArea)
 
     // ✅ Ahora — separa plantas con posición de las que no tienen slot asignado
-   const plantsWithSlot = this._userPlants.filter(
-     p => p.ubicacion === this._currentRoom && p.pos_x && p.pos_y
-   )
-   const plantsWithoutSlot = this._userPlants.filter(
-     p => !p.ubicacion || (p.ubicacion === this._currentRoom && !p.pos_x)
-   )
+    const plantsWithSlot = this._userPlants.filter(
+      p => p.ubicacion === this._currentRoom && p.pos_x && p.pos_y
+    )
+    const plantsWithoutSlot = this._userPlants.filter(
+      p => !p.ubicacion || (p.ubicacion === this._currentRoom && !p.pos_x)
+    )
 
-   plantsWithSlot.forEach(plant => {
-     this._renderPlantInSlot(plantArea, plant)
-   })
+    plantsWithSlot.forEach(plant => {
+      this._renderPlantInSlot(plantArea, plant)
+    })
 
-   this._renderSidePanel(room, plantsWithoutSlot)
+    this._renderSidePanel(room, plantsWithoutSlot)
   },
 
   // Renderiza los slots vacíos de la habitación actual
@@ -130,18 +130,18 @@ const Environment = {
       // Verifica si este slot ya está ocupado
       const occupiedPlant = this._userPlants.find(
         p => p.ubicacion === this._currentRoom &&
-             parseFloat(p.pos_x) === slot.x &&
-             parseFloat(p.pos_y) === slot.y
+          parseFloat(p.pos_x) === slot.x &&
+          parseFloat(p.pos_y) === slot.y
       )
       if (occupiedPlant) return  // slot ocupado — no renderizar marcador
 
       const slotEl = document.createElement('div')
-      slotEl.className       = 'plant-slot'
-      slotEl.dataset.slotId  = slot.id
-      slotEl.dataset.x       = slot.x
-      slotEl.dataset.y       = slot.y
-      slotEl.style.left      = `${slot.x}%`
-      slotEl.style.top       = `${slot.y}%`
+      slotEl.className = 'plant-slot'
+      slotEl.dataset.slotId = slot.id
+      slotEl.dataset.x = slot.x
+      slotEl.dataset.y = slot.y
+      slotEl.style.left = `${slot.x}%`
+      slotEl.style.top = `${slot.y}%`
 
       // Drag over: resalta el slot
       slotEl.addEventListener('dragover', (e) => {
@@ -159,7 +159,7 @@ const Environment = {
         slotEl.classList.remove('slot-highlight')
 
         const id_registro = parseInt(e.dataTransfer.getData('id_registro'))
-        const plantName   = e.dataTransfer.getData('plantName')
+        const plantName = e.dataTransfer.getData('plantName')
 
         await this._placePlantInSlot(id_registro, plantName, slot)
       })
@@ -171,20 +171,20 @@ const Environment = {
   // Renderiza una planta ya colocada en su posición guardada
   _renderPlantInSlot(container, plant) {
     const stateColor = {
-      'SANA':     '#66bb6a',
+      'SANA': '#66bb6a',
       'MARCHITA': '#ffa726',
-      'ENFERMA':  '#ef5350',
-      'MUERTA':   '#757575'
+      'ENFERMA': '#ef5350',
+      'MUERTA': '#757575'
     }
 
     const wrapper = document.createElement('div')
-    wrapper.className  = 'room-plant positioned'
+    wrapper.className = 'room-plant positioned'
     wrapper.dataset.registroId = plant.id_registro
 
     // Usa pos_x/pos_y si existen, sino centra en la parte inferior
-    if (plant.pos_x && plant.pos_y) {
+    if (plant.pos_x != null && plant.pos_y != null) {
       wrapper.style.left = `${plant.pos_x}%`
-      wrapper.style.top  = `${plant.pos_y}%`
+      wrapper.style.top = `${plant.pos_y}%`
     }
 
     wrapper.innerHTML = `
@@ -219,8 +219,8 @@ const Environment = {
       <div class="env-unplaced">
         <p class="env-section-label">
           ${unplacedPlants.length > 0
-            ? '🌱 Arrastra una planta a un slot:'
-            : 'Todas tus plantas están colocadas'}
+        ? '🌱 Arrastra una planta a un slot:'
+        : 'Todas tus plantas están colocadas'}
         </p>
         <div class="unplaced-list" id="unplaced-list">
           ${unplacedPlants.map(p => `
@@ -244,7 +244,7 @@ const Environment = {
     panel.querySelectorAll('.unplaced-plant-card').forEach(card => {
       card.addEventListener('dragstart', (e) => {
         e.dataTransfer.setData('id_registro', card.dataset.registro)
-        e.dataTransfer.setData('plantName',   card.dataset.name)
+        e.dataTransfer.setData('plantName', card.dataset.name)
         card.classList.add('dragging')
       })
 
@@ -256,7 +256,7 @@ const Environment = {
 
   // Coloca una planta en un slot específico con pregunta proactiva LM2
   async _placePlantInSlot(id_registro, plantName, slot) {
-    const room   = this._rooms[this._currentRoom]
+    const room = this._rooms[this._currentRoom]
     const answer = await this._showLocationQuestion(plantName, room)
 
     const result = await window.gameAPI.placePlant(
@@ -309,9 +309,9 @@ const Environment = {
 
   _showLocationResult(plantName, room, playerAnswer, actualLight) {
     const lightMessages = {
-      'DIRECTA':   'recibe luz solar directa — ideal para plantas que necesitan sol intenso.',
+      'DIRECTA': 'recibe luz solar directa — ideal para plantas que necesitan sol intenso.',
       'INDIRECTA': 'recibe luz indirecta — ideal para la mayoría de plantas de interior.',
-      'SOMBRA':    'recibe poca luz — solo para plantas que toleran la sombra.'
+      'SOMBRA': 'recibe poca luz — solo para plantas que toleran la sombra.'
     }
     const overlay = document.createElement('div')
     overlay.className = 'diagnosis-overlay'
@@ -340,17 +340,17 @@ const Environment = {
   // Genera barra de humedad con color adaptativo.
   // Rojo: seca (0-30%) | Azul: óptima (30-75%) | Naranja: saturada (75%+)
   _getHumidityBarHTML(humedad) {
-  const colorClass =
-    humedad < 30  ? 'diag-bar-water-low'     :
-    humedad <= 75 ? 'diag-bar-water-optimal' :
-                    'diag-bar-water-high'
+    const colorClass =
+      humedad < 40 ? 'diag-bar-water-low' :   // rojo     0-39%
+        humedad <= 75 ? 'diag-bar-water-optimal' :   // azul     40-75%
+          'diag-bar-water-high'         // naranja  76-100%
 
-  const label =
-    humedad < 30  ? '💧 Humedad (baja)'      :
-    humedad <= 75 ? '💧 Humedad (óptima)'    :
-                    '💧 Humedad (saturada)'
+    const label =
+      humedad < 40 ? '💧 Humedad (baja)' :
+        humedad <= 75 ? '💧 Humedad (óptima)' :
+          '💧 Humedad (saturada)'
 
-  return `
+    return `
     <div class="diag-bar-row">
       <span class="diag-bar-label">${label}</span>
       <div class="diag-bar-bg">
@@ -372,9 +372,11 @@ const Environment = {
     }
 
     const progressResult = await window.gameAPI.getProgress()
-    const playerLevel    = progressResult.success ? progressResult.progress.nivel : 1
+    const playerLevel = progressResult.success ? progressResult.progress.nivel : 1
+    // Determina disponibilidad de cada herramienta
     const pruneAvailable = plant.tipo_poda !== 'NUNCA' && plant.requiere_poda_activa === 1
-    const pruneUnlocked  = playerLevel >= 2
+    const pruneUnlocked = playerLevel >= 2
+    const nutrientes = plant.nutrientes ?? 50
 
     const pruneLabel = !pruneUnlocked
       ? '✂️ Podar 🔒 (nivel 2)'
@@ -402,20 +404,37 @@ const Environment = {
           </div>
           <span class="diag-bar-val">${plant.salud}%</span>
         </div>
+        <div class="diag-bar-row">
+          <span class="diag-bar-label">
+            ${nutrientes < 30  ? '🌿 Nutrientes (bajos)'   :
+              nutrientes <= 75 ? '🌿 Nutrientes (óptimos)' :
+                         '🌿 Nutrientes (exceso)'}
+          </span>
+          <div class="diag-bar-bg">
+            <div class="diag-bar-fill"
+                 style="width:${nutrientes}%; background:${
+                   nutrientes < 30  ? '#ef5350' :
+                   nutrientes <= 75 ? '#66bb6a' :
+                              '#ffa726'
+                 }">
+            </div>
+          </div>
+          <span class="diag-bar-val">${nutrientes}%</span>
+        </div>
       </div>
-      <p class="care-panel-days">
-        Sin regar hace ${plant.dias_sin_regar} días
-        (regar cada ${plant.frecuencia_riego} días)
-      </p>
       <div class="care-panel-actions">
-        <button class="btn btn-primary care-action-btn" id="btn-water">💧 Regar</button>
-        <button class="btn btn-secondary care-action-btn" id="btn-fertilize">🌿 Abonar</button>
+        <button class="btn btn-primary care-action-btn" id="btn-water">
+          💧 Regar
+        </button>
+        <button class="btn btn-secondary care-action-btn" id="btn-fertilize">
+          🌿 Abonar
+        </button>
         <button class="btn care-action-btn ${pruneAvailable && pruneUnlocked ? 'btn-secondary' : 'btn-ghost'}"
-                id="btn-prune" ${pruneAvailable && pruneUnlocked ? '' : 'disabled'}>
+               id="btn-prune" ${pruneAvailable && pruneUnlocked ? '' : 'disabled'}>
           ${pruneLabel}
         </button>
-      </div>
-      ${plant.ubicacion ? `
+       </div>
+       ${plant.ubicacion ? `
         <button class="btn btn-ghost care-action-btn" id="btn-move-plant"
                 style="margin-top:0.5rem; width:100%">
           📦 Cambiar de lugar
@@ -446,6 +465,7 @@ const Environment = {
         CareActions.prune(plant, afterAction)
       })
     }
+
     if (plant.ubicacion) {
       panel.querySelector('#btn-move-plant').addEventListener('click', () => {
         panel.remove()

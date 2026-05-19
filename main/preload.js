@@ -71,6 +71,8 @@ contextBridge.exposeInMainWorld('gameAPI', {
   resetTutorial: () => ipcRenderer.invoke('tutorial:reset'),
 
   resetGame: () => ipcRenderer.invoke('game:reset'),
+
+  drainPlant: (id_registro) => ipcRenderer.invoke('care:drain', id_registro),
   
 
 })

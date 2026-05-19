@@ -17,17 +17,17 @@ const CareActions = {
   // Contenido educativo por tipo de error (RF-28/29)
   _contextualGuides: {
     riego: {
-      icon:  '💧',
+      icon: '💧',
       title: 'Sobre el riego',
       steps: [
-        'Revisa la humedad antes de regar — las barras de estado te lo indican.',
-        'Cada planta tiene su propia frecuencia de riego. Una suculenta necesita agua cada 14-21 días; un helecho cada 3.',
-        'El exceso de agua pudre las raíces. Si la tierra aún está húmeda, espera.',
-        'Señales de sed: hojas caídas, tierra completamente seca, aspecto marchito.',
+        'Revisa la humedad antes de regar — la barra te indica si está baja, óptima o saturada.',
+        'Cada planta tiene su propia frecuencia de riego. Una suculenta cada 14-21 días; un helecho cada 3.',
+        'El riego sube la humedad entre 20-30 puntos — puede necesitar varios riegos si estaba muy seca.',
+        'Si la humedad supera el 75%, usa "Drenar" en lugar de esperar — reduce el riesgo de pudrición.',
       ]
     },
     abono: {
-      icon:  '🌿',
+      icon: '🌿',
       title: 'Sobre el abono',
       steps: [
         'Abona solo cuando la salud de la planta esté por debajo del 80%.',
@@ -37,7 +37,7 @@ const CareActions = {
       ]
     },
     poda: {
-      icon:  '✂️',
+      icon: '✂️',
       title: 'Sobre la poda',
       steps: [
         'La poda solo está disponible para plantas que la requieren activamente.',
@@ -47,7 +47,7 @@ const CareActions = {
       ]
     },
     ubicacion: {
-      icon:  '📍',
+      icon: '📍',
       title: 'Sobre la ubicación',
       steps: [
         'Cada espacio tiene condiciones de luz distintas: Jardín (directa), Sala y Dormitorio (indirecta).',
@@ -55,18 +55,54 @@ const CareActions = {
         'Una mala ubicación deteriora la salud lentamente aunque riegues bien.',
         'Puedes mover una planta en cualquier momento desde su panel de cuidado.',
       ]
-    }
+    },
+    /*/ Agrega después de 'ubicacion':
+    drenaje: {
+      icon: '🚰',
+      title: 'Sobre el drenaje',
+      steps: [
+        'El drenaje solo aplica cuando la humedad supera el 75% — exceso de agua.',
+        'Simula inclinar la maceta, secar el sustrato y mejorar la ventilación.',
+        'No drenes si la humedad está en rango normal — puede secar demasiado la planta.',
+        'Después de drenar, espera al menos 2-3 días antes de volver a regar.',
+      ]
+    }, */
   },
 
-  init() {},
+  init() { },
 
   async water(plant, onComplete) {
     const canProceed = await Diagnosis.run(plant, 'water')
-    if (!canProceed) return
+
+    // ✅ 'drained' = el diagnóstico ya ejecutó el drenaje, no regar
+    if (!canProceed || canProceed === 'drained') {
+      if (canProceed === 'drained') {
+        // Recarga el entorno para mostrar la humedad actualizada
+        if (onComplete) onComplete({ success: true, isError: false })
+      }
+      return
+    }
 
     const result = await window.gameAPI.waterPlant(plant.id_registro)
     await this._handleResult(result, onComplete, 'riego')
   },
+
+  // Drenar exceso de agua — disponible cuando humedad > 75%
+  /*async drain(plant, onComplete) {
+    if (plant.humedad <= 75) {
+      this._showToast(
+        `⚠️ ${plant.nombre_planta} no tiene exceso de agua. El drenaje solo aplica con humedad > 75%.`,
+        'warning'
+      )
+      return
+    }
+
+    const canProceed = await Diagnosis.run(plant, 'drain')
+    if (!canProceed) return
+
+    const result = await window.gameAPI.drainPlant(plant.id_registro)
+    await this._handleResult(result, onComplete, 'riego')
+  },  */
 
   async fertilize(plant, onComplete) {
     const canProceed = await Diagnosis.run(plant, 'fertilize')
@@ -127,47 +163,48 @@ const CareActions = {
   // Verifica si el contador de errores supera el umbral (5 errores).
   // Solo muestra la guía una vez por tipo por sesión.
   // Snapshot de contadores cuando se mostró la guía por última vez.
-// Permite calcular errores nuevos desde entonces, no el total histórico.
-_errorCountsAtLastGuide: {
-  riego:     null,
-  abono:     null,
-  poda:      null,
-  ubicacion: null
-},
+  // Permite calcular errores nuevos desde entonces, no el total histórico.
+  _errorCountsAtLastGuide: {
+    riego: null,
+    abono: null,
+    poda: null,
+    ubicacion: null,
+    drenaje: null
+  },
 
-async _checkContextualGuide(errorType) {
-  if (this._guidesShownThisSession.has(errorType)) return
+  async _checkContextualGuide(errorType) {
+    if (this._guidesShownThisSession.has(errorType)) return
 
-  const statsResult = await window.gameAPI.getStats()
-  if (!statsResult.success) return
+    const statsResult = await window.gameAPI.getStats()
+    if (!statsResult.success) return
 
-  const stats = statsResult.stats
-  const totalErrors = {
-    riego:     stats.errores_riego,
-    abono:     stats.errores_abono,
-    poda:      stats.errores_poda,
-    ubicacion: stats.errores_ubicacion
-  }[errorType] || 0
+    const stats = statsResult.stats
+    const totalErrors = {
+      riego: stats.errores_riego,
+      abono: stats.errores_abono,
+      poda: stats.errores_poda,
+      ubicacion: stats.errores_ubicacion
+    }[errorType] || 0
 
-  // Si es la primera vez que revisamos este tipo en esta sesión,
-  // guardamos el valor actual como punto de partida
-  if (this._errorCountsAtLastGuide[errorType] === null) {
-    this._errorCountsAtLastGuide[errorType] = totalErrors - 1
-    // -1 porque el error que acaba de ocurrir ya está sumado
-  }
+    // Si es la primera vez que revisamos este tipo en esta sesión,
+    // guardamos el valor actual como punto de partida
+    if (this._errorCountsAtLastGuide[errorType] === null) {
+      this._errorCountsAtLastGuide[errorType] = totalErrors - 1
+      // -1 porque el error que acaba de ocurrir ya está sumado
+    }
 
-  // Errores cometidos DESDE que arrancó la sesión (o desde la última guía)
-  const errorsThisSession =
-    totalErrors - this._errorCountsAtLastGuide[errorType]
+    // Errores cometidos DESDE que arrancó la sesión (o desde la última guía)
+    const errorsThisSession =
+      totalErrors - this._errorCountsAtLastGuide[errorType]
 
-  if (errorsThisSession > 5) {
-    setTimeout(() => {
-      this._showContextualGuide(errorType)
-      this._guidesShownThisSession.add(errorType)
-      // Actualiza el snapshot para el siguiente ciclo
-      this._errorCountsAtLastGuide[errorType] = totalErrors
-    }, 2000)
-  }
+    if (errorsThisSession > 5) {
+      setTimeout(() => {
+        this._showContextualGuide(errorType)
+        this._guidesShownThisSession.add(errorType)
+        // Actualiza el snapshot para el siguiente ciclo
+        this._errorCountsAtLastGuide[errorType] = totalErrors
+      }, 2000)
+    }
   },
 
   // Muestra el modal de guía contextual educativa (RF-28)
@@ -216,7 +253,7 @@ async _checkContextualGuide(errorType) {
     if (existing) existing.remove()
 
     const toast = document.createElement('div')
-    toast.className   = `care-toast care-toast-${type}`
+    toast.className = `care-toast care-toast-${type}`
     toast.textContent = message
     document.body.appendChild(toast)
 

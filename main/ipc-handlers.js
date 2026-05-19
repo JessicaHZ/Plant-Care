@@ -326,6 +326,15 @@ function registerIpcHandlers() {
     }
   })
 
+  ipcMain.handle('care:drain', async (event, id_registro) => {
+    try {
+      return db.drainPlant(id_registro)
+    } catch (error) {
+      console.error('Error en drenaje:', error)
+      return { success: false, error: 'Error al drenar' }
+    }
+  })
+
 }
 
 
