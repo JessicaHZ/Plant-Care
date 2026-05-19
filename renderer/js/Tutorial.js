@@ -35,7 +35,7 @@ const Tutorial = {
                   tipo de luz, frecuencia de riego y nivel de dificultad.
                   <br><br>
                   Adquiere las plantas que quieras cuidar y agrégalas a tu colección.`,
-      highlight:  'btn-go-nursery',   // resalta el botón del vivero en el menú
+      highlight:  'nav-btn-nursery',    // resalta el botón del vivero en el menú
       skippable:  true,
       btnNext:    'Siguiente →'
     },
@@ -48,7 +48,7 @@ const Tutorial = {
                   <br><br>
                   Arrastra cada planta al slot que consideres más adecuado —
                   pero piénsalo bien: la ubicación afecta directamente su salud.`,
-      highlight:  'btn-go-environment',
+      highlight:  'nav-btn-environment',
       skippable:  true,
       btnNext:    'Siguiente →'
     },

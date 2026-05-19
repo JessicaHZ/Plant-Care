@@ -14,6 +14,7 @@
   <link rel="stylesheet" href="styles/minigames.css" />
   <link rel="stylesheet" href="styles/profile.css" />
   <link rel="stylesheet" href="styles/splash.css" />
+  <link rel="stylesheet" href="styles/navbar.css" />
 </head>
 
 <body>
@@ -289,6 +290,29 @@
       </div>
     </div>
   </div>
+
+  <!-- ══════════════════════════════════════════════════════
+     BARRA DE NAVEGACIÓN INFERIOR
+     Visible en todas las pantallas del juego (excepto splash)
+     ══════════════════════════════════════════════════════ -->
+<nav id="bottom-nav" class="bottom-nav hidden">
+  <button class="nav-btn active" id="nav-btn-environment" data-screen="environment">
+    <span class="nav-btn-icon">🏡</span>
+    <span class="nav-btn-label">Mi Jardín</span>
+  </button>
+  <button class="nav-btn" id="nav-btn-nursery" data-screen="nursery">
+    <span class="nav-btn-icon">🌱</span>
+    <span class="nav-btn-label">Vivero</span>
+  </button>
+  <button class="nav-btn" id="nav-btn-minigames" data-screen="minigames">
+    <span class="nav-btn-icon">🎮</span>
+    <span class="nav-btn-label">Minijuegos</span>
+  </button>
+  <button class="nav-btn" id="nav-btn-profile" data-screen="profile">
+    <span class="nav-btn-icon">📊</span>
+    <span class="nav-btn-label">Perfil</span>
+  </button>
+</nav>
 
   <!-- Scripts en orden de dependencia.
        MiniGamePruning.js eliminado: la poda es herramienta, no minijuego. -->

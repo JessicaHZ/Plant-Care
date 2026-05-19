@@ -44,6 +44,7 @@ const PlayerHUD = {
         </div>
       </div>
     `
+    
 
     document.body.insertBefore(hud, document.body.firstChild)
   },

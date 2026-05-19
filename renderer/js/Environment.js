@@ -339,28 +339,59 @@ const Environment = {
 
   // Genera barra de humedad con color adaptativo.
   // Rojo: seca (0-30%) | Azul: óptima (30-75%) | Naranja: saturada (75%+)
-  _getHumidityBarHTML(humedad) {
-    const colorClass =
-      humedad < 40 ? 'diag-bar-water-low' :   // rojo     0-39%
-        humedad <= 75 ? 'diag-bar-water-optimal' :   // azul     40-75%
-          'diag-bar-water-high'         // naranja  76-100%
+  // Genera barra de humedad con color adaptativo y etiqueta según nivel.
+  // Nivel 1-2: etiqueta descriptiva, sin %
+  // Nivel 3+:  solo color, sin etiqueta descriptiva ni %
+  _getHumidityBarHTML(humedad, playerLevel = 1) {
+  const colorClass =
+    humedad < 40  ? 'diag-bar-water-low'     :
+    humedad <= 75 ? 'diag-bar-water-optimal' :
+                    'diag-bar-water-high'
 
-    const label =
-      humedad < 40 ? '💧 Humedad (baja)' :
-        humedad <= 75 ? '💧 Humedad (óptima)' :
-          '💧 Humedad (saturada)'
+  // ✅ Nivel 1-2: con descripción entre paréntesis
+  // ✅ Nivel 3+: solo el nombre, sin paréntesis
+  const label = playerLevel <= 2
+    ? (humedad < 40  ? '💧 Humedad (baja)'    :
+       humedad <= 75 ? '💧 Humedad (óptima)'  :
+                       '💧 Humedad (saturada)')
+    : '💧 Humedad'
 
-    return `
+  return `
     <div class="diag-bar-row">
       <span class="diag-bar-label">${label}</span>
       <div class="diag-bar-bg">
         <div class="diag-bar-fill ${colorClass}"
-             style="width: ${humedad}%"></div>
+             style="width:${humedad}%"></div>
       </div>
-      <span class="diag-bar-val">${humedad}%</span>
     </div>
   `
-  },
+},
+
+_getNutrientBarHTML(nutrientes, playerLevel) {
+  const color =
+    nutrientes < 30  ? '#ef5350' :
+    nutrientes <= 75 ? '#66bb6a' :
+                       '#ffa726'
+
+  // ✅ Nivel 1-2: con descripción entre paréntesis
+  // ✅ Nivel 3+: solo el nombre, sin paréntesis
+  const label = playerLevel <= 2
+    ? (nutrientes < 30  ? '🌿 Nutrientes (bajos)'   :
+       nutrientes <= 75 ? '🌿 Nutrientes (óptimos)' :
+                          '🌿 Nutrientes (exceso)')
+    : '🌿 Nutrientes'
+
+  return `
+    <div class="diag-bar-row">
+      <span class="diag-bar-label">${label}</span>
+      <div class="diag-bar-bg">
+        <div class="diag-bar-fill"
+             style="width:${nutrientes}%; background:${color}">
+        </div>
+      </div>
+    </div>
+  `
+},
 
   async _openCarePanel(plant) {
     const existing = document.querySelector('.care-panel')
@@ -396,32 +427,16 @@ const Environment = {
         alt="${plant.nombre_planta}"
       />
       <div class="care-panel-bars">
-        ${this._getHumidityBarHTML(plant.humedad)}
-        <div class="diag-bar-row">
-          <span class="diag-bar-label">❤️ Salud</span>
-          <div class="diag-bar-bg">
-            <div class="diag-bar-fill diag-bar-health" style="width:${plant.salud}%"></div>
-          </div>
-          <span class="diag-bar-val">${plant.salud}%</span>
-        </div>
-        <div class="diag-bar-row">
-          <span class="diag-bar-label">
-            ${nutrientes < 30  ? '🌿 Nutrientes (bajos)'   :
-              nutrientes <= 75 ? '🌿 Nutrientes (óptimos)' :
-                         '🌿 Nutrientes (exceso)'}
-          </span>
-          <div class="diag-bar-bg">
-            <div class="diag-bar-fill"
-                 style="width:${nutrientes}%; background:${
-                   nutrientes < 30  ? '#ef5350' :
-                   nutrientes <= 75 ? '#66bb6a' :
-                              '#ffa726'
-                 }">
-            </div>
-          </div>
-          <span class="diag-bar-val">${nutrientes}%</span>
-        </div>
-      </div>
+  ${this._getHumidityBarHTML(plant.humedad, playerLevel)}
+  <div class="diag-bar-row">
+    <span class="diag-bar-label">❤️ Salud</span>
+    <div class="diag-bar-bg">
+      <div class="diag-bar-fill diag-bar-health" style="width:${plant.salud}%"></div>
+    </div>
+    <span class="diag-bar-val">${plant.salud}%</span>
+  </div>
+  ${this._getNutrientBarHTML(nutrientes, playerLevel)}
+</div>
       <div class="care-panel-actions">
         <button class="btn btn-primary care-action-btn" id="btn-water">
           💧 Regar
