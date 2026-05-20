@@ -113,9 +113,10 @@ const ProfileScreen = {
   // ── Pestaña Progreso ──────────────────────────────────────────────────────
 
   _renderProgress(progress) {
-    const nivel      = progress.nivel       || 1
+    const maxLevel   = this._levels[this._levels.length - 1]
+    const nivel      = Math.min(progress.nivel || 1, maxLevel.nivel)
     const xp         = progress.experiencia || 0
-    const levelData  = this._levels.find(l => l.nivel === nivel) || this._levels[0]
+    const levelData  = this._levels.find(l => l.nivel === nivel) || maxLevel
     const nextLevel  = this._levels.find(l => l.nivel === nivel + 1)
 
     // Badge y título

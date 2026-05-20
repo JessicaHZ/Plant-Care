@@ -74,8 +74,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ── Minijuegos ────────────────────────────────────────────────────────
 
   document.getElementById('btn-start-pests').addEventListener('click', () => {
-    MiniGamePests.start((correct) => {
-      console.log(`Plagas: ${correct ? 'correcto' : 'incorrecto'}`)
+    MiniGameDefense.start((summary) => {
+      console.log(`Defensa del brote: ${summary.xpGained} XP`)
     })
   })
 
@@ -86,6 +86,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   // ── Funciones internas ────────────────────────────────────────────────
+
+  document.getElementById('btn-start-pruning').addEventListener('click', () => {
+    MiniGamePruning.startPractice((result) => {
+      console.log(`Poda practica: ${result.accuracy}% de precision`)
+    })
+  })
 
   function initBottomNav() {
     const nav = document.getElementById('bottom-nav')

@@ -394,100 +394,154 @@ _getNutrientBarHTML(nutrientes, playerLevel) {
 },
 
   async _openCarePanel(plant) {
-    const existing = document.querySelector('.care-panel')
-    if (existing) existing.remove()
+  const existing = document.querySelector('.care-panel')
+  if (existing) existing.remove()
 
-    if (plant.estado_planta === 'MUERTA') {
-      this._openDeadPlantPanel(plant)
-      return
-    }
+  if (plant.estado_planta === 'MUERTA') {
+    this._openDeadPlantPanel(plant)
+    return
+  }
 
-    const progressResult = await window.gameAPI.getProgress()
-    const playerLevel = progressResult.success ? progressResult.progress.nivel : 1
-    // Determina disponibilidad de cada herramienta
-    const pruneAvailable = plant.tipo_poda !== 'NUNCA' && plant.requiere_poda_activa === 1
-    const pruneUnlocked = playerLevel >= 2
-    const nutrientes = plant.nutrientes ?? 50
+  const progressResult = await window.gameAPI.getProgress()
+  const playerLevel    = progressResult.success ? progressResult.progress.nivel : 1
+  const pruneAvailable = plant.tipo_poda !== 'NUNCA' && plant.requiere_poda_activa === 1
+  const pruneUnlocked  = playerLevel >= 2
+  const nutrientes     = plant.nutrientes ?? 50
 
-    const pruneLabel = !pruneUnlocked
+  const pruneLabel = !pruneUnlocked
+    ? '✂️ Podar 🔒 (nivel 2)'
+    : pruneAvailable ? '✂️ Podar' : '✂️ Podar'
+
+  const panel = document.createElement('div')
+  panel.className = 'care-panel'
+
+  // Función que renderiza el contenido del panel con datos actualizados
+  const renderPanelContent = (currentPlant, currentLevel) => {
+    const currentNutrientes = currentPlant.nutrientes ?? 50
+    const currentPruneAvailable = currentPlant.tipo_poda !== 'NUNCA' &&
+                                  currentPlant.requiere_poda_activa === 1
+    const currentPruneLabel = !pruneUnlocked
       ? '✂️ Podar 🔒 (nivel 2)'
-      : pruneAvailable ? '✂️ Podar' : '✂️ Podar (no necesario)'
+      : currentPruneAvailable ? '✂️ Podar' : '✂️ Podar'
 
-    const panel = document.createElement('div')
-    panel.className = 'care-panel'
-    panel.innerHTML = `
+    return `
       <div class="care-panel-header">
-        <h3 class="care-panel-name">${plant.nombre_planta}</h3>
+        <h3 class="care-panel-name">${currentPlant.nombre_planta}</h3>
         <button class="btn btn-ghost" id="btn-close-care">✕</button>
       </div>
       <img
         class="care-panel-sprite"
-        src="../assets/sprites/plants/${plant.sprite_key}_${plant.estado_planta.toLowerCase()}.png"
+        src="../assets/sprites/plants/${currentPlant.sprite_key}_${currentPlant.estado_planta.toLowerCase()}.png"
         onerror="this.src='../assets/sprites/plants/placeholder.png'"
-        alt="${plant.nombre_planta}"
+        alt="${currentPlant.nombre_planta}"
       />
       <div class="care-panel-bars">
-  ${this._getHumidityBarHTML(plant.humedad, playerLevel)}
-  <div class="diag-bar-row">
-    <span class="diag-bar-label">❤️ Salud</span>
-    <div class="diag-bar-bg">
-      <div class="diag-bar-fill diag-bar-health" style="width:${plant.salud}%"></div>
-    </div>
-    <span class="diag-bar-val">${plant.salud}%</span>
-  </div>
-  ${this._getNutrientBarHTML(nutrientes, playerLevel)}
-</div>
+        ${this._getHumidityBarHTML(currentPlant.humedad, currentLevel)}
+        <div class="diag-bar-row">
+          <span class="diag-bar-label">❤️ Salud</span>
+          <div class="diag-bar-bg">
+            <div class="diag-bar-fill diag-bar-health"
+                 style="width:${currentPlant.salud}%"></div>
+          </div>
+          <span class="diag-bar-val">${currentPlant.salud}%</span>
+        </div>
+        ${this._getNutrientBarHTML(currentNutrientes, currentLevel)}
+      </div>
       <div class="care-panel-actions">
-        <button class="btn btn-primary care-action-btn" id="btn-water">
+        <button class="btn btn-primary btn-pixel care-action-btn" id="btn-water">
           💧 Regar
         </button>
-        <button class="btn btn-secondary care-action-btn" id="btn-fertilize">
+        <button class="btn btn-secondary btn-pixel care-action-btn" id="btn-fertilize">
           🌿 Abonar
         </button>
-        <button class="btn care-action-btn ${pruneAvailable && pruneUnlocked ? 'btn-secondary' : 'btn-ghost'}"
-               id="btn-prune" ${pruneAvailable && pruneUnlocked ? '' : 'disabled'}>
-          ${pruneLabel}
+        <button class="btn btn-pixel care-action-btn ${currentPruneAvailable && pruneUnlocked ? 'btn-secondary' : 'btn-ghost'}"
+                id="btn-prune"
+                ${currentPruneAvailable && pruneUnlocked ? '' : 'disabled'}>
+          ${currentPruneLabel}
         </button>
-       </div>
-       ${plant.ubicacion ? `
-        <button class="btn btn-ghost care-action-btn" id="btn-move-plant"
+      </div>
+      ${currentPlant.ubicacion ? `
+        <button class="btn btn-ghost btn-pixel care-action-btn" id="btn-move-plant"
                 style="margin-top:0.5rem; width:100%">
           📦 Cambiar de lugar
         </button>
       ` : ''}
     `
+  }
 
-    document.getElementById('room-area').appendChild(panel)
+  // Renderizado inicial
+  panel.innerHTML = renderPanelContent(plant, playerLevel)
+  document.getElementById('room-area').appendChild(panel)
 
-    const afterAction = async () => {
-      await this._loadUserPlants()
-      this._renderCurrentRoom()
+  // ✅ Callback para regar y abonar — actualiza el panel SIN cerrarlo
+  const afterCareAction = async () => {
+    await this._loadUserPlants()
+
+    // Busca la planta actualizada por id_registro
+    const updatedPlant = this._userPlants.find(
+      p => p.id_registro === plant.id_registro
+    )
+    if (!updatedPlant) {
       panel.remove()
+      this._renderCurrentRoom()
+      return
     }
 
-    panel.querySelector('#btn-close-care').addEventListener('click', () => panel.remove())
-    panel.querySelector('#btn-water').addEventListener('click', () => {
-      panel.remove()
-      CareActions.water(plant, afterAction)
-    })
-    panel.querySelector('#btn-fertilize').addEventListener('click', () => {
-      panel.remove()
-      CareActions.fertilize(plant, afterAction)
-    })
-    if (pruneAvailable && pruneUnlocked) {
-      panel.querySelector('#btn-prune').addEventListener('click', () => {
+    // Actualiza la referencia local y re-renderiza el panel
+    plant = updatedPlant
+    panel.innerHTML = renderPanelContent(updatedPlant, playerLevel)
+    this._renderCurrentRoom()
+
+    // Re-registra los listeners después de actualizar el HTML
+    bindListeners()
+  }
+
+  // ✅ Callback para poda y mover — cierra el panel como antes
+  const afterFinalAction = async () => {
+    await this._loadUserPlants()
+    this._renderCurrentRoom()
+    panel.remove()
+  }
+
+  // Función que registra todos los listeners del panel
+  // Se llama al inicio y después de cada actualización del HTML
+  const bindListeners = () => {
+    panel.querySelector('#btn-close-care')
+      .addEventListener('click', () => {
         panel.remove()
-        CareActions.prune(plant, afterAction)
+        this._renderCurrentRoom()
+      })
+
+    panel.querySelector('#btn-water')
+      .addEventListener('click', () => {
+        CareActions.water(plant, afterCareAction)  // ✅ no cierra
+      })
+
+    panel.querySelector('#btn-fertilize')
+      .addEventListener('click', () => {
+        CareActions.fertilize(plant, afterCareAction)  // ✅ no cierra
+      })
+
+    const pruneBtn = panel.querySelector('#btn-prune')
+    if (pruneBtn && !pruneBtn.disabled) {
+      pruneBtn.addEventListener('click', () => {
+        panel.remove()
+        CareActions.prune(plant, afterFinalAction)  // ✅ cierra
       })
     }
 
-    if (plant.ubicacion) {
-      panel.querySelector('#btn-move-plant').addEventListener('click', () => {
+    const moveBtn = panel.querySelector('#btn-move-plant')
+    if (moveBtn) {
+      moveBtn.addEventListener('click', () => {
         panel.remove()
         this._movePlant(plant)
       })
     }
-  },
+  }
+
+  // Registro inicial de listeners
+  bindListeners()
+},
 
   _openDeadPlantPanel(plant) {
     const panel = document.createElement('div')

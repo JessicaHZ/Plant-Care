@@ -12,6 +12,10 @@
   <link rel="stylesheet" href="styles/environment.css" />
   <link rel="stylesheet" href="styles/diagnosis.css" />
   <link rel="stylesheet" href="styles/minigames.css" />
+  <link rel="stylesheet" href="styles/minigame-quiz.css" />
+  <link rel="stylesheet" href="styles/minigame-weekly.css" />
+  <link rel="stylesheet" href="styles/minigame-defense.css" />
+  <link rel="stylesheet" href="styles/minigame-pruning.css" />
   <link rel="stylesheet" href="styles/profile.css" />
   <link rel="stylesheet" href="styles/splash.css" />
   <link rel="stylesheet" href="styles/navbar.css" />
@@ -26,19 +30,13 @@
      Punto de entrada del juego. Permite continuar o nueva partida.
      ══════════════════════════════════════════════════════ -->
   <div id="screen-splash" class="screen">
-    <div class="splash-container">
-
-      <div class="splash-buttons">
-        <button class="btn-wood" id="btn-continue-game" disabled>
-          🌿 Continuar partida
-        </button>
-        <button class="btn-wood btn-wood-new" id="btn-new-game">
-          ✨ Nueva partida
-        </button>
-      </div>
-
+  <div class="splash-container">
+    <div class="splash-buttons">
+      <button class="menu-img-btn btn-continuar" id="btn-continue-game" disabled aria-label="Continuar partida"></button>
+      <button class="menu-img-btn btn-nueva" id="btn-new-game" aria-label="Nueva partida"></button>
     </div>
   </div>
+</div>
 
   <!-- ══════════════════════════════════════════════════════
        PANTALLA: MENÚ PRINCIPAL
@@ -141,7 +139,7 @@
   <!-- ══════════════════════════════════════════════════════
        PANTALLA: MINIJUEGOS
        HU-13: plagas. HU-14: quiz.
-       La poda ya no es minijuego (RF-09: herramienta de cuidado).
+       La poda se conserva como herramienta real y se ofrece aqui como practica.
        ══════════════════════════════════════════════════════ -->
   <div id="screen-minigames" class="screen">
     <div class="minigames-hub">
@@ -155,14 +153,14 @@
 
         <div class="minigame-card">
           <div class="minigame-card-icon">🐛</div>
-          <h3 class="minigame-card-title">Control de plagas</h3>
+          <h3 class="minigame-card-title">Defensa del brote</h3>
           <p class="minigame-card-desc">
-            Analiza los síntomas de la planta y elige el tratamiento correcto
-            entre las opciones disponibles.
+            Protege un brote de plagas invasoras y evita afectar organismos
+            aliados del ecosistema.
           </p>
           <div class="minigame-card-meta">
-            <span class="minigame-card-xp">+20 XP si aciertas</span>
-            <span class="minigame-card-time">🎯 1 escenario</span>
+            <span class="minigame-card-xp">XP por desempeno</span>
+            <span class="minigame-card-time">60 segundos</span>
           </div>
           <button class="btn btn-primary" id="btn-start-pests">Jugar</button>
         </div>
@@ -179,6 +177,20 @@
             <span class="minigame-card-time">❓ 5 preguntas</span>
           </div>
           <button class="btn btn-primary" id="btn-start-quiz">Jugar</button>
+        </div>
+
+        <div class="minigame-card">
+          <div class="minigame-card-icon">✂️</div>
+          <h3 class="minigame-card-title">Poda de precision</h3>
+          <p class="minigame-card-desc">
+            Practica como identificar hojas secas o danadas sin afectar tus
+            plantas reales.
+          </p>
+          <div class="minigame-card-meta">
+            <span class="minigame-card-xp">Modo practica</span>
+            <span class="minigame-card-time">Sin impacto</span>
+          </div>
+          <button class="btn btn-primary" id="btn-start-pruning">Practicar</button>
         </div>
 
       </div>
@@ -314,8 +326,7 @@
   </button>
 </nav>
 
-  <!-- Scripts en orden de dependencia.
-       MiniGamePruning.js eliminado: la poda es herramienta, no minijuego. -->
+  <!-- Scripts en orden de dependencia. -->
   <script src="js/ScreenManager.js"></script>
   <script src="js/PlayerHUD.js"></script>
   <script src="js/Nursery.js"></script>
@@ -323,7 +334,8 @@
   <script src="js/Diagnosis.js"></script>
   <script src="js/CareActions.js"></script>
   <script src="js/Environment.js"></script>
-  <script src="js/MiniGamePests.js"></script>
+  <script src="js/MiniGameDefense.js"></script>
+  <script src="js/MiniGamePruning.js"></script>
   <script src="js/MiniGameQuiz.js"></script>
   <script src="js/WeeklyReview.js"></script>
   <script src="js/ProfileScreen.js"></script>

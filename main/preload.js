@@ -45,9 +45,9 @@ contextBridge.exposeInMainWorld('gameAPI', {
   // HU-14: quiz de preguntas.
   submitQuiz: (correct) => ipcRenderer.invoke('quiz:submit', correct),
 
-  // HU-13: minijuego de plagas.
-  completePestsGame: (correct) =>
-    ipcRenderer.invoke('minigame:pests:complete', correct),
+  // HU-13: Defensa del Brote, variante arcade con recompensa variable.
+  completeDefenseGame: (xpAmount) =>
+    ipcRenderer.invoke('minigame:defense:complete', xpAmount),
 
   // ── Revisión semanal activa (RF-32 / LM5 — Evaluar) ──────────────────
   getTopActions:       ()           => ipcRenderer.invoke('weekly:getTopActions'),

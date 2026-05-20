@@ -3,6 +3,7 @@ const path = require('path')
 const { app } = require('electron')
 const DB_PATH = path.join(app.getPath('userData'), 'game.db')
 const db = new Database(DB_PATH)
+const MAX_PLAYER_LEVEL = 5
 
 function initializeDatabase() {
 
@@ -151,7 +152,13 @@ function initializeDatabase() {
 // Crea la fila inicial si el juego se ejecuta por primera vez.
 function getProgress() {
   const row = db.prepare(`SELECT * FROM progreso LIMIT 1`).get()
-  if (row) return row
+  if (row) {
+    if (row.nivel > MAX_PLAYER_LEVEL) {
+      updateProgress({ nivel: MAX_PLAYER_LEVEL })
+      return { ...row, nivel: MAX_PLAYER_LEVEL }
+    }
+    return row
+  }
 
   db.prepare(`INSERT INTO progreso (nivel, experiencia, racha_dias) VALUES (1, 0, 0)`).run()
   return db.prepare(`SELECT * FROM progreso LIMIT 1`).get()
@@ -546,13 +553,14 @@ function updateStats(updates) {
 
 // ── Actualiza XP y nivel del jugador ──────────────────────────────────────
 // Suma XP al jugador y recalcula su nivel.
-// Fórmula: nivel = floor(XP / 100) + 1
+// Formula: nivel = min(5, floor(XP / 100) + 1)
 // Retorna el nuevo estado y si hubo subida de nivel.
 function addExperience(xpAmount) {
   const current = getProgress()
 
   const newXP = current.experiencia + xpAmount
-  const newLevel = Math.floor(newXP / 100) + 1
+  const calculatedLevel = Math.floor(newXP / 100) + 1
+  const newLevel = Math.min(MAX_PLAYER_LEVEL, calculatedLevel)
 
   updateProgress({ experiencia: newXP, nivel: newLevel })
 
@@ -602,7 +610,7 @@ function simulateDays(daysToAdvance) {
         nutrientes = Math.max(0, nutrientes - 1)
 
         // Salud según humedad y nutrientes
-        if      (humedad < 20)  salud = Math.max(0,   salud - 8)
+        if      (humedad < 20)  salud = Math.max(0,   salud - 6)
         else if (humedad < 40)  salud = Math.max(0,   salud - 3)
         else if (humedad <= 75) {
           // Rango óptimo de humedad
@@ -685,7 +693,7 @@ function waterPlant(id_registro) {
     // ⚠️ Riego prematuro — entrará en exceso
     feedback = `💧 Tu ${plant.nombre_planta} tenía ${plant.humedad}% de humedad — aún suficiente. ` +
       `Ahora está en ${newHumedad}%. ` +
-      `${newHumedad > 75 ? 'Ha entrado en exceso — considera usar "Drenar".' : 'Observa antes de volver a regar.'}`
+      `${newHumedad > 75 ? 'Ha entrado en exceso ' : 'Observa antes de volver a regar.'}`
     xpGained = 5
     isError = true
     updateStats({ errores_riego: 1, acciones_totales: 1 })
@@ -736,7 +744,7 @@ function fertilizePlant(id_registro) {
   const nutrientes = plant.nutrientes ?? 50
   let feedback, xpGained, newNutrientes, healthChange, isError
 
-  if (nutrientes > 70) {
+  if (nutrientes > 75) {
     // ❌ Exceso de nutrientes — quema raíces
     feedback = `⚠️ Tu ${plant.nombre_planta} ya tiene suficientes nutrientes (${nutrientes}%). ` +
       `El exceso de abono quema las raíces y daña la planta. ` +
@@ -761,10 +769,10 @@ function fertilizePlant(id_registro) {
   } else {
     // ✅ Abono correcto — nutrientes bajos
     feedback = `✅ Abono aplicado correctamente. Los nutrientes de tu ${plant.nombre_planta} ` +
-      `subieron de ${nutrientes}% a ${Math.min(100, nutrientes + 35)}%. ` +
+      `subieron de ${nutrientes}% a ${Math.min(100, nutrientes + 25)}%. ` +
       `La planta se recuperará gradualmente en los próximos días.`
     xpGained = 12
-    newNutrientes = Math.min(100, nutrientes + 35)
+    newNutrientes = Math.min(100, nutrientes + 25)
     healthChange = 0    // no cura inmediatamente — la recuperación es gradual
     isError = false
     updateStats({ acciones_correctas: 1, acciones_totales: 1 })

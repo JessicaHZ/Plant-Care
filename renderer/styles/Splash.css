@@ -1,65 +1,63 @@
-/* ── Pantalla de inicio ─────────────────────────────────── */
 #screen-splash {
-  background-image:    url('../../assets/fondo_inicio.png');
-  background-size:     cover;
+  background-image: url('../../assets/fondo_inicio.png');
+  background-size: cover;
   background-position: center;
-  background-repeat:   no-repeat;
-  position:            relative;  /* ✅ necesario para posicionamiento absoluto */
-  overflow:            hidden;
+  background-repeat: no-repeat;
+  position: relative;
+  overflow: hidden;
 }
 
 .splash-container {
   position: absolute;
-  inset:    0;          /* ocupa toda la pantalla */
+  inset: 0;
 }
 
 .splash-buttons {
   position: absolute;
-  inset:    0;
+  left: 49%;
+  top: 65%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  justify-content: flex-start;
+  width: fit-content;
 }
 
-/* ── Botones posicionados sobre los de la imagen ─────────── */
-/* Cada botón es transparente y cubre exactamente el botón decorativo */
-
-#btn-continue-game {
-  position:   absolute;
-  left:       39.2%;
-  top:        75.3%;
-  transform:  translate(-50%, -50%);
-  width:      22%;      /* ✅ ajusta si necesitas más/menos cobertura */
-  height:     12%;
-  background: transparent;
-  border:     none;
-  cursor:     pointer;
-  font-size:  0;        /* texto invisible — la imagen ya lo tiene */
-  color:      transparent;
+.menu-img-btn {
+  border: none;
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  cursor: pointer;
+  image-rendering: pixelated;
+  padding: 0;
+  margin: 0;
 }
 
-#btn-new-game {
-  position:   absolute;
-  left:       65.0%;
-  top:        75.4%;
-  transform:  translate(-50%, -50%);
-  width:      22%;
-  height:     12%;
-  background: transparent;
-  border:     none;
-  cursor:     pointer;
-  font-size:  0;
-  color:      transparent;
+.btn-continuar {
+  width: 358px;
+  height: 138px;
+  background-image: url('../../assets/botonContinuar.png');
 }
 
-/* Hover: sutil brillo sobre el botón de la imagen */
-#btn-continue-game:hover:not(:disabled),
-#btn-new-game:hover:not(:disabled) {
-  background:    rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  transition:    background 0.2s ease;
+.btn-nueva {
+  width: 362px;
+  height: 142px;
+  background-image: url('../../assets/boton_nuevapartida.png');
 }
 
-/* Deshabilitado: oscurece el área del botón */
-#btn-continue-game:disabled {
-  background: rgba(0, 0, 0, 0.35);
-  border-radius: 8px;
-  cursor:     not-allowed;
+.menu-img-btn:hover:not(:disabled) {
+  transform: scale(1.04);
+  filter: brightness(1.12);
+}
+
+.menu-img-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.menu-img-btn:disabled {
+  filter: grayscale(0.8) brightness(0.65);
+  cursor: not-allowed;
 }

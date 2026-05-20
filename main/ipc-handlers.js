@@ -169,28 +169,29 @@ function registerIpcHandlers() {
     }
   })
 
-  // Registra resultado del minijuego de plagas (HU-13).
-  ipcMain.handle('minigame:pests:complete', async (event, correct) => {
+  // Registra Defensa del Brote con recompensa calculada por desempeno.
+  ipcMain.handle('minigame:defense:complete', async (event, xpAmount) => {
     try {
-      const xpAmount = correct ? 20 : 0
-      const xpResult = correct ? db.addExperience(xpAmount) : null
+      const safeXp = Math.max(0, Math.min(300, Math.floor(Number(xpAmount) || 0)))
+      const xpResult = safeXp > 0 ? db.addExperience(safeXp) : null
 
       db.updateStats(
-        correct
+        safeXp > 0
           ? { acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 }
           : { acciones_totales: 1 }
       )
 
-      return { success: true, xpGained: xpAmount, xpResult }
+      return { success: true, xpGained: safeXp, xpResult }
     } catch (error) {
-      console.error('Error en minijuego de plagas:', error)
-      return { success: false, error: 'Error en minijuego de plagas' }
+      console.error('Error en Defensa del Brote:', error)
+      return { success: false, error: 'Error en Defensa del Brote' }
     }
   })
 
   // ── Revisión semanal activa (RF-32 / LM5 — Evaluar) ────────────────────
 
   // Devuelve las 3 acciones con más errores para presentar al jugador.
+
   ipcMain.handle('weekly:getTopActions', async () => {
     try {
       const actions = db.getTopActions()

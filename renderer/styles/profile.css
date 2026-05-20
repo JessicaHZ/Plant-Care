@@ -19,7 +19,7 @@
 .profile-title {
   font-size:   1.4rem;
   font-weight: 700;
-  color:       var(--color-secondary);
+  color:       #9be36f;
 }
 
 /* ── Pestañas ───────────────────────────────────────── */
@@ -27,27 +27,29 @@
   display:       flex;
   gap:           0.5rem;
   padding:       0 1.5rem;
-  border-bottom: 1px solid rgba(129, 199, 132, 0.15);
+  border-bottom: 2px solid rgba(82, 45, 27, 0.42);
   margin-bottom: 1rem;
   flex-shrink:   0;
 }
 
 .profile-tab {
   padding:       0.6rem 1.2rem;
-  background:    transparent;
-  border:        none;
-  border-bottom: 2px solid transparent;
-  color:         var(--color-text-muted);
+  background:    rgba(132, 82, 49, 0.48);
+  border:        2px solid var(--pixel-panel-border);
+  border-radius: 4px 4px 0 0;
+  color:         var(--pixel-panel-muted);
   font-size:     0.9rem;
   cursor:        pointer;
   transition:    all 0.2s ease;
+  box-shadow:    0 3px 0 rgba(63, 40, 28, 0.8);
 }
 
 .profile-tab:hover  { color: var(--color-text); }
 
 .profile-tab.active {
-  color:        var(--color-secondary);
-  border-color: var(--color-secondary);
+  color:        #fff5df;
+  background:   linear-gradient(180deg, #a66b43, #74462b);
+  border-color: #f1c77d;
   font-weight:  600;
 }
 
@@ -70,17 +72,23 @@
   align-items:   center;
   gap:           1.5rem;
   padding:       1.5rem;
-  background:    var(--color-surface);
-  border-radius: 16px;
+  background:
+    linear-gradient(180deg, var(--pixel-panel-bg), var(--pixel-panel-bg-dark));
+  border: 2px solid var(--pixel-panel-border);
+  border-radius: 8px;
   margin-bottom: 1rem;
+  box-shadow:
+    inset 0 2px 0 var(--pixel-panel-highlight),
+    inset 0 -3px 0 rgba(0,0,0,0.22),
+    0 5px 0 #3f281c;
 }
 
 .progress-level-badge {
   width:           64px;
   height:          64px;
   border-radius:   50%;
-  background:      var(--color-secondary);
-  color:           #0a0e1a;
+  background:      linear-gradient(180deg, #75b66d, #4c8a4f);
+  color:           #fff5df;
   font-size:       2rem;
   font-weight:     700;
   display:         flex;
@@ -91,13 +99,13 @@
 
 .progress-level-label {
   font-size: 0.8rem;
-  color:     var(--color-text-muted);
+  color:     var(--pixel-panel-muted);
 }
 
 .progress-level-title {
   font-size:   1.3rem;
   font-weight: 700;
-  color:       var(--color-secondary);
+  color:       #9be36f;
 }
 
 .progress-xp-bar-container { margin-bottom: 1.5rem; }
@@ -106,7 +114,7 @@
   display:         flex;
   justify-content: space-between;
   font-size:       0.8rem;
-  color:           var(--color-text-muted);
+  color:           var(--pixel-panel-muted);
   margin-bottom:   0.4rem;
 }
 
@@ -136,21 +144,22 @@
   align-items:   center;
   gap:           1rem;
   padding:       0.75rem 1rem;
-  background:    var(--color-surface);
-  border-radius: 10px;
-  border:        1px solid transparent;
+  background:
+    linear-gradient(180deg, rgba(132, 82, 49, 0.9), rgba(79, 49, 34, 0.9));
+  border-radius: 6px;
+  border:        2px solid var(--pixel-panel-border);
   opacity:       0.5;
 }
 
 .level-row.completed {
   opacity:      1;
-  border-color: rgba(102, 187, 106, 0.2);
+  border-color: rgba(155, 227, 111, 0.45);
 }
 
 .level-row.current {
   opacity:      1;
-  border-color: var(--color-secondary);
-  background:   rgba(129, 199, 132, 0.08);
+  border-color: #f1c77d;
+  background:   linear-gradient(180deg, rgba(158, 100, 56, 0.96), rgba(96, 58, 36, 0.96));
 }
 
 .level-row.locked { opacity: 0.35; }
@@ -183,12 +192,12 @@
 .level-row-title {
   font-size:   0.9rem;
   font-weight: 600;
-  color:       var(--color-text);
+  color:       #fff5df;
 }
 
 .level-row-xp {
   font-size: 0.75rem;
-  color:     var(--color-text-muted);
+  color:     var(--pixel-panel-muted);
 }
 
 .level-row-status { font-size: 1rem; }
@@ -201,27 +210,33 @@
 }
 
 .stat-card {
-  background:     var(--color-surface);
-  border-radius:  12px;
+  background:
+    linear-gradient(180deg, rgba(132, 82, 49, 0.94), rgba(79, 49, 34, 0.94));
+  border: 2px solid var(--pixel-panel-border);
+  border-radius:  8px;
   padding:        1rem;
   display:        flex;
   flex-direction: column;
   align-items:    center;
   gap:            0.4rem;
   text-align:     center;
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.14),
+    inset 0 -3px 0 rgba(0,0,0,0.18),
+    0 4px 0 #3f281c;
 }
 
 .stat-card-icon  { font-size: 1.5rem; }
 
 .stat-card-label {
   font-size: 0.75rem;
-  color:     var(--color-text-muted);
+  color:     var(--pixel-panel-muted);
 }
 
 .stat-card-value {
   font-size:   1.6rem;
   font-weight: 700;
-  color:       var(--color-secondary);
+  color:       #9be36f;
 }
 
 /* ── Pestaña: Logros ────────────────────────────────── */
@@ -236,12 +251,17 @@
   align-items:   center;
   gap:           1rem;
   padding:       0.75rem 1rem;
-  background:    var(--color-surface);
-  border-radius: 12px;
-  border:        1px solid transparent;
+  background:
+    linear-gradient(180deg, rgba(132, 82, 49, 0.94), rgba(79, 49, 34, 0.94));
+  border-radius: 8px;
+  border:        2px solid var(--pixel-panel-border);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.14),
+    inset 0 -3px 0 rgba(0,0,0,0.18),
+    0 4px 0 #3f281c;
 }
 
-.achievement-card.obtained { border-color: rgba(129, 199, 132, 0.25); }
+.achievement-card.obtained { border-color: rgba(155, 227, 111, 0.45); }
 .achievement-card.locked   { opacity: 0.45; }
 
 .achievement-icon {
@@ -254,12 +274,12 @@
 .achievement-name {
   font-size:   0.9rem;
   font-weight: 600;
-  color:       var(--color-text);
+  color:       #fff5df;
 }
 
 .achievement-desc {
   font-size:  0.75rem;
-  color:      var(--color-text-muted);
+  color:      var(--pixel-panel-muted);
   margin-top: 0.1rem;
 }
 

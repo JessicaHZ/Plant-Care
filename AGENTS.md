@@ -1,25 +1,5 @@
 # AGENTS.md — Contexto del proyecto "my-plant-home"
 
-Resumen breve
-- Nombre: my-plant-home
-- Versión: 1.0.0
-- Descripción: Serious game - simulador de cuidado de plantas
-- Tipo de proyecto: Aplicación de escritorio basada en Electron (CommonJS)
-- Entrada principal: `main/main.js`
-
-package.json (resumen)
-- `main`: main/main.js
-- `scripts`:
-  - `start`: electron .
-  - `dev`: electron . --inspect
-- `dependencies`:
-  - better-sqlite3 ^12.9.0
-- `devDependencies`:
-  - electron ^41.3.0
-  - electron-rebuild ^3.2.9
-
-  ---
-
 ## 📌 Contexto del proyecto
 
 **my-plant-home** es un serious game de escritorio desarrollado con Electron y JavaScript vanilla.
@@ -53,7 +33,8 @@ Estructura de carpetas (resumen relevante)
     - CareActions.js
     - Diagnosis.js
     - Environment.js
-    - MiniGamePests.js
+    - MiniGameDefense.js
+    - MiniGamePruning.js
     - MiniGameQuiz.js
     - Nursery.js
     - PlayerHUD.js
@@ -99,7 +80,7 @@ Los módulos se comunican sin acoplamiento directo via `CustomEvent` en `window`
 Todos los listeners de estos eventos están en `index.js` registrados UNA sola vez.
 
 ### Delegación de eventos en modales
-Los modales (Diagnosis, WeeklyReview, MiniGamePests, MiniGameQuiz) usan
+Los modales (Diagnosis, WeeklyReview, MiniGameDefense, MiniGamePruning, MiniGameQuiz) usan
 UN solo listener delegado en el overlay en lugar de listeners por botón.
 Esto evita acumulación de handlers.
 
@@ -205,7 +186,7 @@ const x = plant.tp !== 'N' && plant.rpa
 7. **No usar `localStorage` o `sessionStorage`** — todo persiste en SQLite
 8. **No agregar dependencias npm** sin justificación técnica clara
 9. **No hacer cambios visuales mientras haya requisitos funcionales pendientes**
-10. **No usar `MiniGamePruning.js`** — ese archivo fue eliminado del proyecto
+10. 
 
 ---
 
