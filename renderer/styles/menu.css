@@ -64,7 +64,7 @@
 .player-hud {
   position: absolute;
   top: 0; left: 0;
-  width: 1280px;
+  width: 100vw;
   height: 46px;
   background-color: rgba(139, 86, 50, 0.88);
   border-bottom: 2px solid rgba(82, 45, 27, 0.55);

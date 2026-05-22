@@ -2,8 +2,8 @@
 .profile-container {
   display:        flex;
   flex-direction: column;
-  height:         calc(100vh - 52px);  /* ✅ descuenta el HUD exactamente */
-  margin-top:     52px;                /* ✅ empuja debajo del HUD */
+  height:         calc(100vh - 46px);
+  margin-top:     46px;
   overflow:       hidden;
   box-sizing:     border-box;
 }

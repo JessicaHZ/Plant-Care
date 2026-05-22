@@ -1,0 +1,117 @@
+/* Personaje guia: burbuja ligera para tutorial y pistas contextuales. */
+
+.guide-bubble {
+  position: fixed;
+  left: 24px;
+  bottom: 92px;
+  z-index: 1800;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  max-width: min(520px, calc(100vw - 48px));
+  pointer-events: auto;
+}
+
+.guide-portrait {
+  width: 86px;
+  height: 86px;
+  border: 3px solid #2c1a14;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(185, 130, 95, 0.96), rgba(111, 81, 60, 0.96));
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.28),
+    inset 0 -3px 0 rgba(0,0,0,0.22),
+    0 5px 0 #3f281c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+
+.guide-portrait img {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.guide-fallback-icon {
+  display: none;
+  font-size: 2.5rem;
+}
+
+.guide-portrait.fallback .guide-fallback-icon {
+  display: block;
+}
+
+.guide-card {
+  min-width: 260px;
+  background:
+    linear-gradient(180deg, var(--pixel-panel-bg), var(--pixel-panel-bg-dark));
+  border: 2px solid var(--pixel-panel-border);
+  border-radius: 10px;
+  padding: 0.9rem 1rem 1rem;
+  box-shadow:
+    inset 0 2px 0 var(--pixel-panel-highlight),
+    inset 0 -3px 0 rgba(0,0,0,0.22),
+    0 6px 0 rgba(44, 26, 20, 0.72),
+    0 16px 26px var(--pixel-panel-shadow);
+}
+
+.guide-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+}
+
+.guide-title {
+  color: #9be36f;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+.guide-close {
+  width: 26px;
+  height: 26px;
+  border: 2px solid #2c1a14;
+  border-radius: 4px;
+  background: #7a4d33;
+  color: #fff5df;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.guide-message {
+  color: #fff5df;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.guide-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.guide-action {
+  padding: 9px 14px;
+  font-size: 0.85rem;
+}
+
+.guide-highlight {
+  outline: 3px solid #f1c77d;
+  outline-offset: 5px;
+  border-radius: 10px;
+  animation: guide-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes guide-pulse {
+  0%, 100% { outline-color: rgba(241, 199, 125, 0.95); }
+  50% { outline-color: rgba(155, 227, 111, 0.55); }
+}

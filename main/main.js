@@ -5,11 +5,15 @@ const { registerIpcHandlers } = require('./ipc-handlers')
 
 function createGameWindow() {
   const gameWindow = new BrowserWindow({
-    width:     1280,
-    height:    720,
-    resizable: false,
-    title:     'My Plant Home',
-    menuBarVisible: false,
+    width:           1280,
+    height:          720,
+    minWidth:        1024,
+    minHeight:       640,
+    resizable:       true,
+    maximizable:     true,
+    fullscreenable:  true,
+    title:           'My Plant Home',
+    menuBarVisible:  false,
     autoHideMenuBar: true,
     webPreferences: {
       preload:          path.join(__dirname, 'preload.js'),
@@ -17,6 +21,8 @@ function createGameWindow() {
       nodeIntegration:  false
     }
   })
+
+  gameWindow.maximize()
 
   gameWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
 

@@ -30,6 +30,11 @@ const WeeklyReview = {
       (maxI, a, i, arr) => a.errorCount > arr[maxI].errorCount ? i : maxI,
       0
     )
+    const getFrequencyLabel = (index) => {
+      if (index === 0) return 'Más frecuente'
+      if (index === 1) return 'Frecuente'
+      return 'Ocasional'
+    }
 
     const overlay = document.createElement('div')
     overlay.id        = 'weekly-overlay'
@@ -43,12 +48,12 @@ const WeeklyReview = {
           <h2 class="weekly-title">Revisión semanal</h2>
           <p class="weekly-subtitle">
             Completa esta revisión para continuar jugando.
-            Analiza tus acciones de esta semana y evalúa cuál fue la más perjudicial.
+            Observa tus patrones de cuidado y elige cuál afectó más a tus plantas.
           </p>
         </div>
 
         <div class="weekly-actions-summary">
-          <p class="weekly-section-label">Tus 3 acciones con más errores esta semana:</p>
+          <p class="weekly-section-label">Patrones de cuidado observados esta semana:</p>
           <div class="weekly-actions-list">
             ${this._actions.map((action, i) => `
               <div class="weekly-action-item">
@@ -60,7 +65,7 @@ const WeeklyReview = {
                          style="width: ${Math.min(100, action.errorCount * 20)}%">
                     </div>
                   </div>
-                  <span class="weekly-action-count">${action.errorCount} errores</span>
+                  <span class="weekly-action-count">${getFrequencyLabel(i)}</span>
                 </div>
               </div>
             `).join('')}
@@ -118,18 +123,18 @@ const WeeklyReview = {
           <div class="weekly-result-content ${isCorrect ? 'correct' : 'incorrect'}">
             <p class="weekly-result-title">
               ${isCorrect
-                ? `✅ ¡Evaluación correcta! +${result.xpGained} XP`
-                : '❌ No era esa la más perjudicial'}
+                ? 'Evaluación correcta. Identificaste el patrón principal.'
+                : 'No era la más perjudicial. Revisa el patrón principal.'}
             </p>
             ${!isCorrect ? `
               <p class="weekly-compare">
-                Elegiste: <strong>${selected.label}</strong> (${selected.errorCount} errores)<br>
-                La más perjudicial fue: <strong>${mostHarmful.label}</strong> (${mostHarmful.errorCount} errores)
+                Elegiste: <strong>${selected.label}</strong><br>
+                El patrón principal fue: <strong>${mostHarmful.label}</strong>
               </p>
             ` : ''}
             <p class="weekly-explanation">💡 ${mostHarmful.explanation}</p>
             <p class="weekly-advice">
-              La próxima semana presta especial atención a:
+              La próxima semana observa con más cuidado:
               <strong>${mostHarmful.label}</strong>
             </p>
           </div>

@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── Navegación inferior ───────────────────────────────────────────────
   initBottomNav()
+  SlotEditor.init()
 
   // ── Eventos globales ──────────────────────────────────────────────────
 
@@ -111,10 +112,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         case 'environment':
           ScreenManager.show('environment')
           await Environment.init()
+          window.dispatchEvent(new CustomEvent('tutorial:screen:environment'))
           break
         case 'nursery':
           ScreenManager.show('nursery')
           await Nursery.init()
+          window.dispatchEvent(new CustomEvent('tutorial:screen:nursery'))
           break
         case 'minigames':
           ScreenManager.show('minigames')

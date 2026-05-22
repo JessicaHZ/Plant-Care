@@ -143,6 +143,8 @@ const Environment = {
       slotEl.style.left = `${slot.x}%`
       slotEl.style.top = `${slot.y}%`
 
+      window.SlotEditor?.decorateSlot(slotEl, slot)
+
       // Drag over: resalta el slot
       slotEl.addEventListener('dragover', (e) => {
         e.preventDefault()
@@ -270,6 +272,9 @@ const Environment = {
       this._showLocationResult(plantName, room, answer, result.lightCondition)
       await this._loadUserPlants()
       this._renderCurrentRoom()
+      window.dispatchEvent(new CustomEvent('tutorial:plant:placed', {
+        detail: { id_registro, room: this._currentRoom }
+      }))
     }
   },
 
@@ -338,7 +343,7 @@ const Environment = {
   },
 
   // Genera barra de humedad con color adaptativo.
-  // Rojo: seca (0-30%) | Azul: óptima (30-75%) | Naranja: saturada (75%+)
+  // Rojo: seca | Verde: adecuada | Naranja: saturada.
   // Genera barra de humedad con color adaptativo y etiqueta según nivel.
   // Nivel 1-2: etiqueta descriptiva, sin %
   // Nivel 3+:  solo color, sin etiqueta descriptiva ni %
@@ -393,7 +398,18 @@ _getNutrientBarHTML(nutrientes, playerLevel) {
   `
 },
 
+_getHealthState(salud) {
+  if (salud <= 25) return 'Crítica'
+  if (salud <= 50) return 'Delicada'
+  if (salud <= 75) return 'Estable'
+  return 'Saludable'
+},
+
   async _openCarePanel(plant) {
+  window.dispatchEvent(new CustomEvent('tutorial:care-panel:opened', {
+    detail: { id_registro: plant.id_registro }
+  }))
+
   const existing = document.querySelector('.care-panel')
   if (existing) existing.remove()
 
@@ -443,7 +459,7 @@ _getNutrientBarHTML(nutrientes, playerLevel) {
             <div class="diag-bar-fill diag-bar-health"
                  style="width:${currentPlant.salud}%"></div>
           </div>
-          <span class="diag-bar-val">${currentPlant.salud}%</span>
+          <span class="diag-bar-val">${this._getHealthState(currentPlant.salud)}</span>
         </div>
         ${this._getNutrientBarHTML(currentNutrientes, currentLevel)}
       </div>
@@ -596,6 +612,10 @@ _getNutrientBarHTML(nutrientes, playerLevel) {
 
   async _onSimulationTick(results) {
     await this._loadUserPlants()
+    this._renderCurrentRoom()
+  },
+
+  refreshCurrentRoom() {
     this._renderCurrentRoom()
   }
 

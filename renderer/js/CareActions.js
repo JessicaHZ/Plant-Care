@@ -20,28 +20,27 @@ const CareActions = {
       icon: '💧',
       title: 'Sobre el riego',
       steps: [
-        'Revisa la humedad antes de regar — la barra te indica si está baja, óptima o saturada.',
-        'Cada planta tiene su propia frecuencia de riego. Una suculenta cada 14-21 días; un helecho cada 3.',
-        'El riego sube la humedad entre 20-30 puntos — puede necesitar varios riegos si estaba muy seca.',
-        'Si la humedad supera el 75%, usa "Drenar" en lugar de esperar — reduce el riesgo de pudrición.',
+        'Observa la tierra antes de regar: seca, húmeda o saturada.',
+        'Cada planta tiene su propio ritmo. Las suculentas resisten más sequía que los helechos.',
+        'Si la tierra está saturada, no riegues más. Drenar protege las raíces.',
       ]
     },
     abono: {
       icon: '🌿',
       title: 'Sobre el abono',
       steps: [
-        'Abona solo cuando la salud de la planta esté por debajo del 80%.',
+        'Abona cuando la planta muestra desgaste o crecimiento débil.',
         'El abono no es un sustituto del riego — son necesidades distintas.',
         'Abonar en exceso quema las raíces y daña más que ayuda.',
-        'Una planta sana no necesita abono inmediato — observa antes de actuar.',
+        'Una planta sana no necesita abono inmediato. Observa antes de actuar.',
       ]
     },
     poda: {
       icon: '✂️',
       title: 'Sobre la poda',
       steps: [
-        'La poda solo está disponible para plantas que la requieren activamente.',
-        'El indicador "requiere poda" se activa automáticamente según el tipo y días transcurridos.',
+        'La poda sirve para retirar partes secas o controlar crecimiento excesivo.',
+        'No podes por rutina: busca señales visibles antes de cortar.',
         'Podar sin necesidad estresa a la planta e interrumpe su ciclo de crecimiento.',
         'No todas las plantas se podan — las suculentas y cactus generalmente no lo necesitan.',
       ]
@@ -61,12 +60,31 @@ const CareActions = {
       icon: '🚰',
       title: 'Sobre el drenaje',
       steps: [
-        'El drenaje solo aplica cuando la humedad supera el 75% — exceso de agua.',
+        'El drenaje solo aplica cuando la tierra está saturada.',
         'Simula inclinar la maceta, secar el sustrato y mejorar la ventilación.',
         'No drenes si la humedad está en rango normal — puede secar demasiado la planta.',
         'Después de drenar, espera al menos 2-3 días antes de volver a regar.',
       ]
     }, */
+  },
+
+  _guideHints: {
+    riego: {
+      mood: 'worried',
+      message: 'Creo que estas regando demasiado seguido. Observa si la tierra sigue humeda antes de actuar.'
+    },
+    abono: {
+      mood: 'thinking',
+      message: 'El abono ayuda al crecimiento, pero no corrige todos los problemas.'
+    },
+    poda: {
+      mood: 'warning',
+      message: 'Esa planta no necesitaba poda todavia. Espera senales visibles antes de cortar.'
+    },
+    ubicacion: {
+      mood: 'thinking',
+      message: 'La luz del lugar importa. Prueba ubicar la planta donde reciba el tipo de luz que necesita.'
+    }
   },
 
   init() { },
@@ -87,11 +105,11 @@ const CareActions = {
     await this._handleResult(result, onComplete, 'riego')
   },
 
-  // Drenar exceso de agua — disponible cuando humedad > 75%
+  // Drenar exceso de agua — disponible cuando la tierra está saturada.
   /*async drain(plant, onComplete) {
     if (plant.humedad <= 75) {
       this._showToast(
-        `⚠️ ${plant.nombre_planta} no tiene exceso de agua. El drenaje solo aplica con humedad > 75%.`,
+        `${plant.nombre_planta} no tiene exceso de agua. Drena solo cuando la tierra esté saturada.`,
         'warning'
       )
       return
@@ -199,12 +217,26 @@ const CareActions = {
 
     if (errorsThisSession > 5) {
       setTimeout(() => {
+        this._showGuideHint(errorType)
         this._showContextualGuide(errorType)
         this._guidesShownThisSession.add(errorType)
         // Actualiza el snapshot para el siguiente ciclo
         this._errorCountsAtLastGuide[errorType] = totalErrors
       }, 2000)
     }
+  },
+
+  _showGuideHint(errorType) {
+    const hint = this._guideHints[errorType]
+    if (!hint || !window.Guide) return
+
+    Guide.show({
+      title: 'Pista de cuidado',
+      mood: hint.mood,
+      message: hint.message,
+      cooldownKey: `care-${errorType}`,
+      cooldownMs: 90000
+    })
   },
 
   // Muestra el modal de guía contextual educativa (RF-28)
@@ -233,8 +265,8 @@ const CareActions = {
 
         <div class="guide-footer">
           <p class="guide-reminder">
-            💡 Esta guía aparece porque has cometido este tipo de error
-            varias veces. ¡Úsala para mejorar!
+            Esta guía aparece porque este patrón se repitió varias veces.
+            Observa la causa antes de actuar.
           </p>
           <button class="btn btn-primary btn-full" id="btn-close-guide">
             Entendido →

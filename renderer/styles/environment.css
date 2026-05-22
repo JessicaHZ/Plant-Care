@@ -85,7 +85,7 @@
   display: flex;
   flex: 1;
   overflow: hidden;
-  height: calc(100vh - 46px - 46px);
+  min-height: 0;
 }
 
 .env-room-container {

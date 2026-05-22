@@ -59,7 +59,7 @@ function initializeDatabase() {
       id_planta            INTEGER NOT NULL,
       estado_planta        TEXT    NOT NULL DEFAULT 'SANA',
       ubicacion            TEXT    DEFAULT NULL,
-      humedad              INTEGER NOT NULL DEFAULT 80,
+      humedad              INTEGER NOT NULL DEFAULT 50,
       salud                INTEGER NOT NULL DEFAULT 100,
       dias_sin_regar       INTEGER NOT NULL DEFAULT 0,
       ultimo_riego         INTEGER NOT NULL DEFAULT 0,
@@ -610,12 +610,12 @@ function simulateDays(daysToAdvance) {
         nutrientes = Math.max(0, nutrientes - 1)
 
         // Salud según humedad y nutrientes
-        if      (humedad < 20)  salud = Math.max(0,   salud - 6)
+        if      (humedad < 20)  salud = Math.max(0,   salud - 5)
         else if (humedad < 40)  salud = Math.max(0,   salud - 3)
         else if (humedad <= 75) {
           // Rango óptimo de humedad
           if (nutrientes > 75) {
-            // ✅ Exceso de nutrientes — quita 1% de salud por día
+            // Exceso de nutrientes: deterioro leve por día.
             salud = Math.max(0, salud - 1)
           } else if (nutrientes >= 30) {
             // ✅ Nutrientes óptimos — recuperación normal + bonus
@@ -626,7 +626,7 @@ function simulateDays(daysToAdvance) {
           }
         }
         else if (humedad <= 90) salud = Math.max(0,   salud - 3)
-        else                    salud = Math.max(0,   salud - 6)
+        else                    salud = Math.max(0,   salud - 5)
       }
 
       const estado_planta =
@@ -682,34 +682,32 @@ function waterPlant(id_registro) {
 
   if (plant.humedad >= 76) {
     // ❌ Ya había exceso — empeoró la situación
-    feedback = `⚠️ Tu ${plant.nombre_planta} ya tenía exceso de agua (${plant.humedad}%). ` +
-      `Ahora está en ${newHumedad}%. Las raíces no pueden respirar. ` +
-      `Usa "Drenar" para reducir la humedad.`
+    feedback = `Tu ${plant.nombre_planta} ya tenía la tierra saturada. ` +
+      `El exceso de agua impide que las raíces respiren.`
     xpGained = 0
     isError = true
     updateStats({ errores_riego: 1, acciones_totales: 1 })
 
   } else if (plant.humedad >= 56) {
     // ⚠️ Riego prematuro — entrará en exceso
-    feedback = `💧 Tu ${plant.nombre_planta} tenía ${plant.humedad}% de humedad — aún suficiente. ` +
-      `Ahora está en ${newHumedad}%. ` +
-      `${newHumedad > 75 ? 'Ha entrado en exceso ' : 'Observa antes de volver a regar.'}`
+    feedback = `La tierra de tu ${plant.nombre_planta} aún estaba húmeda. ` +
+      `${newHumedad > 75 ? 'Ahora quedó demasiado mojada; observa antes de volver a regar.' : 'Conviene esperar señales de sequedad antes de regar otra vez.'}`
     xpGained = 5
     isError = true
     updateStats({ errores_riego: 1, acciones_totales: 1 })
 
   } else if (plant.humedad >= 20) {
     // ✅ Riego correcto — rango bajo u óptimo
-    feedback = `✅ Riego correcto. Tu ${plant.nombre_planta} subió de ${plant.humedad}% ` +
-      `a ${newHumedad}% de humedad.`
+    feedback = `La tierra estaba seca. ` +
+      `Tu ${plant.nombre_planta} respondió bien al riego.`
     xpGained = 15
     isError = false
     updateStats({ acciones_correctas: 1, acciones_totales: 1 })
 
   } else {
     // ✅ Riego urgente — estaba muy seca
-    feedback = `✅ Riego urgente. Tu ${plant.nombre_planta} estaba muy seca (${plant.humedad}%). ` +
-      `Subió a ${newHumedad}% — puede necesitar otro riego pronto.`
+    feedback = `La tierra estaba muy seca. ` +
+      `Riega con cuidado y observa si las hojas se recuperan.`
     xpGained = 15
     isError = false
     updateStats({ acciones_correctas: 1, acciones_totales: 1 })
@@ -746,9 +744,8 @@ function fertilizePlant(id_registro) {
 
   if (nutrientes > 75) {
     // ❌ Exceso de nutrientes — quema raíces
-    feedback = `⚠️ Tu ${plant.nombre_planta} ya tiene suficientes nutrientes (${nutrientes}%). ` +
-      `El exceso de abono quema las raíces y daña la planta. ` +
-      `Abona cuando los nutrientes bajen del 40%.`
+    feedback = `Tu ${plant.nombre_planta} ya tenía suficiente alimento en el sustrato. ` +
+      `Demasiado abono puede quemar las raíces.`
     xpGained = 0
     newNutrientes = nutrientes          // no sube más
     healthChange = -5                  // daño por exceso
@@ -757,9 +754,8 @@ function fertilizePlant(id_registro) {
 
   } else if (nutrientes >= 40) {
     // ⚠️ Abono prematuro — aún tiene nutrientes
-    feedback = `💡 Tu ${plant.nombre_planta} aún tiene nutrientes (${nutrientes}%). ` +
-      `El abono es más efectivo cuando los nutrientes bajan del 40%. ` +
-      `Espera un poco más.`
+    feedback = `El sustrato de tu ${plant.nombre_planta} aún tenía nutrientes. ` +
+      `El abono ayuda más cuando la planta muestra desgaste.`
     xpGained = 5
     newNutrientes = Math.min(100, nutrientes + 15)
     healthChange = 0
@@ -768,9 +764,8 @@ function fertilizePlant(id_registro) {
 
   } else {
     // ✅ Abono correcto — nutrientes bajos
-    feedback = `✅ Abono aplicado correctamente. Los nutrientes de tu ${plant.nombre_planta} ` +
-      `subieron de ${nutrientes}% a ${Math.min(100, nutrientes + 25)}%. ` +
-      `La planta se recuperará gradualmente en los próximos días.`
+    feedback = `El sustrato estaba pobre en nutrientes. ` +
+      `El abono ayudará a tu ${plant.nombre_planta} a recuperarse poco a poco.`
     xpGained = 12
     newNutrientes = Math.min(100, nutrientes + 25)
     healthChange = 0    // no cura inmediatamente — la recuperación es gradual
@@ -790,7 +785,7 @@ function fertilizePlant(id_registro) {
 }
 
 // Drena el exceso de agua de una planta.
-// Disponible solo cuando humedad > 75%.
+// Disponible solo cuando la tierra está saturada.
 // Simula: inclinar maceta, secar sustrato, mejorar ventilación.
 function drainPlant(id_registro) {
   const plant = db.prepare(`
@@ -810,9 +805,8 @@ function drainPlant(id_registro) {
   if (plant.humedad <= 75) {
     // ❌ No hay exceso — drenaje innecesario
     newHumedad = Math.max(0, plant.humedad - 10)  // penalización leve
-    feedback = `⚠️ Tu ${plant.nombre_planta} no tenía exceso de agua (${plant.humedad}%). ` +
-      `El drenaje innecesario puede resecar demasiado el sustrato. ` +
-      `Úsalo solo cuando la humedad supere el 75%.`
+    feedback = `La tierra de tu ${plant.nombre_planta} no estaba saturada. ` +
+      `Drenar sin necesidad puede secar demasiado el sustrato.`
     xpGained = 0
     isError = true
     updateStats({ errores_riego: 1, acciones_totales: 1 })
@@ -820,9 +814,8 @@ function drainPlant(id_registro) {
   } else {
     // ✅ Drenaje correcto — reduce ~25%
     newHumedad = Math.max(40, plant.humedad - 25)
-    feedback = `✅ Drenaje aplicado correctamente. La humedad de tu ${plant.nombre_planta} ` +
-      `bajó de ${plant.humedad}% a ${newHumedad}%. ` +
-      `Inclinaste la maceta y secaste el exceso de agua del sustrato.`
+    feedback = `La tierra estaba saturada. ` +
+      `Drenar ayudó a sacar el exceso de agua y proteger las raíces.`
     xpGained = 12
     isError = false
     updateStats({ acciones_correctas: 1, acciones_totales: 1 })
@@ -862,7 +855,7 @@ function prunePlant(id_registro) {
     updateStats({ errores_poda: 1, acciones_totales: 1 })
     return {
       success: true,
-      feedback: `❌ El ${plant.nombre_planta} no requiere poda. Podarla puede dañarla permanentemente.`,
+      feedback: `El ${plant.nombre_planta} no requiere poda. Cortarlo sin necesidad puede debilitarlo.`,
       xpGained: 0,
       isError: true
     }
@@ -873,7 +866,7 @@ function prunePlant(id_registro) {
     updateStats({ errores_poda: 1, acciones_totales: 1 })
     return {
       success: true,
-      feedback: `⚠️ Tu ${plant.nombre_planta} no necesita poda ahora. La poda innecesaria estresa a la planta.`,
+      feedback: `Tu ${plant.nombre_planta} no necesita poda ahora. Espera a ver hojas secas o crecimiento desordenado.`,
       xpGained: 0,
       isError: true
     }
@@ -890,7 +883,7 @@ function prunePlant(id_registro) {
 
   return {
     success: true,
-    feedback: `✅ Poda realizada correctamente. Eliminar hojas secas permite que tu ${plant.nombre_planta} conserve energía y crezca mejor.`,
+    feedback: `Poda realizada con cuidado. Tu ${plant.nombre_planta} puede concentrar energía en brotes sanos.`,
     xpGained: 20,
     isError: false,
     xpResult
@@ -914,25 +907,25 @@ function getTopActions() {
       key: 'riego',
       label: 'Riego excesivo o prematuro',
       errorCount: stats.errores_riego,
-      explanation: 'El exceso de riego es la causa más común de muerte en plantas de interior. Las raíces se pudren sin oxígeno.'
+      explanation: 'El exceso de riego deja a las raíces sin aire. Observa la tierra antes de volver a regar.'
     },
     {
       key: 'abono',
       label: 'Abono innecesario',
       errorCount: stats.errores_abono,
-      explanation: 'Abonar cuando la planta no lo necesita quema las raíces y genera estrés. Abona solo cuando la salud baja.'
+      explanation: 'El abono ayuda cuando la planta lo necesita. Usarlo de más puede estresar las raíces.'
     },
     {
       key: 'poda',
       label: 'Poda incorrecta',
       errorCount: stats.errores_poda,
-      explanation: 'Podar sin que la planta lo requiera interrumpe su ciclo de crecimiento y puede dejarla vulnerable.'
+      explanation: 'La poda debe tener propósito: retirar partes secas o controlar crecimiento.'
     },
     {
       key: 'ubicacion',
       label: 'Mala ubicación',
       errorCount: stats.errores_ubicacion,
-      explanation: 'Colocar una planta en el lugar equivocado afecta su acceso a luz y temperatura, deteriorando su salud lentamente.'
+      explanation: 'La ubicación cambia la luz que recibe la planta. Un mal lugar la debilita poco a poco.'
     },
   ]
 
