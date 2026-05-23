@@ -28,9 +28,13 @@ function initializeDatabase() {
       errores_abono          INTEGER NOT NULL DEFAULT 0,
       errores_poda           INTEGER NOT NULL DEFAULT 0,
       errores_ubicacion      INTEGER NOT NULL DEFAULT 0,
+      errores_riego_semana    INTEGER NOT NULL DEFAULT 0,
+      errores_abono_semana    INTEGER NOT NULL DEFAULT 0,
+      errores_poda_semana     INTEGER NOT NULL DEFAULT 0,
+      errores_ubicacion_semana INTEGER NOT NULL DEFAULT 0,
       diagnosticos_correctos INTEGER NOT NULL DEFAULT 0,
       plantas_muertas        INTEGER NOT NULL DEFAULT 0,
-      semana_simulada_actual INTEGER NOT NULL DEFAULT 1
+      semana_simulada_actual INTEGER NOT NULL DEFAULT 0
     )
   `)
   // ── Catálogo de plantas del vivero ───────────────────────────────────────
@@ -65,6 +69,7 @@ function initializeDatabase() {
       ultimo_riego         INTEGER NOT NULL DEFAULT 0,
       dias_transcurridos   INTEGER NOT NULL DEFAULT 0,
       requiere_poda_activa INTEGER NOT NULL DEFAULT 0,
+      ultimo_poda          INTEGER NOT NULL DEFAULT 0,
       adquirida_en         TEXT    NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (id_planta) REFERENCES plantas(id_planta)
     )
@@ -100,6 +105,7 @@ function initializeDatabase() {
     `ALTER TABLE plantas ADD COLUMN nombre_cientifico TEXT NOT NULL DEFAULT ''`,
     `ALTER TABLE plantas ADD COLUMN tipo_planta TEXT NOT NULL DEFAULT 'OTRO'`,
     `ALTER TABLE plantas_usuario ADD COLUMN requiere_poda_activa INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE plantas_usuario ADD COLUMN ultimo_poda INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE plantas_usuario ADD COLUMN pos_x TEXT DEFAULT NULL`,  // ✅ nuevo
     `ALTER TABLE plantas_usuario ADD COLUMN pos_y TEXT DEFAULT NULL`,  // ✅ nuevo
     `ALTER TABLE progreso ADD COLUMN ultimo_cierre INTEGER DEFAULT NULL`,
@@ -108,6 +114,10 @@ function initializeDatabase() {
     // solo la columna con un DEFAULT y creamos un índice único después.
     `ALTER TABLE logros ADD COLUMN clave_logro TEXT DEFAULT ''`,
     `ALTER TABLE estadisticas ADD COLUMN acciones_correctas_hoy INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE estadisticas ADD COLUMN errores_riego_semana INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE estadisticas ADD COLUMN errores_abono_semana INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE estadisticas ADD COLUMN errores_poda_semana INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE estadisticas ADD COLUMN errores_ubicacion_semana INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE progreso ADD COLUMN tutorial_completado INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE plantas_usuario ADD COLUMN nutrientes INTEGER NOT NULL DEFAULT 50`,  
     
@@ -499,7 +509,7 @@ function updatePlantState(id_registro, fields) {
   const allowed = [
     'estado_planta', 'ubicacion', 'humedad', 'salud',
     'dias_sin_regar', 'ultimo_riego', 'dias_transcurridos',
-    'requiere_poda_activa',   // ✅ nombre corregido
+    'requiere_poda_activa', 'ultimo_poda',
     'pos_x', 'pos_y',
     'nutrientes'
   ]
@@ -516,39 +526,104 @@ function updatePlantState(id_registro, fields) {
   `).run({ ...fields, id_registro })
 }
 
-// ── Coloca una planta en una ubicación del entorno ────────────────────────
-function placePlantInRoom(id_registro, ubicacion, pos_x = null, pos_y = null) {
-  const lightConditions = {
-    'SALA': 'INDIRECTA',
-    'JARDÍN': 'DIRECTA',
-    'DORMITORIO': 'INDIRECTA'
+const ROOM_LIGHT_CONDITIONS = {
+  'SALA': 'INDIRECTA',
+  'JARDÍN': 'DIRECTA',
+  'DORMITORIO': 'INDIRECTA'
+}
+
+function getRoomLightCondition(ubicacion) {
+  return ROOM_LIGHT_CONDITIONS[ubicacion] || 'INDIRECTA'
+}
+
+function isLightCompatible(requiredLight, roomLight) {
+  if (!requiredLight || !roomLight) return true
+  if (requiredLight === roomLight) return true
+
+  // Las plantas de sombra toleran luz indirecta, pero no sol directo.
+  if (requiredLight === 'SOMBRA' && roomLight === 'INDIRECTA') return true
+
+  return false
+}
+
+function getLocationEffect(plant) {
+  if (!plant.ubicacion) {
+    return { isCompatible: true, roomLight: null, healthDelta: 0 }
   }
 
+  const roomLight = getRoomLightCondition(plant.ubicacion)
+  const isCompatible = isLightCompatible(plant.tipo_luz, roomLight)
+
+  return {
+    isCompatible,
+    roomLight,
+    // La luz incorrecta debe notarse incluso si humedad y nutrientes estan bien.
+    healthDelta: isCompatible ? 0 : -3
+  }
+}
+
+function getPruningIntervalDays(tipo_poda) {
+  if (tipo_poda === 'FRECUENTE') return 7
+  if (tipo_poda === 'OCASIONAL') return 14
+  return null
+}
+
+// ── Coloca una planta en una ubicación del entorno ────────────────────────
+function placePlantInRoom(id_registro, ubicacion, pos_x = null, pos_y = null) {
+  const plant = db.prepare(`
+    SELECT pu.*, p.tipo_luz
+    FROM plantas_usuario pu
+    JOIN plantas p ON pu.id_planta = p.id_planta
+    WHERE pu.id_registro = ?
+  `).get(id_registro)
+  const roomLight = getRoomLightCondition(ubicacion)
+
   updatePlantState(id_registro, { ubicacion, pos_x, pos_y })
-  return lightConditions[ubicacion] || 'INDIRECTA'
+
+  if (plant && ubicacion && !isLightCompatible(plant.tipo_luz, roomLight)) {
+    updateStats({ errores_ubicacion: 1, acciones_totales: 1 })
+  }
+
+  return roomLight
 }
 
 // ── Actualiza estadísticas del jugador ────────────────────────────────────
 // Incrementa contadores en la tabla estadísticas (singleton).
 // Uso: updateStats({ errores_riego: 1, acciones_totales: 1 })
 function updateStats(updates) {
+  const weeklyErrorFields = {
+    errores_riego: 'errores_riego_semana',
+    errores_abono: 'errores_abono_semana',
+    errores_poda: 'errores_poda_semana',
+    errores_ubicacion: 'errores_ubicacion_semana'
+  }
+
+  const normalizedUpdates = { ...updates }
+  Object.entries(weeklyErrorFields).forEach(([totalField, weeklyField]) => {
+    if (updates[totalField] && normalizedUpdates[weeklyField] === undefined) {
+      normalizedUpdates[weeklyField] = updates[totalField]
+    }
+  })
+
   const allowed = [
     'acciones_totales', 'acciones_correctas',
     'acciones_correctas_hoy',
     'errores_riego', 'errores_abono',
     'errores_poda', 'errores_ubicacion',
+    'errores_riego_semana', 'errores_abono_semana',
+    'errores_poda_semana', 'errores_ubicacion_semana',
     'diagnosticos_correctos', 'plantas_muertas',
     'semana_simulada_actual'  // ✅ nombre corregido
   ]
 
-  const setClauses = Object.keys(updates)
+  const setClauses = Object.keys(normalizedUpdates)
     .filter(key => allowed.includes(key))
     .map(key => `${key} = ${key} + @${key}`)
     .join(', ')
 
   if (!setClauses) return
 
-  db.prepare(`UPDATE estadisticas SET ${setClauses}`).run(updates)
+  db.prepare(`UPDATE estadisticas SET ${setClauses}`).run(normalizedUpdates)
 }
 
 // ── Actualiza XP y nivel del jugador ──────────────────────────────────────
@@ -578,7 +653,7 @@ function getStats() {
   const row = db.prepare('SELECT * FROM estadisticas LIMIT 1').get()
   if (row) return row
 
-  db.prepare('INSERT INTO estadisticas DEFAULT VALUES').run()
+  db.prepare('INSERT INTO estadisticas (semana_simulada_actual) VALUES (0)').run()
   return db.prepare('SELECT * FROM estadisticas LIMIT 1').get()
 }
 
@@ -595,6 +670,8 @@ function simulateDays(daysToAdvance) {
 
       let { humedad, salud, dias_sin_regar, dias_transcurridos } = plant
       let nutrientes = plant.nutrientes ?? 50   // ✅ extrae nutrientes
+      const locationEffect = getLocationEffect(plant)
+      const pruningInterval = getPruningIntervalDays(plant.tipo_poda)
 
       for (let d = 0; d < daysToAdvance; d++) {
         dias_transcurridos++
@@ -627,18 +704,28 @@ function simulateDays(daysToAdvance) {
         }
         else if (humedad <= 90) salud = Math.max(0,   salud - 3)
         else                    salud = Math.max(0,   salud - 5)
+
+        if (locationEffect.healthDelta < 0) {
+          salud = Math.max(0, salud + locationEffect.healthDelta)
+        }
       }
 
       const estado_planta =
         salud <= 0  ? 'MUERTA'   :
         salud <= 25 ? 'ENFERMA'  :
         salud <= 50 ? 'MARCHITA' : 'SANA'
+      const lastPrunedDay = plant.ultimo_poda ?? 0
+      const shouldActivatePruning =
+        pruningInterval !== null &&
+        plant.requiere_poda_activa !== 1 &&
+        dias_transcurridos - lastPrunedDay >= pruningInterval
 
       // ✅ Guarda nutrientes junto con el resto del estado
       updatePlantState(plant.id_registro, {
         humedad, salud, dias_sin_regar,
         dias_transcurridos, estado_planta,
-        nutrientes
+        nutrientes,
+        requiere_poda_activa: shouldActivatePruning ? 1 : plant.requiere_poda_activa
       })
 
       if (estado_planta === 'MUERTA' && plant.estado_planta !== 'MUERTA') {
@@ -651,7 +738,11 @@ function simulateDays(daysToAdvance) {
         estado_planta,
         salud:         Math.round(salud),
         humedad:       Math.round(humedad),
-        nutrientes:    Math.round(nutrientes)
+        nutrientes:    Math.round(nutrientes),
+        ubicacion:     plant.ubicacion,
+        luz_ubicacion: locationEffect.roomLight,
+        luz_correcta:  locationEffect.isCompatible,
+        requiere_poda_activa: shouldActivatePruning ? 1 : plant.requiere_poda_activa
       })
     }
   })()
@@ -876,10 +967,12 @@ function prunePlant(id_registro) {
   const newSalud = Math.min(100, plant.salud + 10)
   updatePlantState(id_registro, {
     salud: newSalud,
-    requiere_poda_activa: 0   // ✅ nombre corregido
+    requiere_poda_activa: 0,
+    ultimo_poda: plant.dias_transcurridos
   })
   updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
   const xpResult = addExperience(20)
+  checkAndGrantAchievements()
 
   return {
     success: true,
@@ -888,10 +981,6 @@ function prunePlant(id_registro) {
     isError: false,
     xpResult
   }
-
-  // ✅ Verifica logros tras cada acción
-  checkAndGrantAchievements()
-  return { success: true, feedback, xpGained, isError, xpResult }
 }
 
 
@@ -906,25 +995,25 @@ function getTopActions() {
     {
       key: 'riego',
       label: 'Riego excesivo o prematuro',
-      errorCount: stats.errores_riego,
+      errorCount: stats.errores_riego_semana,
       explanation: 'El exceso de riego deja a las raíces sin aire. Observa la tierra antes de volver a regar.'
     },
     {
       key: 'abono',
       label: 'Abono innecesario',
-      errorCount: stats.errores_abono,
+      errorCount: stats.errores_abono_semana,
       explanation: 'El abono ayuda cuando la planta lo necesita. Usarlo de más puede estresar las raíces.'
     },
     {
       key: 'poda',
       label: 'Poda incorrecta',
-      errorCount: stats.errores_poda,
+      errorCount: stats.errores_poda_semana,
       explanation: 'La poda debe tener propósito: retirar partes secas o controlar crecimiento.'
     },
     {
       key: 'ubicacion',
       label: 'Mala ubicación',
-      errorCount: stats.errores_ubicacion,
+      errorCount: stats.errores_ubicacion_semana,
       explanation: 'La ubicación cambia la luz que recibe la planta. Un mal lugar la debilita poco a poco.'
     },
   ]
@@ -932,21 +1021,6 @@ function getTopActions() {
   return actions
     .sort((a, b) => b.errorCount - a.errorCount)
     .slice(0, 3)
-}
-
-// ── Registra el resultado de la revisión semanal ──────────────────────────
-// Registra el resultado de la revisión semanal activa (RF-32 / LM5).
-// Avanza el contador de semana y otorga XP si la evaluación fue correcta.
-function recordWeeklyReview(wasCorrect) {
-  db.prepare(`
-    UPDATE estadisticas
-    SET semana_simulada_actual = semana_simulada_actual + 1
-  `).run()
-
-  if (wasCorrect) {
-    return addExperience(25)
-  }
-  return null
 }
 
 // ── Registra resultado del quiz ───────────────────────────────────────────
@@ -963,8 +1037,7 @@ function recordQuizResult(correct) {
 }
 
 // ── Comprueba si debe activarse la revisión semanal ──────────────────────
-// Retorna true cuando el día simulado actual alcanza el umbral
-// de la próxima revisión semanal (múltiplos de 7).
+// Retorna true cuando el día simulado actual alcanza una semana no revisada.
 function shouldTriggerWeeklyReview(currentDay) {
   if (currentDay < 7) return false
 
@@ -972,10 +1045,11 @@ function shouldTriggerWeeklyReview(currentDay) {
   if (!stats) return false
 
   const currentWeek = Math.floor(currentDay / 7)
+  const lastReviewedWeek = stats.semana_simulada_actual ?? 0
 
-  // ✅ Dispara cuando la semana actual supera la última evaluada
-  const shouldTrigger = currentWeek > stats.semana_simulada_actual
-  console.log(`[Weekly] Día ${currentDay}, semana ${currentWeek}, última evaluada ${stats.semana_simulada_actual}, dispara: ${shouldTrigger}`)
+  // Dispara cuando la semana actual supera la última evaluada.
+  const shouldTrigger = currentWeek > lastReviewedWeek
+  console.log(`[Weekly] Día ${currentDay}, semana ${currentWeek}, última evaluada ${lastReviewedWeek}, dispara: ${shouldTrigger}`)
   return shouldTrigger
 }
 
@@ -987,15 +1061,32 @@ function fixWeeklyCounter(value) {
   `).run(value)
 }
 
-function recordWeeklyReview(wasCorrect) {
-  const maxDayResult = db.prepare(
-    'SELECT MAX(dias_transcurridos) as maxDay FROM plantas_usuario'
-  ).get()
-  const maxDay = maxDayResult?.maxDay || 0
-  const currentWeek = Math.floor(maxDay / 7)
+function recordWeeklyReview(wasCorrect, reviewedWeek = null) {
+  const parsedReviewedWeek = Number(reviewedWeek)
+  let currentWeek = Number.isFinite(parsedReviewedWeek) && parsedReviewedWeek > 0
+    ? Math.floor(parsedReviewedWeek)
+    : null
 
-  db.prepare(`UPDATE estadisticas SET semana_simulada_actual = ?`)
-    .run(currentWeek)
+  if (currentWeek === null) {
+    const maxDayResult = db.prepare(
+      'SELECT MAX(dias_transcurridos) as maxDay FROM plantas_usuario'
+    ).get()
+    const maxDay = maxDayResult?.maxDay || 0
+    currentWeek = Math.floor(maxDay / 7)
+  }
+
+  const stats = getStats()
+  const lastReviewedWeek = stats?.semana_simulada_actual ?? 0
+  currentWeek = Math.max(currentWeek, lastReviewedWeek)
+
+  db.prepare(`
+    UPDATE estadisticas
+    SET semana_simulada_actual = ?,
+        errores_riego_semana = 0,
+        errores_abono_semana = 0,
+        errores_poda_semana = 0,
+        errores_ubicacion_semana = 0
+  `).run(currentWeek)
 
   if (wasCorrect) {
     // ✅ Logro de evaluación correcta

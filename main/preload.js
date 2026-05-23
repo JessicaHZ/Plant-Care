@@ -51,7 +51,8 @@ contextBridge.exposeInMainWorld('gameAPI', {
 
   // ── Revisión semanal activa (RF-32 / LM5 — Evaluar) ──────────────────
   getTopActions:       ()           => ipcRenderer.invoke('weekly:getTopActions'),
-  submitWeeklyReview:  (wasCorrect) => ipcRenderer.invoke('weekly:submit', wasCorrect),
+  submitWeeklyReview:  (wasCorrect, reviewedWeek) =>
+    ipcRenderer.invoke('weekly:submit', { wasCorrect, reviewedWeek }),
   shouldTriggerWeekly: (currentDay) => ipcRenderer.invoke('weekly:shouldTrigger', currentDay),
   fixWeeklyCounter: (value) => ipcRenderer.invoke('stats:fixWeekly', value),
 

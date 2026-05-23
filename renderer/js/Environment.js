@@ -13,17 +13,17 @@ const Environment = {
   // Slots fijos por habitación (coordenadas en % sobre room-area)
   _slots: {
     'JARDÍN': [
-      { id: 'jardin-1', x: 66.3, y: 30.4 },
-      { id: 'jardin-2', x: 62.2, y: 28.1 },
-      { id: 'jardin-3', x: 57.3, y: 24.5 },
-      { id: 'jardin-4', x: 53.1, y: 35.2 },
-      { id: 'jardin-5', x: 57.3, y: 40.8 },
-      { id: 'jardin-6', x: 62.9, y: 46.2 },
-      { id: 'jardin-7', x: 19.0, y: 42.9 },
-      { id: 'jardin-8', x: 12.8, y: 49.1 },
-      { id: 'jardin-9', x: 43.8, y: 69.6 },
-      { id: 'jardin-10', x: 63.7, y: 89.8 },
-      { id: 'jardin-11', x: 53.5, y: 78.8 },
+      { id: 'jardin-1', x: 70, y: 34.1 },
+      { id: 'jardin-2', x: 62.5, y: 25.8 },
+      { id: 'jardin-3', x: 43.8, y: 61.6 },
+      { id: 'jardin-4', x: 51.1, y: 29.7 },
+      { id: 'jardin-5', x: 58.5, y: 39.2 },
+      { id: 'jardin-6', x: 65.9, y: 45 },
+      { id: 'jardin-7', x: 25.3, y: 45.3 },
+      { id: 'jardin-8', x: 16.6, y: 52.7 },
+      { id: 'jardin-9', x: 50.9, y: 52.7 },
+      { id: 'jardin-10', x: 52.1, y: 72.1 },
+      { id: 'jardin-11', x: 59, y: 60.4 },
     ],
     'SALA': [
       { id: 'sala-1', x: 52.8, y: 75.9 },
@@ -330,7 +330,8 @@ const Environment = {
           El <strong>${room.label}</strong> ${lightMessages[actualLight]}
           <br><br>
           Tu <strong>${plantName}</strong> ha sido colocada aquí.
-          Observa cómo reacciona con el paso de los días.
+          Si la luz no coincide con sus necesidades, su salud bajará lentamente
+          con el paso de los días simulados.
         </p>
         <button class="btn btn-primary btn-full" id="btn-close-location-result">
           Entendido →
@@ -348,20 +349,20 @@ const Environment = {
   // Nivel 1-2: etiqueta descriptiva, sin %
   // Nivel 3+:  solo color, sin etiqueta descriptiva ni %
   _getHumidityBarHTML(humedad, playerLevel = 1) {
-  const colorClass =
-    humedad < 40  ? 'diag-bar-water-low'     :
-    humedad <= 75 ? 'diag-bar-water-optimal' :
-                    'diag-bar-water-high'
+    const colorClass =
+      humedad < 40 ? 'diag-bar-water-low' :
+        humedad <= 75 ? 'diag-bar-water-optimal' :
+          'diag-bar-water-high'
 
-  // ✅ Nivel 1-2: con descripción entre paréntesis
-  // ✅ Nivel 3+: solo el nombre, sin paréntesis
-  const label = playerLevel <= 2
-    ? (humedad < 40  ? '💧 Humedad (baja)'    :
-       humedad <= 75 ? '💧 Humedad (óptima)'  :
-                       '💧 Humedad (saturada)')
-    : '💧 Humedad'
+    // ✅ Nivel 1-2: con descripción entre paréntesis
+    // ✅ Nivel 3+: solo el nombre, sin paréntesis
+    const label = playerLevel <= 2
+      ? (humedad < 40 ? '💧 Humedad (baja)' :
+        humedad <= 75 ? '💧 Humedad (óptima)' :
+          '💧 Humedad (saturada)')
+      : '💧 Humedad'
 
-  return `
+    return `
     <div class="diag-bar-row">
       <span class="diag-bar-label">${label}</span>
       <div class="diag-bar-bg">
@@ -370,23 +371,23 @@ const Environment = {
       </div>
     </div>
   `
-},
+  },
 
-_getNutrientBarHTML(nutrientes, playerLevel) {
-  const color =
-    nutrientes < 30  ? '#ef5350' :
-    nutrientes <= 75 ? '#66bb6a' :
-                       '#ffa726'
+  _getNutrientBarHTML(nutrientes, playerLevel) {
+    const color =
+      nutrientes < 30 ? '#ef5350' :
+        nutrientes <= 75 ? '#66bb6a' :
+          '#ffa726'
 
-  // ✅ Nivel 1-2: con descripción entre paréntesis
-  // ✅ Nivel 3+: solo el nombre, sin paréntesis
-  const label = playerLevel <= 2
-    ? (nutrientes < 30  ? '🌿 Nutrientes (bajos)'   :
-       nutrientes <= 75 ? '🌿 Nutrientes (óptimos)' :
-                          '🌿 Nutrientes (exceso)')
-    : '🌿 Nutrientes'
+    // ✅ Nivel 1-2: con descripción entre paréntesis
+    // ✅ Nivel 3+: solo el nombre, sin paréntesis
+    const label = playerLevel <= 2
+      ? (nutrientes < 30 ? '🌿 Nutrientes (bajos)' :
+        nutrientes <= 75 ? '🌿 Nutrientes (óptimos)' :
+          '🌿 Nutrientes (exceso)')
+      : '🌿 Nutrientes'
 
-  return `
+    return `
     <div class="diag-bar-row">
       <span class="diag-bar-label">${label}</span>
       <div class="diag-bar-bg">
@@ -396,51 +397,51 @@ _getNutrientBarHTML(nutrientes, playerLevel) {
       </div>
     </div>
   `
-},
+  },
 
-_getHealthState(salud) {
-  if (salud <= 25) return 'Crítica'
-  if (salud <= 50) return 'Delicada'
-  if (salud <= 75) return 'Estable'
-  return 'Saludable'
-},
+  _getHealthState(salud) {
+    if (salud <= 25) return 'Crítica'
+    if (salud <= 50) return 'Delicada'
+    if (salud <= 75) return 'Estable'
+    return 'Saludable'
+  },
 
   async _openCarePanel(plant) {
-  window.dispatchEvent(new CustomEvent('tutorial:care-panel:opened', {
-    detail: { id_registro: plant.id_registro }
-  }))
+    window.dispatchEvent(new CustomEvent('tutorial:care-panel:opened', {
+      detail: { id_registro: plant.id_registro }
+    }))
 
-  const existing = document.querySelector('.care-panel')
-  if (existing) existing.remove()
+    const existing = document.querySelector('.care-panel')
+    if (existing) existing.remove()
 
-  if (plant.estado_planta === 'MUERTA') {
-    this._openDeadPlantPanel(plant)
-    return
-  }
+    if (plant.estado_planta === 'MUERTA') {
+      this._openDeadPlantPanel(plant)
+      return
+    }
 
-  const progressResult = await window.gameAPI.getProgress()
-  const playerLevel    = progressResult.success ? progressResult.progress.nivel : 1
-  const pruneAvailable = plant.tipo_poda !== 'NUNCA' && plant.requiere_poda_activa === 1
-  const pruneUnlocked  = playerLevel >= 2
-  const nutrientes     = plant.nutrientes ?? 50
+    const progressResult = await window.gameAPI.getProgress()
+    const playerLevel = progressResult.success ? progressResult.progress.nivel : 1
+    const pruneAvailable = plant.tipo_poda !== 'NUNCA' && plant.requiere_poda_activa === 1
+    const pruneUnlocked = playerLevel >= 2
+    const nutrientes = plant.nutrientes ?? 50
 
-  const pruneLabel = !pruneUnlocked
-    ? '✂️ Podar 🔒 (nivel 2)'
-    : pruneAvailable ? '✂️ Podar' : '✂️ Podar'
-
-  const panel = document.createElement('div')
-  panel.className = 'care-panel'
-
-  // Función que renderiza el contenido del panel con datos actualizados
-  const renderPanelContent = (currentPlant, currentLevel) => {
-    const currentNutrientes = currentPlant.nutrientes ?? 50
-    const currentPruneAvailable = currentPlant.tipo_poda !== 'NUNCA' &&
-                                  currentPlant.requiere_poda_activa === 1
-    const currentPruneLabel = !pruneUnlocked
+    const pruneLabel = !pruneUnlocked
       ? '✂️ Podar 🔒 (nivel 2)'
-      : currentPruneAvailable ? '✂️ Podar' : '✂️ Podar'
+      : pruneAvailable ? '✂️ Podar' : '✂️ No necesita poda'
 
-    return `
+    const panel = document.createElement('div')
+    panel.className = 'care-panel'
+
+    // Función que renderiza el contenido del panel con datos actualizados
+    const renderPanelContent = (currentPlant, currentLevel) => {
+      const currentNutrientes = currentPlant.nutrientes ?? 50
+      const currentPruneAvailable = currentPlant.tipo_poda !== 'NUNCA' &&
+        currentPlant.requiere_poda_activa === 1
+      const currentPruneLabel = !pruneUnlocked
+        ? '✂️ Podar 🔒 (nivel 2)'
+        : currentPruneAvailable ? '✂️ Podar' : '✂️ No necesita poda'
+
+      return `
       <div class="care-panel-header">
         <h3 class="care-panel-name">${currentPlant.nombre_planta}</h3>
         <button class="btn btn-ghost" id="btn-close-care">✕</button>
@@ -483,81 +484,81 @@ _getHealthState(salud) {
         </button>
       ` : ''}
     `
-  }
-
-  // Renderizado inicial
-  panel.innerHTML = renderPanelContent(plant, playerLevel)
-  document.getElementById('room-area').appendChild(panel)
-
-  // ✅ Callback para regar y abonar — actualiza el panel SIN cerrarlo
-  const afterCareAction = async () => {
-    await this._loadUserPlants()
-
-    // Busca la planta actualizada por id_registro
-    const updatedPlant = this._userPlants.find(
-      p => p.id_registro === plant.id_registro
-    )
-    if (!updatedPlant) {
-      panel.remove()
-      this._renderCurrentRoom()
-      return
     }
 
-    // Actualiza la referencia local y re-renderiza el panel
-    plant = updatedPlant
-    panel.innerHTML = renderPanelContent(updatedPlant, playerLevel)
-    this._renderCurrentRoom()
+    // Renderizado inicial
+    panel.innerHTML = renderPanelContent(plant, playerLevel)
+    document.getElementById('room-area').appendChild(panel)
 
-    // Re-registra los listeners después de actualizar el HTML
-    bindListeners()
-  }
+    // ✅ Callback para regar y abonar — actualiza el panel SIN cerrarlo
+    const afterCareAction = async () => {
+      await this._loadUserPlants()
 
-  // ✅ Callback para poda y mover — cierra el panel como antes
-  const afterFinalAction = async () => {
-    await this._loadUserPlants()
-    this._renderCurrentRoom()
-    panel.remove()
-  }
-
-  // Función que registra todos los listeners del panel
-  // Se llama al inicio y después de cada actualización del HTML
-  const bindListeners = () => {
-    panel.querySelector('#btn-close-care')
-      .addEventListener('click', () => {
+      // Busca la planta actualizada por id_registro
+      const updatedPlant = this._userPlants.find(
+        p => p.id_registro === plant.id_registro
+      )
+      if (!updatedPlant) {
         panel.remove()
         this._renderCurrentRoom()
-      })
+        return
+      }
 
-    panel.querySelector('#btn-water')
-      .addEventListener('click', () => {
-        CareActions.water(plant, afterCareAction)  // ✅ no cierra
-      })
+      // Actualiza la referencia local y re-renderiza el panel
+      plant = updatedPlant
+      panel.innerHTML = renderPanelContent(updatedPlant, playerLevel)
+      this._renderCurrentRoom()
 
-    panel.querySelector('#btn-fertilize')
-      .addEventListener('click', () => {
-        CareActions.fertilize(plant, afterCareAction)  // ✅ no cierra
-      })
-
-    const pruneBtn = panel.querySelector('#btn-prune')
-    if (pruneBtn && !pruneBtn.disabled) {
-      pruneBtn.addEventListener('click', () => {
-        panel.remove()
-        CareActions.prune(plant, afterFinalAction)  // ✅ cierra
-      })
+      // Re-registra los listeners después de actualizar el HTML
+      bindListeners()
     }
 
-    const moveBtn = panel.querySelector('#btn-move-plant')
-    if (moveBtn) {
-      moveBtn.addEventListener('click', () => {
-        panel.remove()
-        this._movePlant(plant)
-      })
+    // ✅ Callback para poda y mover — cierra el panel como antes
+    const afterFinalAction = async () => {
+      await this._loadUserPlants()
+      this._renderCurrentRoom()
+      panel.remove()
     }
-  }
 
-  // Registro inicial de listeners
-  bindListeners()
-},
+    // Función que registra todos los listeners del panel
+    // Se llama al inicio y después de cada actualización del HTML
+    const bindListeners = () => {
+      panel.querySelector('#btn-close-care')
+        .addEventListener('click', () => {
+          panel.remove()
+          this._renderCurrentRoom()
+        })
+
+      panel.querySelector('#btn-water')
+        .addEventListener('click', () => {
+          CareActions.water(plant, afterCareAction)  // ✅ no cierra
+        })
+
+      panel.querySelector('#btn-fertilize')
+        .addEventListener('click', () => {
+          CareActions.fertilize(plant, afterCareAction)  // ✅ no cierra
+        })
+
+      const pruneBtn = panel.querySelector('#btn-prune')
+      if (pruneBtn && !pruneBtn.disabled) {
+        pruneBtn.addEventListener('click', () => {
+          panel.remove()
+          CareActions.prune(plant, afterFinalAction)  // ✅ cierra
+        })
+      }
+
+      const moveBtn = panel.querySelector('#btn-move-plant')
+      if (moveBtn) {
+        moveBtn.addEventListener('click', () => {
+          panel.remove()
+          this._movePlant(plant)
+        })
+      }
+    }
+
+    // Registro inicial de listeners
+    bindListeners()
+  },
 
   _openDeadPlantPanel(plant) {
     const panel = document.createElement('div')

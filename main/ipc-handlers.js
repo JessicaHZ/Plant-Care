@@ -203,9 +203,11 @@ function registerIpcHandlers() {
   })
 
   // Registra si el jugador evaluó correctamente su peor decisión.
-  ipcMain.handle('weekly:submit', async (event, wasCorrect) => {
+  ipcMain.handle('weekly:submit', async (event, payload) => {
     try {
-      const xpResult = db.recordWeeklyReview(wasCorrect)
+      const wasCorrect = typeof payload === 'object' ? payload.wasCorrect : payload
+      const reviewedWeek = typeof payload === 'object' ? payload.reviewedWeek : null
+      const xpResult = db.recordWeeklyReview(wasCorrect, reviewedWeek)
       return { success: true, xpResult, xpGained: wasCorrect ? 25 : 0 }
     } catch (error) {
       console.error('Error registrando revisión semanal:', error)
