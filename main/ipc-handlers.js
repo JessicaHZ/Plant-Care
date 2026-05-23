@@ -169,28 +169,29 @@ function registerIpcHandlers() {
     }
   })
 
-  // Registra resultado del minijuego de plagas (HU-13).
-  ipcMain.handle('minigame:pests:complete', async (event, correct) => {
+  // Registra Defensa del Brote con recompensa calculada por desempeno.
+  ipcMain.handle('minigame:defense:complete', async (event, xpAmount) => {
     try {
-      const xpAmount = correct ? 20 : 0
-      const xpResult = correct ? db.addExperience(xpAmount) : null
+      const safeXp = Math.max(0, Math.min(300, Math.floor(Number(xpAmount) || 0)))
+      const xpResult = safeXp > 0 ? db.addExperience(safeXp) : null
 
       db.updateStats(
-        correct
+        safeXp > 0
           ? { acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 }
           : { acciones_totales: 1 }
       )
 
-      return { success: true, xpGained: xpAmount, xpResult }
+      return { success: true, xpGained: safeXp, xpResult }
     } catch (error) {
-      console.error('Error en minijuego de plagas:', error)
-      return { success: false, error: 'Error en minijuego de plagas' }
+      console.error('Error en Defensa del Brote:', error)
+      return { success: false, error: 'Error en Defensa del Brote' }
     }
   })
 
   // ── Revisión semanal activa (RF-32 / LM5 — Evaluar) ────────────────────
 
   // Devuelve las 3 acciones con más errores para presentar al jugador.
+
   ipcMain.handle('weekly:getTopActions', async () => {
     try {
       const actions = db.getTopActions()
@@ -202,9 +203,11 @@ function registerIpcHandlers() {
   })
 
   // Registra si el jugador evaluó correctamente su peor decisión.
-  ipcMain.handle('weekly:submit', async (event, wasCorrect) => {
+  ipcMain.handle('weekly:submit', async (event, payload) => {
     try {
-      const xpResult = db.recordWeeklyReview(wasCorrect)
+      const wasCorrect = typeof payload === 'object' ? payload.wasCorrect : payload
+      const reviewedWeek = typeof payload === 'object' ? payload.reviewedWeek : null
+      const xpResult = db.recordWeeklyReview(wasCorrect, reviewedWeek)
       return { success: true, xpResult, xpGained: wasCorrect ? 25 : 0 }
     } catch (error) {
       console.error('Error registrando revisión semanal:', error)
@@ -258,7 +261,7 @@ function registerIpcHandlers() {
       return { success: true }
     } catch (error) {
       console.error('Error regresando planta al panel:', error)
-    return { success: false }
+      return { success: false }
     }
   })
 
@@ -291,21 +294,48 @@ function registerIpcHandlers() {
   })
 
   ipcMain.handle('tutorial:isCompleted', async () => {
-  try {
-    const completed = db.isTutorialCompleted()
-    return { success: true, completed }
-  } catch (error) {
-    return { success: true, completed: false }
-  }
+    try {
+      const completed = db.isTutorialCompleted()
+      return { success: true, completed }
+    } catch (error) {
+      return { success: true, completed: false }
+    }
   })
 
   ipcMain.handle('tutorial:complete', async () => {
-  try {
-    db.completeTutorial()
-    return { success: true }
-  } catch (error) {
-    return { success: false }
-  }
+    try {
+      db.completeTutorial()
+      return { success: true }
+    } catch (error) {
+      return { success: false }
+    }
+  })
+
+  ipcMain.handle('game:reset', async () => {
+    try {
+      db.resetGame()
+      return { success: true }
+    } catch (error) {
+      return { success: false }
+    }
+  })
+
+  ipcMain.handle('tutorial:reset', async () => {
+    try {
+      db.resetTutorial()
+      return { success: true }
+    } catch (error) {
+      return { success: false }
+    }
+  })
+
+  ipcMain.handle('care:drain', async (event, id_registro) => {
+    try {
+      return db.drainPlant(id_registro)
+    } catch (error) {
+      console.error('Error en drenaje:', error)
+      return { success: false, error: 'Error al drenar' }
+    }
   })
 
 }

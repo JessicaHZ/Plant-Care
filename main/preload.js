@@ -45,13 +45,14 @@ contextBridge.exposeInMainWorld('gameAPI', {
   // HU-14: quiz de preguntas.
   submitQuiz: (correct) => ipcRenderer.invoke('quiz:submit', correct),
 
-  // HU-13: minijuego de plagas.
-  completePestsGame: (correct) =>
-    ipcRenderer.invoke('minigame:pests:complete', correct),
+  // HU-13: Defensa del Brote, variante arcade con recompensa variable.
+  completeDefenseGame: (xpAmount) =>
+    ipcRenderer.invoke('minigame:defense:complete', xpAmount),
 
   // ── Revisión semanal activa (RF-32 / LM5 — Evaluar) ──────────────────
   getTopActions:       ()           => ipcRenderer.invoke('weekly:getTopActions'),
-  submitWeeklyReview:  (wasCorrect) => ipcRenderer.invoke('weekly:submit', wasCorrect),
+  submitWeeklyReview:  (wasCorrect, reviewedWeek) =>
+    ipcRenderer.invoke('weekly:submit', { wasCorrect, reviewedWeek }),
   shouldTriggerWeekly: (currentDay) => ipcRenderer.invoke('weekly:shouldTrigger', currentDay),
   fixWeeklyCounter: (value) => ipcRenderer.invoke('stats:fixWeekly', value),
 
@@ -68,6 +69,11 @@ contextBridge.exposeInMainWorld('gameAPI', {
 
   isTutorialCompleted: () => ipcRenderer.invoke('tutorial:isCompleted'),
   completeTutorial:    () => ipcRenderer.invoke('tutorial:complete'),
+  resetTutorial: () => ipcRenderer.invoke('tutorial:reset'),
+
+  resetGame: () => ipcRenderer.invoke('game:reset'),
+
+  drainPlant: (id_registro) => ipcRenderer.invoke('care:drain', id_registro),
   
 
 })

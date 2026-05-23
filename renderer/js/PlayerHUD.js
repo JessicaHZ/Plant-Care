@@ -9,6 +9,7 @@
 //   PlayerHUD.update(progressData, count)   → actualiza los valores
 
 const PlayerHUD = {
+  _maxLevel: 5,
 
   init() {
     if (document.getElementById('player-hud')) return
@@ -44,6 +45,7 @@ const PlayerHUD = {
         </div>
       </div>
     `
+    
 
     document.body.insertBefore(hud, document.body.firstChild)
   },
@@ -55,7 +57,8 @@ const PlayerHUD = {
     const hud = document.getElementById('player-hud')
     if (!hud || !progressData) return
 
-    document.getElementById('hud-level').textContent  = progressData.nivel
+    document.getElementById('hud-level').textContent  =
+      Math.min(progressData.nivel || 1, this._maxLevel)
     document.getElementById('hud-xp').textContent     = progressData.experiencia
     document.getElementById('hud-streak').textContent = progressData.racha_dias
     document.getElementById('hud-plants').textContent = plantCount

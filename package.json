@@ -1,5 +1,5 @@
 {
-  "name": "plant_simulator",
+  "name": "my-plant-home",
   "version": "1.0.0",
   "description": "Serious game - simulador de cuidado de plantas",
   "main": "main/main.js",

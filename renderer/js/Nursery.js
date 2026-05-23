@@ -114,6 +114,9 @@ const Nursery = {
 
   _showDetail(plant) {
     this._selectedPlant = plant
+    window.dispatchEvent(new CustomEvent('tutorial:plant:selected', {
+      detail: { plantId: plant.id_planta }
+    }))
 
     const panel = document.getElementById('nursery-detail')
     if (!panel) return

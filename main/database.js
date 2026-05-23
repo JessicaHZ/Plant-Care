@@ -3,6 +3,7 @@ const path = require('path')
 const { app } = require('electron')
 const DB_PATH = path.join(app.getPath('userData'), 'game.db')
 const db = new Database(DB_PATH)
+const MAX_PLAYER_LEVEL = 5
 
 function initializeDatabase() {
 
@@ -27,9 +28,13 @@ function initializeDatabase() {
       errores_abono          INTEGER NOT NULL DEFAULT 0,
       errores_poda           INTEGER NOT NULL DEFAULT 0,
       errores_ubicacion      INTEGER NOT NULL DEFAULT 0,
+      errores_riego_semana    INTEGER NOT NULL DEFAULT 0,
+      errores_abono_semana    INTEGER NOT NULL DEFAULT 0,
+      errores_poda_semana     INTEGER NOT NULL DEFAULT 0,
+      errores_ubicacion_semana INTEGER NOT NULL DEFAULT 0,
       diagnosticos_correctos INTEGER NOT NULL DEFAULT 0,
       plantas_muertas        INTEGER NOT NULL DEFAULT 0,
-      semana_simulada_actual INTEGER NOT NULL DEFAULT 1
+      semana_simulada_actual INTEGER NOT NULL DEFAULT 0
     )
   `)
   // ── Catálogo de plantas del vivero ───────────────────────────────────────
@@ -58,12 +63,13 @@ function initializeDatabase() {
       id_planta            INTEGER NOT NULL,
       estado_planta        TEXT    NOT NULL DEFAULT 'SANA',
       ubicacion            TEXT    DEFAULT NULL,
-      humedad              INTEGER NOT NULL DEFAULT 80,
+      humedad              INTEGER NOT NULL DEFAULT 50,
       salud                INTEGER NOT NULL DEFAULT 100,
       dias_sin_regar       INTEGER NOT NULL DEFAULT 0,
       ultimo_riego         INTEGER NOT NULL DEFAULT 0,
       dias_transcurridos   INTEGER NOT NULL DEFAULT 0,
       requiere_poda_activa INTEGER NOT NULL DEFAULT 0,
+      ultimo_poda          INTEGER NOT NULL DEFAULT 0,
       adquirida_en         TEXT    NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (id_planta) REFERENCES plantas(id_planta)
     )
@@ -99,6 +105,7 @@ function initializeDatabase() {
     `ALTER TABLE plantas ADD COLUMN nombre_cientifico TEXT NOT NULL DEFAULT ''`,
     `ALTER TABLE plantas ADD COLUMN tipo_planta TEXT NOT NULL DEFAULT 'OTRO'`,
     `ALTER TABLE plantas_usuario ADD COLUMN requiere_poda_activa INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE plantas_usuario ADD COLUMN ultimo_poda INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE plantas_usuario ADD COLUMN pos_x TEXT DEFAULT NULL`,  // ✅ nuevo
     `ALTER TABLE plantas_usuario ADD COLUMN pos_y TEXT DEFAULT NULL`,  // ✅ nuevo
     `ALTER TABLE progreso ADD COLUMN ultimo_cierre INTEGER DEFAULT NULL`,
@@ -107,7 +114,13 @@ function initializeDatabase() {
     // solo la columna con un DEFAULT y creamos un índice único después.
     `ALTER TABLE logros ADD COLUMN clave_logro TEXT DEFAULT ''`,
     `ALTER TABLE estadisticas ADD COLUMN acciones_correctas_hoy INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE estadisticas ADD COLUMN errores_riego_semana INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE estadisticas ADD COLUMN errores_abono_semana INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE estadisticas ADD COLUMN errores_poda_semana INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE estadisticas ADD COLUMN errores_ubicacion_semana INTEGER NOT NULL DEFAULT 0`,
     `ALTER TABLE progreso ADD COLUMN tutorial_completado INTEGER NOT NULL DEFAULT 0`,
+    `ALTER TABLE plantas_usuario ADD COLUMN nutrientes INTEGER NOT NULL DEFAULT 50`,  
+    
   ]
   for (const migration of safeMigrations) {
     try { db.exec(migration) } catch (_) { /* columna ya existe */ }
@@ -120,16 +133,16 @@ function initializeDatabase() {
 
   // Migración de logros existentes para preservar clave_texto
   const legacyAchievementMap = {
-    'Primer Brote':        'primera_planta',
-    'Pequeño Jardín':      'cinco_plantas',
-    'Cuidador Novato':     'primer_nivel',
-    'Ojo Clínico':         'diagnostico_perfecto',
-    'Constante':           'racha_5',
-    'Dedicado':            'racha_10',
+    'Primer Brote': 'primera_planta',
+    'Pequeño Jardín': 'cinco_plantas',
+    'Cuidador Novato': 'primer_nivel',
+    'Ojo Clínico': 'diagnostico_perfecto',
+    'Constante': 'racha_5',
+    'Dedicado': 'racha_10',
     'Evaluador Reflexivo': 'evaluacion_correcta',
-    'Semana Perfecta':     'sin_errores_semana',
-    'Verde Experto':       'planta_nivel3',
-    'Maestro Botanista':   'quiz_perfecto'
+    'Semana Perfecta': 'sin_errores_semana',
+    'Verde Experto': 'planta_nivel3',
+    'Maestro Botanista': 'quiz_perfecto'
   }
 
   for (const [nombre, clave] of Object.entries(legacyAchievementMap)) {
@@ -149,7 +162,13 @@ function initializeDatabase() {
 // Crea la fila inicial si el juego se ejecuta por primera vez.
 function getProgress() {
   const row = db.prepare(`SELECT * FROM progreso LIMIT 1`).get()
-  if (row) return row
+  if (row) {
+    if (row.nivel > MAX_PLAYER_LEVEL) {
+      updateProgress({ nivel: MAX_PLAYER_LEVEL })
+      return { ...row, nivel: MAX_PLAYER_LEVEL }
+    }
+    return row
+  }
 
   db.prepare(`INSERT INTO progreso (nivel, experiencia, racha_dias) VALUES (1, 0, 0)`).run()
   return db.prepare(`SELECT * FROM progreso LIMIT 1`).get()
@@ -169,228 +188,228 @@ function updateProgress(fields) {
 const PLANT_CATALOG = [
   // ── FÁCIL ──────────────────────────────────────────────────────────────
   {
-    nombre_planta:     'Pothos',
+    nombre_planta: 'Pothos',
     nombre_cientifico: 'Epipremnum aureum',
-    tipo_planta:       'ORNAMENTAL',       // ✅ corregido
-    tipo_luz:          'INDIRECTA',
-    frecuencia_riego:  7,
-    nivel_dificultad:  'FÁCIL',
-    tipo_poda:         'OCASIONAL',
-    descripcion:       'Una de las plantas de interior más resistentes del mundo. Tolera poca luz, olvidos de riego y condiciones adversas. Purifica el aire eliminando formaldehído y monóxido de carbono. Sus tallos colgantes pueden alcanzar varios metros.',
-    sprite_key:        'pothos'
+    tipo_planta: 'ORNAMENTAL',       // ✅ corregido
+    tipo_luz: 'INDIRECTA',
+    frecuencia_riego: 7,
+    nivel_dificultad: 'FÁCIL',
+    tipo_poda: 'OCASIONAL',
+    descripcion: 'Una de las plantas de interior más resistentes del mundo. Tolera poca luz, olvidos de riego y condiciones adversas. Purifica el aire eliminando formaldehído y monóxido de carbono. Sus tallos colgantes pueden alcanzar varios metros.',
+    sprite_key: 'pothos'
   },
   {
-    nombre_planta:     'Sansevieria',
+    nombre_planta: 'Sansevieria',
     nombre_cientifico: 'Dracaena trifasciata',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'INDIRECTA',
-    frecuencia_riego:  14,
-    nivel_dificultad:  'FÁCIL',
-    tipo_poda:         'NUNCA',
-    descripcion:       'Conocida como "lengua de suegra" o "planta serpiente". Prácticamente indestructible: sobrevive en sombra, calor y sequía. Es una de las mejores purificadoras de aire según la NASA. Convierte CO₂ en oxígeno incluso de noche.',
-    sprite_key:        'sansevieria'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'INDIRECTA',
+    frecuencia_riego: 14,
+    nivel_dificultad: 'FÁCIL',
+    tipo_poda: 'NUNCA',
+    descripcion: 'Conocida como "lengua de suegra" o "planta serpiente". Prácticamente indestructible: sobrevive en sombra, calor y sequía. Es una de las mejores purificadoras de aire según la NASA. Convierte CO₂ en oxígeno incluso de noche.',
+    sprite_key: 'sansevieria'
   },
   {
-    nombre_planta:     'Echeveria',
+    nombre_planta: 'Echeveria',
     nombre_cientifico: 'Echeveria elegans',
-    tipo_planta:       'SUCULENTA',        // ✅ corregido
-    tipo_luz:          'DIRECTA',
-    frecuencia_riego:  14,
-    nivel_dificultad:  'FÁCIL',
-    tipo_poda:         'NUNCA',
-    descripcion:       'Suculenta en forma de rosa, nativa de México. Almacena agua en sus hojas carnosas y soporta períodos de sequía. Necesita luz solar directa y riego escaso. Es sensible al exceso de agua, que pudre sus raíces rápidamente.',
-    sprite_key:        'echeveria'
+    tipo_planta: 'SUCULENTA',        // ✅ corregido
+    tipo_luz: 'DIRECTA',
+    frecuencia_riego: 14,
+    nivel_dificultad: 'FÁCIL',
+    tipo_poda: 'NUNCA',
+    descripcion: 'Suculenta en forma de rosa, nativa de México. Almacena agua en sus hojas carnosas y soporta períodos de sequía. Necesita luz solar directa y riego escaso. Es sensible al exceso de agua, que pudre sus raíces rápidamente.',
+    sprite_key: 'echeveria'
   },
   {
-    nombre_planta:     'Cactus',
+    nombre_planta: 'Cactus',
     nombre_cientifico: 'Mammillaria elongata',
-    tipo_planta:       'CACTUS',           // ✅ corregido (categoría propia)
-    tipo_luz:          'DIRECTA',
-    frecuencia_riego:  21,
-    nivel_dificultad:  'FÁCIL',
-    tipo_poda:         'NUNCA',
-    descripcion:       'Cactus columnares agrupados con espinas doradas, originario de México. Extremadamente tolerante a la sequía y al calor. Puede pasar semanas sin agua. En primavera produce pequeñas flores blancas o amarillas. Ideal para principiantes.',
-    sprite_key:        'cactus'
+    tipo_planta: 'CACTUS',           // ✅ corregido (categoría propia)
+    tipo_luz: 'DIRECTA',
+    frecuencia_riego: 21,
+    nivel_dificultad: 'FÁCIL',
+    tipo_poda: 'NUNCA',
+    descripcion: 'Cactus columnares agrupados con espinas doradas, originario de México. Extremadamente tolerante a la sequía y al calor. Puede pasar semanas sin agua. En primavera produce pequeñas flores blancas o amarillas. Ideal para principiantes.',
+    sprite_key: 'cactus'
   },
   {
-    nombre_planta:     'Dracena',
+    nombre_planta: 'Dracena',
     nombre_cientifico: 'Dracaena marginata',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'INDIRECTA',
-    frecuencia_riego:  10,
-    nivel_dificultad:  'FÁCIL',
-    tipo_poda:         'OCASIONAL',
-    descripcion:       'Árbol tropical esbelto con hojas largas bordeadas en rojo o rosa. Muy tolerante a la poca luz y al descuido. Purifica el aire eliminando benceno y tricloroetileno. Crece lentamente y puede vivir décadas con cuidados mínimos.',
-    sprite_key:        'dracena'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'INDIRECTA',
+    frecuencia_riego: 10,
+    nivel_dificultad: 'FÁCIL',
+    tipo_poda: 'OCASIONAL',
+    descripcion: 'Árbol tropical esbelto con hojas largas bordeadas en rojo o rosa. Muy tolerante a la poca luz y al descuido. Purifica el aire eliminando benceno y tricloroetileno. Crece lentamente y puede vivir décadas con cuidados mínimos.',
+    sprite_key: 'dracena'
   },
 
   // ── MEDIO ──────────────────────────────────────────────────────────────
   {
-    nombre_planta:     'Helecho',
+    nombre_planta: 'Helecho',
     nombre_cientifico: 'Nephrolepis exaltata',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'SOMBRA',
-    frecuencia_riego:  3,
-    nivel_dificultad:  'MEDIO',
-    tipo_poda:         'OCASIONAL',
-    descripcion:       'El helecho de Boston es uno de los más populares de interior. Necesita humedad constante: si el aire es seco, sus hojas se vuelven marrones. Ideal para baños o cocinas. Es excelente purificador de aire y humidificador natural.',
-    sprite_key:        'helecho'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'SOMBRA',
+    frecuencia_riego: 3,
+    nivel_dificultad: 'MEDIO',
+    tipo_poda: 'OCASIONAL',
+    descripcion: 'El helecho de Boston es uno de los más populares de interior. Necesita humedad constante: si el aire es seco, sus hojas se vuelven marrones. Ideal para baños o cocinas. Es excelente purificador de aire y humidificador natural.',
+    sprite_key: 'helecho'
   },
   {
-    nombre_planta:     'Begonia',
+    nombre_planta: 'Begonia',
     nombre_cientifico: 'Begonia rex',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'INDIRECTA',
-    frecuencia_riego:  4,
-    nivel_dificultad:  'MEDIO',
-    tipo_poda:         'OCASIONAL',
-    descripcion:       'Famosa por sus hojas ornamentales con patrones metálicos en rojo, plata y verde. No tolera el sol directo ni el sustrato encharcado. Prefiere luz indirecta brillante y riego cuando la superficie del sustrato esté seca al tacto.',
-    sprite_key:        'begonia'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'INDIRECTA',
+    frecuencia_riego: 4,
+    nivel_dificultad: 'MEDIO',
+    tipo_poda: 'OCASIONAL',
+    descripcion: 'Famosa por sus hojas ornamentales con patrones metálicos en rojo, plata y verde. No tolera el sol directo ni el sustrato encharcado. Prefiere luz indirecta brillante y riego cuando la superficie del sustrato esté seca al tacto.',
+    sprite_key: 'begonia'
   },
   {
-    nombre_planta:     'Tradescantia',
+    nombre_planta: 'Tradescantia',
     nombre_cientifico: 'Tradescantia zebrina',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'INDIRECTA',
-    frecuencia_riego:  5,
-    nivel_dificultad:  'MEDIO',
-    tipo_poda:         'FRECUENTE',
-    descripcion:       'Planta colgante de rayas plateadas y envés morado. Crece muy rápido y necesita poda frecuente para mantener su forma compacta. Tolera algo de sequía pero prefiere humedad moderada. Es fácil de propagar: basta un tallo en agua.',
-    sprite_key:        'tradescantia'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'INDIRECTA',
+    frecuencia_riego: 5,
+    nivel_dificultad: 'MEDIO',
+    tipo_poda: 'FRECUENTE',
+    descripcion: 'Planta colgante de rayas plateadas y envés morado. Crece muy rápido y necesita poda frecuente para mantener su forma compacta. Tolera algo de sequía pero prefiere humedad moderada. Es fácil de propagar: basta un tallo en agua.',
+    sprite_key: 'tradescantia'
   },
   {
-    nombre_planta:     'Croton',
+    nombre_planta: 'Croton',
     nombre_cientifico: 'Codiaeum variegatum',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'DIRECTA',
-    frecuencia_riego:  5,
-    nivel_dificultad:  'MEDIO',
-    tipo_poda:         'OCASIONAL',
-    descripcion:       'Planta tropical de colores espectaculares: hojas con manchas amarillas, rojas, naranjas y verdes. Necesita mucha luz para mantener su colorido. Es sensible a los cambios de ubicación y al frío. Pierde hojas si se mueve frecuentemente.',
-    sprite_key:        'croton'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'DIRECTA',
+    frecuencia_riego: 5,
+    nivel_dificultad: 'MEDIO',
+    tipo_poda: 'OCASIONAL',
+    descripcion: 'Planta tropical de colores espectaculares: hojas con manchas amarillas, rojas, naranjas y verdes. Necesita mucha luz para mantener su colorido. Es sensible a los cambios de ubicación y al frío. Pierde hojas si se mueve frecuentemente.',
+    sprite_key: 'croton'
   },
   {
-    nombre_planta:     'Calathea',
+    nombre_planta: 'Calathea',
     nombre_cientifico: 'Calathea ornata',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'SOMBRA',
-    frecuencia_riego:  4,
-    nivel_dificultad:  'MEDIO',
-    tipo_poda:         'NUNCA',
-    descripcion:       'Conocida como "planta oración" porque cierra sus hojas de noche. Sus hojas verde oscuro con líneas rosadas son inconfundibles. Necesita humedad alta, agua sin cloro y temperatura constante. No tolera corrientes de aire ni luz directa.',
-    sprite_key:        'calathea'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'SOMBRA',
+    frecuencia_riego: 4,
+    nivel_dificultad: 'MEDIO',
+    tipo_poda: 'NUNCA',
+    descripcion: 'Conocida como "planta oración" porque cierra sus hojas de noche. Sus hojas verde oscuro con líneas rosadas son inconfundibles. Necesita humedad alta, agua sin cloro y temperatura constante. No tolera corrientes de aire ni luz directa.',
+    sprite_key: 'calathea'
   },
 
   // ── DIFÍCIL ────────────────────────────────────────────────────────────
   {
-    nombre_planta:     'Hibisco',
+    nombre_planta: 'Hibisco',
     nombre_cientifico: 'Hibiscus rosa-sinensis',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'DIRECTA',
-    frecuencia_riego:  3,
-    nivel_dificultad:  'DIFÍCIL',
-    tipo_poda:         'FRECUENTE',
-    descripcion:       'Arbusto tropical con flores grandes en rojo, rosa, amarillo y naranja. Necesita mucho sol y riego frecuente en verano. La poda tras cada floración estimula nuevas flores. Es sensible al frío y a la sequía. Sus flores duran solo un día.',
-    sprite_key:        'hibisco'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'DIRECTA',
+    frecuencia_riego: 3,
+    nivel_dificultad: 'DIFÍCIL',
+    tipo_poda: 'FRECUENTE',
+    descripcion: 'Arbusto tropical con flores grandes en rojo, rosa, amarillo y naranja. Necesita mucho sol y riego frecuente en verano. La poda tras cada floración estimula nuevas flores. Es sensible al frío y a la sequía. Sus flores duran solo un día.',
+    sprite_key: 'hibisco'
   },
   {
-    nombre_planta:     'Petunia',
+    nombre_planta: 'Petunia',
     nombre_cientifico: 'Petunia hybrida',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'DIRECTA',
-    frecuencia_riego:  3,
-    nivel_dificultad:  'DIFÍCIL',
-    tipo_poda:         'FRECUENTE',
-    descripcion:       'Planta de temporada con flores en prácticamente todos los colores. Necesita sol pleno, riego regular y poda de flores marchitas para prolongar la floración. Es susceptible a las lluvias intensas y al exceso de agua en el sustrato.',
-    sprite_key:        'petunia'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'DIRECTA',
+    frecuencia_riego: 3,
+    nivel_dificultad: 'DIFÍCIL',
+    tipo_poda: 'FRECUENTE',
+    descripcion: 'Planta de temporada con flores en prácticamente todos los colores. Necesita sol pleno, riego regular y poda de flores marchitas para prolongar la floración. Es susceptible a las lluvias intensas y al exceso de agua en el sustrato.',
+    sprite_key: 'petunia'
   },
   {
-    nombre_planta:     'Bugambilia',
+    nombre_planta: 'Bugambilia',
     nombre_cientifico: 'Bougainvillea glabra',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'DIRECTA',
-    frecuencia_riego:  7,
-    nivel_dificultad:  'DIFÍCIL',
-    tipo_poda:         'FRECUENTE',
-    descripcion:       'Enredadera tropical con brácteas de colores intensos: magenta, naranja, blanco. Muy resistente al calor y a la sequía una vez establecida. Florece más cuando se estresa levemente con menos agua. La poda post-floración es esencial.',
-    sprite_key:        'bugambilia'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'DIRECTA',
+    frecuencia_riego: 7,
+    nivel_dificultad: 'DIFÍCIL',
+    tipo_poda: 'FRECUENTE',
+    descripcion: 'Enredadera tropical con brácteas de colores intensos: magenta, naranja, blanco. Muy resistente al calor y a la sequía una vez establecida. Florece más cuando se estresa levemente con menos agua. La poda post-floración es esencial.',
+    sprite_key: 'bugambilia'
   },
   {
-    nombre_planta:     'Ficus',
+    nombre_planta: 'Ficus',
     nombre_cientifico: 'Ficus benjamina',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'INDIRECTA',
-    frecuencia_riego:  7,
-    nivel_dificultad:  'DIFÍCIL',
-    tipo_poda:         'OCASIONAL',
-    descripcion:       'Árbol de interior elegante con hojas brillantes. Extremadamente sensible a los cambios: pierde hojas si lo mueves, si cambia la temperatura o si hay corrientes de aire. Una vez que encuentra su lugar ideal, crece establemente por años.',
-    sprite_key:        'ficus'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'INDIRECTA',
+    frecuencia_riego: 7,
+    nivel_dificultad: 'DIFÍCIL',
+    tipo_poda: 'OCASIONAL',
+    descripcion: 'Árbol de interior elegante con hojas brillantes. Extremadamente sensible a los cambios: pierde hojas si lo mueves, si cambia la temperatura o si hay corrientes de aire. Una vez que encuentra su lugar ideal, crece establemente por años.',
+    sprite_key: 'ficus'
   },
   {
-    nombre_planta:     'Albahaca',              // ✅ nombre más preciso que 'Aromática'
+    nombre_planta: 'Albahaca',              // ✅ nombre más preciso que 'Aromática'
     nombre_cientifico: 'Ocimum basilicum',
-    tipo_planta:       'AROMATICA',             // ✅ sin tilde, normalizado
-    tipo_luz:          'DIRECTA',
-    frecuencia_riego:  2,
-    nivel_dificultad:  'DIFÍCIL',
-    tipo_poda:         'FRECUENTE',
-    descripcion:       'La albahaca es una hierba aromática y culinaria esencial. Necesita mucho sol, riego frecuente y poda de las flores para mantener el sabor de las hojas. Es muy sensible al frío. Pinzar los brotes florales retrasa la maduración y extiende la cosecha.',
-    sprite_key:        'aromatica'
+    tipo_planta: 'AROMATICA',             // ✅ sin tilde, normalizado
+    tipo_luz: 'DIRECTA',
+    frecuencia_riego: 2,
+    nivel_dificultad: 'DIFÍCIL',
+    tipo_poda: 'FRECUENTE',
+    descripcion: 'La albahaca es una hierba aromática y culinaria esencial. Necesita mucho sol, riego frecuente y poda de las flores para mantener el sabor de las hojas. Es muy sensible al frío. Pinzar los brotes florales retrasa la maduración y extiende la cosecha.',
+    sprite_key: 'aromatica'
   },
   {
-    nombre_planta:     'Rosa',
+    nombre_planta: 'Rosa',
     nombre_cientifico: 'Rosa hybrida',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'DIRECTA',
-    frecuencia_riego:  3,
-    nivel_dificultad:  'DIFÍCIL',
-    tipo_poda:         'FRECUENTE',
-    descripcion:       'La reina de las flores requiere atención constante: 6+ horas de sol, riego al suelo (no a las hojas), poda formativa en invierno y protección contra pulgones y hongos. La recompensa es una floración espectacular y duradera.',
-    sprite_key:        'rosa'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'DIRECTA',
+    frecuencia_riego: 3,
+    nivel_dificultad: 'DIFÍCIL',
+    tipo_poda: 'FRECUENTE',
+    descripcion: 'La reina de las flores requiere atención constante: 6+ horas de sol, riego al suelo (no a las hojas), poda formativa en invierno y protección contra pulgones y hongos. La recompensa es una floración espectacular y duradera.',
+    sprite_key: 'rosa'
   },
   {
-    nombre_planta:     'Hortensia',
+    nombre_planta: 'Hortensia',
     nombre_cientifico: 'Hydrangea macrophylla',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'INDIRECTA',
-    frecuencia_riego:  3,
-    nivel_dificultad:  'DIFÍCIL',
-    tipo_poda:         'OCASIONAL',
-    descripcion:       'Sus grandes flores esféricas cambian de color según el pH del suelo: azul en suelos ácidos, rosa en alcalinos. Necesita mucha agua y nunca debe secarse. Sensible al sol directo en verano. La poda incorrecta elimina los futuros brotes florales.',
-    sprite_key:        'hortensia'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'INDIRECTA',
+    frecuencia_riego: 3,
+    nivel_dificultad: 'DIFÍCIL',
+    tipo_poda: 'OCASIONAL',
+    descripcion: 'Sus grandes flores esféricas cambian de color según el pH del suelo: azul en suelos ácidos, rosa en alcalinos. Necesita mucha agua y nunca debe secarse. Sensible al sol directo en verano. La poda incorrecta elimina los futuros brotes florales.',
+    sprite_key: 'hortensia'
   },
   {
-    nombre_planta:     'Gardenia',
+    nombre_planta: 'Gardenia',
     nombre_cientifico: 'Gardenia jasminoides',
-    tipo_planta:       'ORNAMENTAL',
-    tipo_luz:          'INDIRECTA',
-    frecuencia_riego:  4,
-    nivel_dificultad:  'DIFÍCIL',
-    tipo_poda:         'OCASIONAL',
-    descripcion:       'Una de las flores más fragantes del mundo. Extremadamente exigente: necesita alta humedad, temperatura constante (15-24°C), agua sin cal y luz indirecta brillante. Los capullos caen si el ambiente cambia. Gratificante cuando florece.',
-    sprite_key:        'gardenia'
+    tipo_planta: 'ORNAMENTAL',
+    tipo_luz: 'INDIRECTA',
+    frecuencia_riego: 4,
+    nivel_dificultad: 'DIFÍCIL',
+    tipo_poda: 'OCASIONAL',
+    descripcion: 'Una de las flores más fragantes del mundo. Extremadamente exigente: necesita alta humedad, temperatura constante (15-24°C), agua sin cal y luz indirecta brillante. Los capullos caen si el ambiente cambia. Gratificante cuando florece.',
+    sprite_key: 'gardenia'
   },
   {
-    nombre_planta:     'Jazmín',
+    nombre_planta: 'Jazmín',
     nombre_cientifico: 'Jasminum officinale',
-    tipo_planta:       'AROMATICA',
-    tipo_luz:          'DIRECTA',
-    frecuencia_riego:  5,
-    nivel_dificultad:  'DIFÍCIL',
-    tipo_poda:         'FRECUENTE',
-    descripcion:       'Enredadera trepadora con flores blancas de fragancia intensa, usada en perfumería. Necesita soporte para trepar, sol directo y poda post-floración para estimular nuevos brotes. Sensible al frío. Su aroma es máximo en las noches de verano.',
-    sprite_key:        'jazmin'
+    tipo_planta: 'AROMATICA',
+    tipo_luz: 'DIRECTA',
+    frecuencia_riego: 5,
+    nivel_dificultad: 'DIFÍCIL',
+    tipo_poda: 'FRECUENTE',
+    descripcion: 'Enredadera trepadora con flores blancas de fragancia intensa, usada en perfumería. Necesita soporte para trepar, sol directo y poda post-floración para estimular nuevos brotes. Sensible al frío. Su aroma es máximo en las noches de verano.',
+    sprite_key: 'jazmin'
   },
   {
-    nombre_planta:     'Limonero',
+    nombre_planta: 'Limonero',
     nombre_cientifico: 'Citrus limon',
-    tipo_planta:       'FRUTAL',            // ✅ categoría correcta del diccionario
-    tipo_luz:          'DIRECTA',
-    frecuencia_riego:  5,
-    nivel_dificultad:  'DIFÍCIL',
-    tipo_poda:         'FRECUENTE',
-    descripcion:       'Árbol frutal cítrico cultivable en maceta. Necesita mínimo 8 horas de sol, riego regular y abono específico para cítricos. La poda formativa controla su tamaño y estimula la producción de frutos. Florece con aroma intenso antes de fructificar.',
-    sprite_key:        'limonero'
+    tipo_planta: 'FRUTAL',            // ✅ categoría correcta del diccionario
+    tipo_luz: 'DIRECTA',
+    frecuencia_riego: 5,
+    nivel_dificultad: 'DIFÍCIL',
+    tipo_poda: 'FRECUENTE',
+    descripcion: 'Árbol frutal cítrico cultivable en maceta. Necesita mínimo 8 horas de sol, riego regular y abono específico para cítricos. La poda formativa controla su tamaño y estimula la producción de frutos. Florece con aroma intenso antes de fructificar.',
+    sprite_key: 'limonero'
   },
 ]
 
@@ -490,8 +509,9 @@ function updatePlantState(id_registro, fields) {
   const allowed = [
     'estado_planta', 'ubicacion', 'humedad', 'salud',
     'dias_sin_regar', 'ultimo_riego', 'dias_transcurridos',
-    'requiere_poda_activa',   // ✅ nombre corregido
-    'pos_x', 'pos_y' 
+    'requiere_poda_activa', 'ultimo_poda',
+    'pos_x', 'pos_y',
+    'nutrientes'
   ]
 
   const updates = Object.keys(fields)
@@ -506,50 +526,116 @@ function updatePlantState(id_registro, fields) {
   `).run({ ...fields, id_registro })
 }
 
-// ── Coloca una planta en una ubicación del entorno ────────────────────────
-function placePlantInRoom(id_registro, ubicacion, pos_x = null, pos_y = null) {
-  const lightConditions = {
-    'SALA':       'INDIRECTA',
-    'JARDÍN':     'DIRECTA',
-    'DORMITORIO': 'INDIRECTA'
+const ROOM_LIGHT_CONDITIONS = {
+  'SALA': 'INDIRECTA',
+  'JARDÍN': 'DIRECTA',
+  'DORMITORIO': 'INDIRECTA'
+}
+
+function getRoomLightCondition(ubicacion) {
+  return ROOM_LIGHT_CONDITIONS[ubicacion] || 'INDIRECTA'
+}
+
+function isLightCompatible(requiredLight, roomLight) {
+  if (!requiredLight || !roomLight) return true
+  if (requiredLight === roomLight) return true
+
+  // Las plantas de sombra toleran luz indirecta, pero no sol directo.
+  if (requiredLight === 'SOMBRA' && roomLight === 'INDIRECTA') return true
+
+  return false
+}
+
+function getLocationEffect(plant) {
+  if (!plant.ubicacion) {
+    return { isCompatible: true, roomLight: null, healthDelta: 0 }
   }
 
+  const roomLight = getRoomLightCondition(plant.ubicacion)
+  const isCompatible = isLightCompatible(plant.tipo_luz, roomLight)
+
+  return {
+    isCompatible,
+    roomLight,
+    // La luz incorrecta debe notarse incluso si humedad y nutrientes estan bien.
+    healthDelta: isCompatible ? 0 : -3
+  }
+}
+
+function getPruningIntervalDays(tipo_poda) {
+  if (tipo_poda === 'FRECUENTE') return 7
+  if (tipo_poda === 'OCASIONAL') return 14
+  return null
+}
+
+// ── Coloca una planta en una ubicación del entorno ────────────────────────
+function placePlantInRoom(id_registro, ubicacion, pos_x = null, pos_y = null) {
+  const plant = db.prepare(`
+    SELECT pu.*, p.tipo_luz
+    FROM plantas_usuario pu
+    JOIN plantas p ON pu.id_planta = p.id_planta
+    WHERE pu.id_registro = ?
+  `).get(id_registro)
+  const roomLight = getRoomLightCondition(ubicacion)
+
   updatePlantState(id_registro, { ubicacion, pos_x, pos_y })
-  return lightConditions[ubicacion] || 'INDIRECTA'
+
+  if (plant && ubicacion && !isLightCompatible(plant.tipo_luz, roomLight)) {
+    updateStats({ errores_ubicacion: 1, acciones_totales: 1 })
+  }
+
+  return roomLight
 }
 
 // ── Actualiza estadísticas del jugador ────────────────────────────────────
 // Incrementa contadores en la tabla estadísticas (singleton).
 // Uso: updateStats({ errores_riego: 1, acciones_totales: 1 })
 function updateStats(updates) {
+  const weeklyErrorFields = {
+    errores_riego: 'errores_riego_semana',
+    errores_abono: 'errores_abono_semana',
+    errores_poda: 'errores_poda_semana',
+    errores_ubicacion: 'errores_ubicacion_semana'
+  }
+
+  const normalizedUpdates = { ...updates }
+  Object.entries(weeklyErrorFields).forEach(([totalField, weeklyField]) => {
+    if (updates[totalField] && normalizedUpdates[weeklyField] === undefined) {
+      normalizedUpdates[weeklyField] = updates[totalField]
+    }
+  })
+
   const allowed = [
-    'acciones_totales',     'acciones_correctas',
+    'acciones_totales', 'acciones_correctas',
     'acciones_correctas_hoy',
-    'errores_riego',        'errores_abono',
-    'errores_poda',         'errores_ubicacion',
+    'errores_riego', 'errores_abono',
+    'errores_poda', 'errores_ubicacion',
+    'errores_riego_semana', 'errores_abono_semana',
+    'errores_poda_semana', 'errores_ubicacion_semana',
     'diagnosticos_correctos', 'plantas_muertas',
     'semana_simulada_actual'  // ✅ nombre corregido
   ]
 
-  const setClauses = Object.keys(updates)
+  const setClauses = Object.keys(normalizedUpdates)
     .filter(key => allowed.includes(key))
     .map(key => `${key} = ${key} + @${key}`)
     .join(', ')
 
   if (!setClauses) return
 
-  db.prepare(`UPDATE estadisticas SET ${setClauses}`).run(updates)
+  db.prepare(`UPDATE estadisticas SET ${setClauses}`).run(normalizedUpdates)
 }
 
 // ── Actualiza XP y nivel del jugador ──────────────────────────────────────
 // Suma XP al jugador y recalcula su nivel.
-// Fórmula: nivel = floor(XP / 100) + 1
+// Formula: nivel = min(5, floor(XP / 100) + 1)
 // Retorna el nuevo estado y si hubo subida de nivel.
 function addExperience(xpAmount) {
   const current = getProgress()
 
-  const newXP    = current.experiencia + xpAmount
-  const newLevel = Math.floor(newXP / 100) + 1
+  const newXP = current.experiencia + xpAmount
+  const calculatedLevel = Math.floor(newXP / 100) + 1
+  const newLevel = Math.min(MAX_PLAYER_LEVEL, calculatedLevel)
 
   updateProgress({ experiencia: newXP, nivel: newLevel })
 
@@ -567,7 +653,7 @@ function getStats() {
   const row = db.prepare('SELECT * FROM estadisticas LIMIT 1').get()
   if (row) return row
 
-  db.prepare('INSERT INTO estadisticas DEFAULT VALUES').run()
+  db.prepare('INSERT INTO estadisticas (semana_simulada_actual) VALUES (0)').run()
   return db.prepare('SELECT * FROM estadisticas LIMIT 1').get()
 }
 
@@ -575,7 +661,7 @@ function getStats() {
 // Esta es la función más importante del motor de simulación.
 // Avanza N días simulados para todas las plantas del jugador.
 function simulateDays(daysToAdvance) {
-  const plants = getUserPlants()   // ✅ sin id_usuario
+  const plants  = getUserPlants()
   const results = []
 
   db.transaction(() => {
@@ -583,34 +669,67 @@ function simulateDays(daysToAdvance) {
       if (plant.estado_planta === 'MUERTA') continue
 
       let { humedad, salud, dias_sin_regar, dias_transcurridos } = plant
+      let nutrientes = plant.nutrientes ?? 50   // ✅ extrae nutrientes
+      const locationEffect = getLocationEffect(plant)
+      const pruningInterval = getPruningIntervalDays(plant.tipo_poda)
 
       for (let d = 0; d < daysToAdvance; d++) {
         dias_transcurridos++
         dias_sin_regar++
 
+        // Humedad baja según días sin regar
         if (dias_sin_regar > plant.frecuencia_riego) {
           const overdueDays = dias_sin_regar - plant.frecuencia_riego
           humedad = Math.max(0, humedad - (overdueDays * 5))
         }
 
-        if      (humedad < 20) salud = Math.max(0,   salud - 8)
-        else if (humedad < 40) salud = Math.max(0,   salud - 3)
-        else if (humedad > 90) salud = Math.max(0,   salud - 5)
-        else                   salud = Math.min(100, salud + 1)
+        // ✅ Nutrientes bajan 1 puntos por día
+        nutrientes = Math.max(0, nutrientes - 1)
+
+        // Salud según humedad y nutrientes
+        if      (humedad < 20)  salud = Math.max(0,   salud - 5)
+        else if (humedad < 40)  salud = Math.max(0,   salud - 3)
+        else if (humedad <= 75) {
+          // Rango óptimo de humedad
+          if (nutrientes > 75) {
+            // Exceso de nutrientes: deterioro leve por día.
+            salud = Math.max(0, salud - 1)
+          } else if (nutrientes >= 30) {
+            // ✅ Nutrientes óptimos — recuperación normal + bonus
+            salud = Math.min(100, salud + 2)
+          } else {
+            // ✅ Nutrientes bajos — recuperación lenta
+            salud = Math.min(100, salud + 1)
+          }
+        }
+        else if (humedad <= 90) salud = Math.max(0,   salud - 3)
+        else                    salud = Math.max(0,   salud - 5)
+
+        if (locationEffect.healthDelta < 0) {
+          salud = Math.max(0, salud + locationEffect.healthDelta)
+        }
       }
 
       const estado_planta =
         salud <= 0  ? 'MUERTA'   :
         salud <= 25 ? 'ENFERMA'  :
         salud <= 50 ? 'MARCHITA' : 'SANA'
+      const lastPrunedDay = plant.ultimo_poda ?? 0
+      const shouldActivatePruning =
+        pruningInterval !== null &&
+        plant.requiere_poda_activa !== 1 &&
+        dias_transcurridos - lastPrunedDay >= pruningInterval
 
+      // ✅ Guarda nutrientes junto con el resto del estado
       updatePlantState(plant.id_registro, {
-        humedad, salud, dias_sin_regar, dias_transcurridos, estado_planta
+        humedad, salud, dias_sin_regar,
+        dias_transcurridos, estado_planta,
+        nutrientes,
+        requiere_poda_activa: shouldActivatePruning ? 1 : plant.requiere_poda_activa
       })
 
-      // Registra planta muerta en estadísticas
       if (estado_planta === 'MUERTA' && plant.estado_planta !== 'MUERTA') {
-        updateStats({ plantas_muertas: 1 })  // ✅ sin id_usuario
+        updateStats({ plantas_muertas: 1 })
       }
 
       results.push({
@@ -618,22 +737,18 @@ function simulateDays(daysToAdvance) {
         nombre_planta: plant.nombre_planta,
         estado_planta,
         salud:         Math.round(salud),
-        humedad:       Math.round(humedad)
+        humedad:       Math.round(humedad),
+        nutrientes:    Math.round(nutrientes),
+        ubicacion:     plant.ubicacion,
+        luz_ubicacion: locationEffect.roomLight,
+        luz_correcta:  locationEffect.isCompatible,
+        requiere_poda_activa: shouldActivatePruning ? 1 : plant.requiere_poda_activa
       })
     }
   })()
 
-
-  // ✅ Evalúa racha al final de cada día simulado
-  // La racha sube si hubo acciones correctas, baja si no
-  const stats = getStats()
-  const hadCorrectAction = stats && stats.acciones_correctas_hoy > 0
-  updateStreak(hadCorrectAction)
-  db.prepare('UPDATE estadisticas SET acciones_correctas_hoy = 0').run()
-
-  // ✅ Verifica logros después de cada avance
+  updateStreak(getStats()?.acciones_correctas > 0)
   checkAndGrantAchievements()
-
   return results
 }
 
@@ -652,45 +767,57 @@ function waterPlant(id_registro) {
     return { success: false, error: 'No puedes regar una planta muerta' }
   }
 
-  const isCorrect    = plant.dias_sin_regar >= Math.floor(plant.frecuencia_riego * 0.7)
-  const isOverwatered = plant.humedad > 75
+  // ✅ Siempre sube +20%, puede llegar a 100%
+  const newHumedad = Math.min(100, plant.humedad + 20)
+  let feedback, xpGained, isError
 
-  let newHumedad, feedback, xpGained, isError
+  if (plant.humedad >= 76) {
+    // ❌ Ya había exceso — empeoró la situación
+    feedback = `Tu ${plant.nombre_planta} ya tenía la tierra saturada. ` +
+      `El exceso de agua impide que las raíces respiren.`
+    xpGained = 0
+    isError = true
+    updateStats({ errores_riego: 1, acciones_totales: 1 })
 
-  if (isOverwatered) {
-    newHumedad = Math.min(100, plant.humedad + 10)
-    feedback   = `⚠️ Tu ${plant.nombre_planta} ya tenía suficiente agua. El exceso de riego puede pudrir las raíces.`
-    xpGained   = 0
-    isError    = true
+  } else if (plant.humedad >= 56) {
+    // ⚠️ Riego prematuro — entrará en exceso
+    feedback = `La tierra de tu ${plant.nombre_planta} aún estaba húmeda. ` +
+      `${newHumedad > 75 ? 'Ahora quedó demasiado mojada; observa antes de volver a regar.' : 'Conviene esperar señales de sequedad antes de regar otra vez.'}`
+    xpGained = 5
+    isError = true
     updateStats({ errores_riego: 1, acciones_totales: 1 })
-  } else if (!isCorrect) {
-    newHumedad = Math.min(100, plant.humedad + 20)
-    feedback   = `💧 Regaste demasiado pronto. El ${plant.nombre_planta} se riega cada ${plant.frecuencia_riego} días. Han pasado solo ${plant.dias_sin_regar}.`
-    xpGained   = 5
-    isError    = true
-    updateStats({ errores_riego: 1, acciones_totales: 1 })
+
+  } else if (plant.humedad >= 20) {
+    // ✅ Riego correcto — rango bajo u óptimo
+    feedback = `La tierra estaba seca. ` +
+      `Tu ${plant.nombre_planta} respondió bien al riego.`
+    xpGained = 15
+    isError = false
+    updateStats({ acciones_correctas: 1, acciones_totales: 1 })
+
   } else {
-    newHumedad = 90
-    feedback   = `✅ ¡Excelente! Regaste tu ${plant.nombre_planta} en el momento justo. La planta está feliz.`
-    xpGained   = 15
-    isError    = false
-    updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
+    // ✅ Riego urgente — estaba muy seca
+    feedback = `La tierra estaba muy seca. ` +
+      `Riega con cuidado y observa si las hojas se recuperan.`
+    xpGained = 15
+    isError = false
+    updateStats({ acciones_correctas: 1, acciones_totales: 1 })
   }
 
   updatePlantState(id_registro, {
-    humedad:        newHumedad,
-    ultimo_riego:   plant.dias_transcurridos,
+    humedad: newHumedad,
+    ultimo_riego: plant.dias_transcurridos,
     dias_sin_regar: 0
   })
 
   const xpResult = addExperience(xpGained)
-  return { success: true, feedback, xpGained, isError, xpResult }
-
-  // ✅ Verifica logros tras cada acción
   checkAndGrantAchievements()
   return { success: true, feedback, xpGained, isError, xpResult }
 }
 
+// El abono aporta nutrientes al sustrato — no cura directamente.
+// Con nutrientes altos, la simulación diaria recupera salud extra.
+// Abonar con nutrientes altos quema las raíces.
 function fertilizePlant(id_registro) {
   const plant = db.prepare(`
     SELECT pu.*, p.nombre_planta
@@ -703,32 +830,93 @@ function fertilizePlant(id_registro) {
     return { success: false, error: 'No se puede abonar esta planta' }
   }
 
-  const isError = plant.salud > 80
-  let feedback, xpGained, healthChange
+  const nutrientes = plant.nutrientes ?? 50
+  let feedback, xpGained, newNutrientes, healthChange, isError
 
-  if (isError) {
-    feedback     = `⚠️ Tu ${plant.nombre_planta} estaba sana. El exceso de abono puede quemar las raíces. Abona solo cuando la planta lo necesite.`
-    xpGained     = 0
-    healthChange = -5
+  if (nutrientes > 75) {
+    // ❌ Exceso de nutrientes — quema raíces
+    feedback = `Tu ${plant.nombre_planta} ya tenía suficiente alimento en el sustrato. ` +
+      `Demasiado abono puede quemar las raíces.`
+    xpGained = 0
+    newNutrientes = nutrientes          // no sube más
+    healthChange = -5                  // daño por exceso
+    isError = true
     updateStats({ errores_abono: 1, acciones_totales: 1 })
+
+  } else if (nutrientes >= 40) {
+    // ⚠️ Abono prematuro — aún tiene nutrientes
+    feedback = `El sustrato de tu ${plant.nombre_planta} aún tenía nutrientes. ` +
+      `El abono ayuda más cuando la planta muestra desgaste.`
+    xpGained = 5
+    newNutrientes = Math.min(100, nutrientes + 15)
+    healthChange = 0
+    isError = true
+    updateStats({ errores_abono: 1, acciones_totales: 1 })
+
   } else {
-    feedback     = `✅ Abono aplicado correctamente. Tu ${plant.nombre_planta} recibirá los nutrientes que necesita.`
-    xpGained     = 12
-    healthChange = 15
-    updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
+    // ✅ Abono correcto — nutrientes bajos
+    feedback = `El sustrato estaba pobre en nutrientes. ` +
+      `El abono ayudará a tu ${plant.nombre_planta} a recuperarse poco a poco.`
+    xpGained = 12
+    newNutrientes = Math.min(100, nutrientes + 25)
+    healthChange = 0    // no cura inmediatamente — la recuperación es gradual
+    isError = false
+    updateStats({ acciones_correctas: 1, acciones_totales: 1 })
   }
 
   const newSalud = Math.min(100, Math.max(0, plant.salud + healthChange))
-  updatePlantState(id_registro, { salud: newSalud })
+  updatePlantState(id_registro, {
+    salud: newSalud,
+    nutrientes: newNutrientes
+  })
+
   const xpResult = addExperience(xpGained)
-
-  return { success: true, feedback, xpGained, isError, xpResult }
-
-  // ✅ Verifica logros tras cada acción
   checkAndGrantAchievements()
   return { success: true, feedback, xpGained, isError, xpResult }
 }
 
+// Drena el exceso de agua de una planta.
+// Disponible solo cuando la tierra está saturada.
+// Simula: inclinar maceta, secar sustrato, mejorar ventilación.
+function drainPlant(id_registro) {
+  const plant = db.prepare(`
+    SELECT pu.*, p.nombre_planta
+    FROM plantas_usuario pu
+    JOIN plantas p ON pu.id_planta = p.id_planta
+    WHERE pu.id_registro = ?
+  `).get(id_registro)
+
+  if (!plant) return { success: false, error: 'Planta no encontrada' }
+  if (plant.estado_planta === 'MUERTA') {
+    return { success: false, error: 'No puedes drenar una planta muerta' }
+  }
+
+  let feedback, xpGained, isError, newHumedad
+
+  if (plant.humedad <= 75) {
+    // ❌ No hay exceso — drenaje innecesario
+    newHumedad = Math.max(0, plant.humedad - 10)  // penalización leve
+    feedback = `La tierra de tu ${plant.nombre_planta} no estaba saturada. ` +
+      `Drenar sin necesidad puede secar demasiado el sustrato.`
+    xpGained = 0
+    isError = true
+    updateStats({ errores_riego: 1, acciones_totales: 1 })
+
+  } else {
+    // ✅ Drenaje correcto — reduce ~25%
+    newHumedad = Math.max(40, plant.humedad - 25)
+    feedback = `La tierra estaba saturada. ` +
+      `Drenar ayudó a sacar el exceso de agua y proteger las raíces.`
+    xpGained = 12
+    isError = false
+    updateStats({ acciones_correctas: 1, acciones_totales: 1 })
+  }
+
+  updatePlantState(id_registro, { humedad: newHumedad })
+  const xpResult = addExperience(xpGained)
+  checkAndGrantAchievements()
+  return { success: true, feedback, xpGained, isError, xpResult }
+}
 // RF-09: la poda requiere nivel >= 2, tipo_poda !== 'NUNCA'
 // y requiere_poda_activa === true.
 function prunePlant(id_registro) {
@@ -737,10 +925,10 @@ function prunePlant(id_registro) {
   // Condición de nivel: bloqueado antes de nivel 2
   if (progress.nivel < 2) {
     return {
-      success:  false,
+      success: false,
       feedback: '🔒 La herramienta de poda se desbloquea al alcanzar el nivel 2.',
       xpGained: 0,
-      isError:  false
+      isError: false
     }
   }
 
@@ -757,10 +945,10 @@ function prunePlant(id_registro) {
   if (plant.tipo_poda === 'NUNCA') {
     updateStats({ errores_poda: 1, acciones_totales: 1 })
     return {
-      success:  true,
-      feedback: `❌ El ${plant.nombre_planta} no requiere poda. Podarla puede dañarla permanentemente.`,
+      success: true,
+      feedback: `El ${plant.nombre_planta} no requiere poda. Cortarlo sin necesidad puede debilitarlo.`,
       xpGained: 0,
-      isError:  true
+      isError: true
     }
   }
 
@@ -768,33 +956,31 @@ function prunePlant(id_registro) {
   if (!plant.requiere_poda_activa) {
     updateStats({ errores_poda: 1, acciones_totales: 1 })
     return {
-      success:  true,
-      feedback: `⚠️ Tu ${plant.nombre_planta} no necesita poda ahora. La poda innecesaria estresa a la planta.`,
+      success: true,
+      feedback: `Tu ${plant.nombre_planta} no necesita poda ahora. Espera a ver hojas secas o crecimiento desordenado.`,
       xpGained: 0,
-      isError:  true
+      isError: true
     }
   }
 
   // Poda correcta
   const newSalud = Math.min(100, plant.salud + 10)
   updatePlantState(id_registro, {
-    salud:               newSalud,
-    requiere_poda_activa: 0   // ✅ nombre corregido
+    salud: newSalud,
+    requiere_poda_activa: 0,
+    ultimo_poda: plant.dias_transcurridos
   })
   updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
   const xpResult = addExperience(20)
+  checkAndGrantAchievements()
 
   return {
-    success:  true,
-    feedback: `✅ Poda realizada correctamente. Eliminar hojas secas permite que tu ${plant.nombre_planta} conserve energía y crezca mejor.`,
+    success: true,
+    feedback: `Poda realizada con cuidado. Tu ${plant.nombre_planta} puede concentrar energía en brotes sanos.`,
     xpGained: 20,
-    isError:  false,
+    isError: false,
     xpResult
   }
-
-  // ✅ Verifica logros tras cada acción
-  checkAndGrantAchievements()
-  return { success: true, feedback, xpGained, isError, xpResult }
 }
 
 
@@ -807,49 +993,34 @@ function getTopActions() {
 
   const actions = [
     {
-      key:         'riego',
-      label:       'Riego excesivo o prematuro',
-      errorCount:  stats.errores_riego,
-      explanation: 'El exceso de riego es la causa más común de muerte en plantas de interior. Las raíces se pudren sin oxígeno.'
+      key: 'riego',
+      label: 'Riego excesivo o prematuro',
+      errorCount: stats.errores_riego_semana,
+      explanation: 'El exceso de riego deja a las raíces sin aire. Observa la tierra antes de volver a regar.'
     },
     {
-      key:         'abono',
-      label:       'Abono innecesario',
-      errorCount:  stats.errores_abono,
-      explanation: 'Abonar cuando la planta no lo necesita quema las raíces y genera estrés. Abona solo cuando la salud baja.'
+      key: 'abono',
+      label: 'Abono innecesario',
+      errorCount: stats.errores_abono_semana,
+      explanation: 'El abono ayuda cuando la planta lo necesita. Usarlo de más puede estresar las raíces.'
     },
     {
-      key:         'poda',
-      label:       'Poda incorrecta',
-      errorCount:  stats.errores_poda,
-      explanation: 'Podar sin que la planta lo requiera interrumpe su ciclo de crecimiento y puede dejarla vulnerable.'
+      key: 'poda',
+      label: 'Poda incorrecta',
+      errorCount: stats.errores_poda_semana,
+      explanation: 'La poda debe tener propósito: retirar partes secas o controlar crecimiento.'
     },
     {
-      key:         'ubicacion',
-      label:       'Mala ubicación',
-      errorCount:  stats.errores_ubicacion,
-      explanation: 'Colocar una planta en el lugar equivocado afecta su acceso a luz y temperatura, deteriorando su salud lentamente.'
+      key: 'ubicacion',
+      label: 'Mala ubicación',
+      errorCount: stats.errores_ubicacion_semana,
+      explanation: 'La ubicación cambia la luz que recibe la planta. Un mal lugar la debilita poco a poco.'
     },
   ]
 
   return actions
     .sort((a, b) => b.errorCount - a.errorCount)
     .slice(0, 3)
-}
-
-// ── Registra el resultado de la revisión semanal ──────────────────────────
-// Registra el resultado de la revisión semanal activa (RF-32 / LM5).
-// Avanza el contador de semana y otorga XP si la evaluación fue correcta.
-function recordWeeklyReview(wasCorrect) {
-  db.prepare(`
-    UPDATE estadisticas
-    SET semana_simulada_actual = semana_simulada_actual + 1
-  `).run()
-
-  if (wasCorrect) {
-    return addExperience(25)
-  }
-  return null
 }
 
 // ── Registra resultado del quiz ───────────────────────────────────────────
@@ -866,8 +1037,7 @@ function recordQuizResult(correct) {
 }
 
 // ── Comprueba si debe activarse la revisión semanal ──────────────────────
-// Retorna true cuando el día simulado actual alcanza el umbral
-// de la próxima revisión semanal (múltiplos de 7).
+// Retorna true cuando el día simulado actual alcanza una semana no revisada.
 function shouldTriggerWeeklyReview(currentDay) {
   if (currentDay < 7) return false
 
@@ -875,10 +1045,11 @@ function shouldTriggerWeeklyReview(currentDay) {
   if (!stats) return false
 
   const currentWeek = Math.floor(currentDay / 7)
+  const lastReviewedWeek = stats.semana_simulada_actual ?? 0
 
-  // ✅ Dispara cuando la semana actual supera la última evaluada
-  const shouldTrigger = currentWeek > stats.semana_simulada_actual
-  console.log(`[Weekly] Día ${currentDay}, semana ${currentWeek}, última evaluada ${stats.semana_simulada_actual}, dispara: ${shouldTrigger}`)
+  // Dispara cuando la semana actual supera la última evaluada.
+  const shouldTrigger = currentWeek > lastReviewedWeek
+  console.log(`[Weekly] Día ${currentDay}, semana ${currentWeek}, última evaluada ${lastReviewedWeek}, dispara: ${shouldTrigger}`)
   return shouldTrigger
 }
 
@@ -890,15 +1061,32 @@ function fixWeeklyCounter(value) {
   `).run(value)
 }
 
-function recordWeeklyReview(wasCorrect) {
-  const maxDayResult = db.prepare(
-    'SELECT MAX(dias_transcurridos) as maxDay FROM plantas_usuario'
-  ).get()
-  const maxDay      = maxDayResult?.maxDay || 0
-  const currentWeek = Math.floor(maxDay / 7)
+function recordWeeklyReview(wasCorrect, reviewedWeek = null) {
+  const parsedReviewedWeek = Number(reviewedWeek)
+  let currentWeek = Number.isFinite(parsedReviewedWeek) && parsedReviewedWeek > 0
+    ? Math.floor(parsedReviewedWeek)
+    : null
 
-  db.prepare(`UPDATE estadisticas SET semana_simulada_actual = ?`)
-    .run(currentWeek)
+  if (currentWeek === null) {
+    const maxDayResult = db.prepare(
+      'SELECT MAX(dias_transcurridos) as maxDay FROM plantas_usuario'
+    ).get()
+    const maxDay = maxDayResult?.maxDay || 0
+    currentWeek = Math.floor(maxDay / 7)
+  }
+
+  const stats = getStats()
+  const lastReviewedWeek = stats?.semana_simulada_actual ?? 0
+  currentWeek = Math.max(currentWeek, lastReviewedWeek)
+
+  db.prepare(`
+    UPDATE estadisticas
+    SET semana_simulada_actual = ?,
+        errores_riego_semana = 0,
+        errores_abono_semana = 0,
+        errores_poda_semana = 0,
+        errores_ubicacion_semana = 0
+  `).run(currentWeek)
 
   if (wasCorrect) {
     // ✅ Logro de evaluación correcta
@@ -949,9 +1137,9 @@ function getOfflineDays() {
   const progress = db.prepare('SELECT ultimo_cierre FROM progreso LIMIT 1').get()
   if (!progress || !progress.ultimo_cierre) return 0
 
-  const msPerDay    = 10 * 60 * 1000  // 10 minutos = 1 día de juego
-  const elapsed     = Date.now() - progress.ultimo_cierre
-  const rawDays     = Math.floor(elapsed / msPerDay)
+  const msPerDay = 10 * 60 * 1000  // 10 minutos = 1 día de juego
+  const elapsed = Date.now() - progress.ultimo_cierre
+  const rawDays = Math.floor(elapsed / msPerDay)
 
   return Math.min(rawDays, 3)  // máximo 3 días offline
 }
@@ -981,10 +1169,10 @@ function updateStreak(hadCorrectActionToday) {
 // Se llama después de cada acción significativa.
 // Solo asigna logros que aún no han sido obtenidos.
 function checkAndGrantAchievements() {
-  const progress     = getProgress()
-  const stats        = getStats()
-  const plants       = getUserPlants()
-  const existingIds  = db.prepare(
+  const progress = getProgress()
+  const stats = getStats()
+  const plants = getUserPlants()
+  const existingIds = db.prepare(
     `SELECT clave_logro FROM logros WHERE clave_logro != ''`
   ).all().map(r => r.clave_logro)
 
@@ -1019,8 +1207,8 @@ function checkAndGrantAchievements() {
 
   // Semana perfecta: completó una semana sin ningún error
   const totalErrors = stats.errores_riego + stats.errores_abono +
-                      stats.errores_poda  + stats.errores_ubicacion
-  const semana      = stats.semana_simulada_actual
+    stats.errores_poda + stats.errores_ubicacion
+  const semana = stats.semana_simulada_actual
   if (semana >= 1 && totalErrors === 0)
     grant('sin_errores_semana', 'Semana Perfecta', 'Completa una semana sin errores de cuidado', 'EDUCATIVO')
 
@@ -1062,6 +1250,20 @@ function completeTutorial() {
   db.prepare('UPDATE progreso SET tutorial_completado = 1').run()
 }
 
+// Reinicia completamente el juego eliminando todo el progreso.
+// Útil para pruebas y como opción de "nueva partida" para el jugador.
+function resetGame() {
+  db.prepare('DELETE FROM plantas_usuario').run()
+  db.prepare('DELETE FROM estadisticas').run()
+  db.prepare('DELETE FROM logros').run()
+  db.prepare('UPDATE progreso SET nivel = 1, experiencia = 0, racha_dias = 0, tutorial_completado = 0, ultimo_cierre = NULL').run()
+}
+
+// Resetea el tutorial para que vuelva a mostrarse.
+// Se usa en "Nueva Partida" y para pruebas de desarrollo.
+function resetTutorial() {
+  db.prepare('UPDATE progreso SET tutorial_completado = 0').run()
+}
 
 
 // Exportamos todo lo que necesitan los demás módulos
@@ -1104,5 +1306,9 @@ module.exports = {
   checkAndGrantAchievements,
   grantQuizPerfectAchievement,
   isTutorialCompleted,
-  completeTutorial
+  completeTutorial,
+  resetGame,
+  resetTutorial,
+  drainPlant
+
 }

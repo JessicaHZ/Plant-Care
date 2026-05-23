@@ -1,124 +1,82 @@
 document.addEventListener('DOMContentLoaded', async () => {
 
-  // ── Inicialización global ─────────────────────────────────────────────
-  // Sin autenticación: el juego inicia directamente en el menú principal.
-  // Todos los módulos se inicializan con el progreso local del jugador.
+  // ✅ Muestra splash inmediatamente
+  ScreenManager.init()
 
-  const progressResult = await window.gameAPI.getProgress()
-  const progress = progressResult.success ? progressResult.progress : { nivel: 1, experiencia: 0, racha_dias: 0 }
+  // ── Carga datos iniciales en paralelo ─────────────────────────────────
+  const [progressResult, plantsResult] = await Promise.all([
+    window.gameAPI.getProgress(),
+    window.gameAPI.getUserPlants()
+  ])
 
-  const plantsResult = await window.gameAPI.getUserPlants()
-  const plantCount   = plantsResult.success ? plantsResult.plants.length : 0
+  const progress   = progressResult.success
+    ? progressResult.progress
+    : { nivel: 1, experiencia: 0, racha_dias: 0 }
+  const plantCount = plantsResult.success ? plantsResult.plants.length : 0
 
-  // Versión de Electron en pantalla
+  // Versión de Electron
   const versionLabel = document.getElementById('version-label')
   if (versionLabel) {
     versionLabel.textContent = `Electron v${window.gameAPI.getVersion()}`
   }
 
-  // ── Módulos del juego ─────────────────────────────────────────────────
-  // Se inicializan una sola vez al cargar el DOM.
-  PlayerHUD.init()
-  PlayerHUD.update(progress, plantCount)
+  // ── Pantalla de inicio ────────────────────────────────────────────────
+  const hasProgress = progress.experiencia > 0 || plantCount > 0
+  const continueBtn = document.getElementById('btn-continue-game')
+  if (continueBtn) continueBtn.disabled = !hasProgress
 
-  CareActions.init()
-  Simulation.init()
+  document.getElementById('btn-continue-game').addEventListener('click', async () => {
+    await _enterGame()
+  })
 
-  // ── Tiempo offline ────────────────────────────────────────────
-  // Calcula días transcurridos mientras el juego estuvo cerrado
-  const offlineResult = await window.gameAPI.getOfflineDays()
-  if (offlineResult.success && offlineResult.days > 0) {
-    await _processOfflineDays(offlineResult.days)
-  }
+  document.getElementById('btn-new-game').addEventListener('click', async () => {
+    if (hasProgress) {
+      const confirmed = await _showNewGameConfirm()
+      if (!confirmed) return
+    }
+    await window.gameAPI.resetGame()
+    await _enterGame(true)
+  })
 
-  // Navega directamente al menú principal (sin splash de login)
-  // Navega directamente al menú principal
-  ScreenManager.init()
+  // ── Navegación inferior ───────────────────────────────────────────────
+  initBottomNav()
+  SlotEditor.init()
 
-  // ✅ Muestra el tutorial si es la primera vez
-  await Tutorial.checkAndStart()
+  // ── Eventos globales ──────────────────────────────────────────────────
 
-  // ── Eventos globales del juego ────────────────────────────────────────
-  // Registrados una sola vez aquí para evitar listeners duplicados.
-
-  // Actualiza el HUD cada vez que el jugador gana XP
   window.addEventListener('xp:gained', async () => {
     const result = await window.gameAPI.getProgress()
     if (result.success) {
-      PlayerHUD.update(result.progress, plantCount)
+      const pr = await window.gameAPI.getUserPlants()
+      const count = pr.success ? pr.plants.length : 0
+      PlayerHUD.update(result.progress, count)
     }
   })
 
-  // Verifica si debe activarse la revisión semanal tras avanzar días
   window.addEventListener('simulation:tick', async ({ detail }) => {
-  // ✅ Recarga el progreso para reflejar la racha actualizada
-  const result = await window.gameAPI.getProgress()
-  if (result.success) {
-    const plantsResult = await window.gameAPI.getUserPlants()
-    const count = plantsResult.success ? plantsResult.plants.length : 0
-    PlayerHUD.update(result.progress, count)
-  }
-  await WeeklyReview.checkAndRun(detail.day)
+    const result = await window.gameAPI.getProgress()
+    if (result.success) {
+      const pr = await window.gameAPI.getUserPlants()
+      const count = pr.success ? pr.plants.length : 0
+      PlayerHUD.update(result.progress, count)
+    }
+    await WeeklyReview.checkAndRun(detail.day)
   })
 
-  // Actualiza el contador de plantas en el HUD al adquirir una
   window.addEventListener('plant:acquired', async () => {
     const result = await window.gameAPI.getUserPlants()
     if (result.success) {
-      PlayerHUD.update(progress, result.plants.length)
+      const pr = await window.gameAPI.getProgress()
+      const fp = pr.success ? pr.progress : progress
+      PlayerHUD.update(fp, result.plants.length)
     }
   })
 
-  // ════════════════════════════════════════════════════════
-  // MENÚ PRINCIPAL
-  // ════════════════════════════════════════════════════════
-
-  document.getElementById('btn-go-nursery').addEventListener('click', async () => {
-    ScreenManager.show('nursery')
-    await Nursery.init()
-  })
-
-  document.getElementById('btn-go-environment').addEventListener('click', async () => {
-    ScreenManager.show('environment')
-    await Environment.init()
-  })
-
-  document.getElementById('btn-go-minigames').addEventListener('click', () => {
-    ScreenManager.show('minigames')
-  })
-
-  document.getElementById('btn-go-profile').addEventListener('click', async () => {
-    ScreenManager.show('profile')
-    await ProfileScreen.init()
-  })
-
-  document.getElementById('btn-profile-back').addEventListener('click', () => {
-    ScreenManager.show('main-menu')
-  })
-
-  // ════════════════════════════════════════════════════════
-  // NAVEGACIÓN — BOTONES DE RETORNO
-  // ════════════════════════════════════════════════════════
-
-  document.getElementById('btn-nursery-back').addEventListener('click', () => {
-    ScreenManager.show('main-menu')
-  })
-
-  document.getElementById('btn-env-back').addEventListener('click', () => {
-    ScreenManager.show('main-menu')
-  })
-
-  document.getElementById('btn-minigames-back').addEventListener('click', () => {
-    ScreenManager.show('main-menu')
-  })
-
-  // ════════════════════════════════════════════════════════
-  // MINIJUEGOS
-  // ════════════════════════════════════════════════════════
+  // ── Minijuegos ────────────────────────────────────────────────────────
 
   document.getElementById('btn-start-pests').addEventListener('click', () => {
-    MiniGamePests.start((correct) => {
-      console.log(`Plagas: ${correct ? 'correcto' : 'incorrecto'}`)
+    MiniGameDefense.start((summary) => {
+      console.log(`Defensa del brote: ${summary.xpGained} XP`)
     })
   })
 
@@ -128,28 +86,107 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
   })
 
+  // ── Funciones internas ────────────────────────────────────────────────
 
-  // Procesa los días offline y muestra el mensaje de bienvenida
+  document.getElementById('btn-start-pruning').addEventListener('click', () => {
+    MiniGamePruning.startPractice((result) => {
+      console.log(`Poda practica: ${result.accuracy}% de precision`)
+    })
+  })
+
+  function initBottomNav() {
+    const nav = document.getElementById('bottom-nav')
+    if (!nav) return
+
+    nav.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.nav-btn')
+      if (!btn) return
+
+      const screen = btn.dataset.screen
+      if (!screen) return
+
+      nav.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+
+      switch (screen) {
+        case 'environment':
+          ScreenManager.show('environment')
+          await Environment.init()
+          window.dispatchEvent(new CustomEvent('tutorial:screen:environment'))
+          break
+        case 'nursery':
+          ScreenManager.show('nursery')
+          await Nursery.init()
+          window.dispatchEvent(new CustomEvent('tutorial:screen:nursery'))
+          break
+        case 'minigames':
+          ScreenManager.show('minigames')
+          break
+        case 'profile':
+          ScreenManager.show('profile')
+          await ProfileScreen.init()
+          break
+      }
+    })
+  }
+
+  function showBottomNav() {
+    document.getElementById('bottom-nav')?.classList.remove('hidden')
+  }
+
+  async function _enterGame(forceTutorial = false) {
+    // Fase 1 — inmediata
+    ScreenManager.show('environment')
+    showBottomNav()
+    PlayerHUD.init()
+    CareActions.init()
+
+    // Fase 2 — en paralelo
+    const [freshProgress, freshPlants, offlineResult] = await Promise.all([
+      window.gameAPI.getProgress(),
+      window.gameAPI.getUserPlants(),
+      window.gameAPI.getOfflineDays()
+    ])
+
+    const freshCount = freshPlants.success ? freshPlants.plants.length : 0
+    const fp = freshProgress.success
+      ? freshProgress.progress
+      : { nivel: 1, experiencia: 0, racha_dias: 0 }
+
+    PlayerHUD.update(fp, freshCount)
+
+    await Promise.all([
+      Simulation.init(),
+      Environment.init()
+    ])
+
+    if (offlineResult.success && offlineResult.days > 0) {
+      await _processOfflineDays(offlineResult.days)
+    }
+
+    if (forceTutorial) {
+      await window.gameAPI.resetTutorial()
+    }
+    await new Promise(resolve => setTimeout(resolve, 100))
+    await Tutorial.checkAndStart()
+  }
+
   async function _processOfflineDays(days) {
-    // Avanza la simulación los días transcurridos
     const result = await window.gameAPI.advanceDays(days)
 
-    // Actualiza el día en pantalla
     if (result.success) {
       Simulation._currentDay += days
       Simulation._updateDayDisplay()
     }
 
-    // Detecta plantas que necesitan atención
-    const plantsResult = await window.gameAPI.getUserPlants()
-    const needsAttention = plantsResult.success
-      ? plantsResult.plants.filter(p =>
+    const pr = await window.gameAPI.getUserPlants()
+    const needsAttention = pr.success
+      ? pr.plants.filter(p =>
           p.estado_planta === 'MARCHITA' ||
           p.estado_planta === 'ENFERMA'
         )
       : []
 
-    // Muestra mensaje de bienvenida
     _showOfflineMessage(days, needsAttention)
   }
 
@@ -164,27 +201,70 @@ document.addEventListener('DOMContentLoaded', async () => {
          </p>`
       : `<p style="color:#66bb6a; margin-top:0.75rem">✅ Tus plantas están bien por ahora.</p>`
 
-  overlay.innerHTML = `
-    <div class="diagnosis-modal">
-      <div class="diagnosis-header">
-        <span class="diagnosis-icon">🌿</span>
-        <h2 class="diagnosis-title">¡Bienvenido de vuelta!</h2>
+    overlay.innerHTML = `
+      <div class="diagnosis-modal">
+        <div class="diagnosis-header">
+          <span class="diagnosis-icon">🌿</span>
+          <h2 class="diagnosis-title">¡Bienvenido de vuelta!</h2>
+        </div>
+        <p style="text-align:center; color:var(--color-text); line-height:1.6; margin-top:1rem">
+          Han pasado <strong>${days} día${days > 1 ? 's' : ''}</strong>
+          desde tu última visita.
+        </p>
+        ${plantWarning}
+        <button class="btn btn-primary btn-full" id="btn-close-offline"
+                style="margin-top:1.5rem">
+          Ver mis plantas →
+        </button>
       </div>
-      <p style="text-align:center; color:var(--color-text); line-height:1.6; margin-top:1rem">
-        Han pasado <strong>${days} día${days > 1 ? 's' : ''}</strong>
-        desde tu última visita.
-      </p>
-      ${plantWarning}
-      <button class="btn btn-primary btn-full" id="btn-close-offline"
-              style="margin-top:1.5rem">
-        Ver mis plantas →
-      </button>
-    </div>
-  `
+    `
 
-  document.body.appendChild(overlay)
-  overlay.querySelector('#btn-close-offline')
-    .addEventListener('click', () => overlay.remove())
+    document.body.appendChild(overlay)
+    overlay.querySelector('#btn-close-offline')
+      .addEventListener('click', () => overlay.remove())
+  }
+
+  function _showNewGameConfirm() {
+    return new Promise((resolve) => {
+      const overlay = document.createElement('div')
+      overlay.className = 'diagnosis-overlay'
+      overlay.innerHTML = `
+        <div class="diagnosis-modal">
+          <div class="diagnosis-header">
+            <span class="diagnosis-icon">⚠️</span>
+            <h2 class="diagnosis-title">¿Nueva partida?</h2>
+          </div>
+          <p style="text-align:center; color:var(--color-text); line-height:1.6; margin-top:1rem">
+            Esto eliminará <strong>todo tu progreso actual</strong>:
+            plantas, nivel, XP y logros.
+            <br><br>
+            Esta acción no se puede deshacer.
+          </p>
+          <div style="display:flex; gap:1rem; margin-top:1.5rem">
+            <button class="btn btn-ghost btn-full" id="btn-confirm-cancel">
+              Cancelar
+            </button>
+            <button class="btn btn-primary btn-full" id="btn-confirm-new"
+                    style="background:#ef5350; border-color:#ef5350">
+              Sí, empezar de nuevo
+            </button>
+          </div>
+        </div>
+      `
+      document.body.appendChild(overlay)
+
+      overlay.querySelector('#btn-confirm-cancel')
+        .addEventListener('click', () => {
+          overlay.remove()
+          resolve(false)
+        })
+
+      overlay.querySelector('#btn-confirm-new')
+        .addEventListener('click', () => {
+          overlay.remove()
+          resolve(true)
+        })
+    })
   }
 
 })

@@ -1,0 +1,87 @@
+/* Herramienta temporal para ajustar slots de plantas en desarrollo. */
+
+.slot-editor-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 86px;
+  z-index: 2500;
+  width: 330px;
+  padding: 0.9rem;
+  background:
+    linear-gradient(180deg, rgba(95, 58, 36, 0.96), rgba(55, 34, 25, 0.96));
+  border: 2px solid var(--pixel-panel-border);
+  border-radius: 8px;
+  color: #fff5df;
+  box-shadow:
+    inset 0 2px 0 var(--pixel-panel-highlight),
+    0 6px 0 rgba(44, 26, 20, 0.72),
+    0 16px 26px var(--pixel-panel-shadow);
+}
+
+.slot-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+  color: #9be36f;
+}
+
+.slot-editor-header button,
+.slot-editor-actions button {
+  border: 2px solid #2c1a14;
+  border-radius: 4px;
+  background: #8f6246;
+  color: #fff5df;
+  cursor: pointer;
+  padding: 0.35rem 0.55rem;
+  font-weight: 700;
+}
+
+.slot-editor-panel p,
+.slot-editor-panel small {
+  color: var(--pixel-panel-muted);
+  font-size: 0.78rem;
+}
+
+.slot-editor-panel textarea {
+  width: 100%;
+  height: 170px;
+  margin: 0.6rem 0;
+  padding: 0.55rem;
+  resize: none;
+  border: 1px solid rgba(42, 24, 16, 0.72);
+  border-radius: 6px;
+  background: rgba(20, 12, 8, 0.55);
+  color: #fff5df;
+  font-family: Consolas, monospace;
+  font-size: 0.74rem;
+}
+
+.slot-editor-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.slot-editor-active .plant-slot {
+  border-color: #f1c77d;
+  background: rgba(241, 199, 125, 0.22);
+  cursor: move;
+  box-shadow: 0 0 0 2px rgba(44, 26, 20, 0.9);
+}
+
+.slot-editor-slot span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #fff5df;
+  text-shadow:
+    1px 0 0 #1a100d,
+    -1px 0 0 #1a100d,
+    0 1px 0 #1a100d,
+    0 -1px 0 #1a100d;
+  pointer-events: none;
+}

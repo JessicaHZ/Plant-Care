@@ -1,134 +1,338 @@
 // MiniGameQuiz: quiz de 5 preguntas sobre cuidado de plantas.
-// Implementa LM1 + LM2 — Recordar + Comprender.
+// Implementa LM1 + LM2: recordar y comprender.
 // Una respuesta correcta cuenta para la racha diaria (RF-22).
 
 const MiniGameQuiz = {
+  SESSION_LENGTH: 5,
 
-  _onFinish:  null,
+  _onFinish: null,
   _questions: [],
-  _current:   0,
-  _correct:   0,
-  _overlay:   null,   // referencia al overlay para no buscarlo en el DOM
+  _current: 0,
+  _correct: 0,
+  _overlay: null,
 
-  _allQuestions: [
+  _questionBank: [
     {
-      question:     '¿Por qué las hojas de una planta se ponen amarillas?',
+      category: 'Riego',
+      question: 'Por que las hojas de una planta pueden ponerse amarillas?',
       options: [
         'Por exceso de riego o falta de nutrientes',
-        'Porque necesitan más sol directo',
-        'Es una señal de que están creciendo bien',
+        'Porque siempre necesitan sol directo',
+        'Porque la planta esta creciendo sin problemas',
         'Por falta de poda reciente'
       ],
       correctIndex: 0,
-      explanation:  'El amarillamiento es la señal más común de exceso de agua o deficiencia de nitrógeno. Revisa el riego antes de abonar.'
+      explanation: 'El amarillamiento suele aparecer por exceso de agua o deficiencia de nitrogeno. Primero revisa humedad y drenaje.'
     },
     {
-      question:     '¿Cuál es la diferencia entre luz directa e indirecta?',
+      category: 'Luz',
+      question: 'Cual es la diferencia entre luz directa e indirecta?',
       options: [
-        'No hay diferencia, cualquier luz sirve igual',
-        'La luz directa toca la planta sin obstáculos; la indirecta es filtrada',
-        'La luz indirecta es más fuerte que la directa',
-        'Solo las plantas de exterior necesitan luz directa'
+        'No hay diferencia practica entre ambas',
+        'La directa toca la planta sin filtro; la indirecta llega suavizada',
+        'La indirecta siempre es mas intensa que la directa',
+        'Solo las plantas de exterior usan luz directa'
       ],
       correctIndex: 1,
-      explanation:  'La luz directa incide sobre las hojas sin filtro. La luz indirecta es más suave, ideal para plantas tropicales de interior.'
+      explanation: 'La luz directa incide sin obstaculos. La indirecta es filtrada o reflejada, ideal para muchas plantas tropicales.'
     },
     {
-      question:     '¿Cuándo es el mejor momento para podar una planta?',
+      category: 'Poda',
+      question: 'Cuando conviene podar una planta?',
       options: [
-        'Cada semana, sin importar su estado',
-        'Solo cuando tiene hojas secas, dañadas o el crecimiento es descontrolado',
-        'Inmediatamente después de regarla',
-        'Cuando la planta está enferma para recuperarla'
+        'Cada semana sin importar su estado',
+        'Cuando hay hojas secas, danadas o crecimiento descontrolado',
+        'Justo despues de regarla abundantemente',
+        'Cuando esta sana para acelerar su deterioro'
       ],
       correctIndex: 1,
-      explanation:  'La poda debe hacerse con propósito: eliminar hojas dañadas o controlar el crecimiento. Podar sin necesidad estresa a la planta.'
+      explanation: 'La poda debe tener proposito: retirar tejido deteriorado o controlar forma. Podar sin necesidad causa estres.'
     },
     {
-      question:     '¿Para qué sirve el abono en las plantas?',
+      category: 'Nutrientes',
+      question: 'Para que sirve el abono?',
       options: [
-        'Reemplaza al agua cuando se olvida regar',
-        'Aporta nutrientes que el sustrato no puede dar indefinidamente',
-        'Endurece la tierra para que las raíces no salgan',
-        'Elimina plagas y enfermedades'
+        'Reemplaza el riego cuando se olvida aplicar agua',
+        'Aporta nutrientes que el sustrato agota con el tiempo',
+        'Endurece la tierra para proteger las raices',
+        'Elimina cualquier plaga automaticamente'
       ],
       correctIndex: 1,
-      explanation:  'El sustrato agota sus nutrientes con el tiempo. El abono repone nitrógeno, fósforo y potasio esenciales. No reemplaza al riego.'
+      explanation: 'El abono repone nutrientes esenciales como nitrogeno, fosforo y potasio. No sustituye agua ni control sanitario.'
     },
     {
-      question:     '¿Qué indica una planta con hojas caídas y tierra seca?',
+      category: 'Riego',
+      question: 'Que indica una planta con hojas caidas y sustrato seco?',
       options: [
         'Exceso de luz solar',
-        'Necesita ser podada urgentemente',
-        'Falta de agua — necesita riego',
-        'La temperatura es demasiado baja'
+        'Necesidad urgente de poda',
+        'Falta de agua',
+        'Temperatura demasiado baja'
       ],
       correctIndex: 2,
-      explanation:  'Hojas caídas con tierra seca es la señal más clara de sed. Riega lentamente hasta que el agua salga por el drenaje.'
+      explanation: 'Hojas caidas con tierra seca indican deshidratacion. Riega lentamente hasta humedecer el sustrato de forma uniforme.'
     },
     {
-      question:     '¿Qué pasa si una planta de sombra recibe luz solar directa intensa?',
+      category: 'Luz',
+      question: 'Que pasa si una planta de sombra recibe sol directo intenso?',
       options: [
-        'Crece más rápido y produce más flores',
-        'Sus hojas se queman y pueden necrosarse',
-        'No le afecta porque todas las plantas necesitan sol',
-        'Se vuelve más resistente a la sequía'
+        'Crece mas rapido y florece siempre',
+        'Sus hojas pueden quemarse o necrosarse',
+        'No le afecta porque todas necesitan sol directo',
+        'Se vuelve mas resistente a la sequia'
       ],
       correctIndex: 1,
-      explanation:  'Las plantas de sombra tienen hojas más delgadas y sensibles. La luz solar directa intensa las quema literalmente.'
+      explanation: 'Muchas plantas de sombra tienen hojas sensibles. El sol directo fuerte puede quemar tejido foliar.'
     },
     {
-      question:     '¿Con qué frecuencia debe regarse generalmente una suculenta?',
+      category: 'Riego',
+      question: 'Como debe regarse generalmente una suculenta?',
       options: [
-        'Todos los días para mantener la tierra húmeda',
-        'Cada 2-3 días igual que cualquier planta',
-        'Cada 2-3 semanas, solo cuando el sustrato está completamente seco',
-        'Nunca; almacenan suficiente agua para siempre'
+        'Todos los dias para mantener humedad constante',
+        'Cada dos dias como cualquier planta',
+        'Solo cuando el sustrato esta completamente seco',
+        'Nunca, porque almacena agua para siempre'
       ],
       correctIndex: 2,
-      explanation:  'Las suculentas almacenan agua en sus hojas. El método correcto es "remojo y secado": regar abundante y esperar a que la tierra se seque completamente.'
+      explanation: 'Las suculentas almacenan agua. El metodo seguro es regar bien y esperar a que el sustrato se seque.'
     },
     {
-      question:     '¿Qué es el drenaje y por qué es importante?',
+      category: 'Sustrato',
+      question: 'Que es el drenaje del sustrato?',
       options: [
-        'El proceso de quitar hojas secas manualmente',
-        'La capacidad del sustrato de dejar salir el exceso de agua',
-        'Un tipo de abono líquido especial',
+        'Quitar hojas secas manualmente',
+        'La capacidad de dejar salir el exceso de agua',
+        'Un tipo de fertilizante liquido',
         'La cantidad de luz que absorbe la planta'
       ],
       correctIndex: 1,
-      explanation:  'Un buen drenaje evita que el agua quede estancada en las raíces, causando pudrición. Usa sustratos porosos y macetas con agujeros.'
+      explanation: 'Un buen drenaje evita agua estancada y reduce el riesgo de pudricion de raices.'
     },
+    {
+      category: 'Plagas',
+      question: 'Cual es una forma segura de controlar pulgones?',
+      options: [
+        'Regar mas seguido',
+        'Aplicar jabon potasico diluido',
+        'Podar toda la planta',
+        'Agregar mucho abono'
+      ],
+      correctIndex: 1,
+      explanation: 'El jabon potasico ayuda a controlar pulgones sin ser tan agresivo como tratamientos no selectivos.'
+    },
+    {
+      category: 'Trasplante',
+      question: 'Cuando suele ser necesario trasplantar?',
+      options: [
+        'Cada mes obligatoriamente',
+        'Cuando las raices salen por el drenaje',
+        'Siempre durante invierno',
+        'Solo cuando aparecen flores'
+      ],
+      correctIndex: 1,
+      explanation: 'Raices saliendo por debajo indican poco espacio. Un trasplante oportuno mejora crecimiento y absorcion.'
+    },
+    {
+      category: 'Nutrientes',
+      question: 'Que nutriente favorece principalmente el crecimiento de hojas?',
+      options: [
+        'Fosforo',
+        'Nitrogeno',
+        'Calcio',
+        'Azufre'
+      ],
+      correctIndex: 1,
+      explanation: 'El nitrogeno participa en clorofila y crecimiento vegetativo, especialmente hojas y tallos.'
+    },
+    {
+      category: 'Biologia vegetal',
+      question: 'Que es la fotosintesis?',
+      options: [
+        'Absorber agua sin usar luz',
+        'Convertir luz, agua y CO2 en azucares',
+        'Reproducirse solo durante el dia',
+        'Eliminar hojas viejas naturalmente'
+      ],
+      correctIndex: 1,
+      explanation: 'En la fotosintesis la planta usa energia luminosa para producir azucares a partir de agua y dioxido de carbono.'
+    },
+    {
+      category: 'Sustrato',
+      question: 'Que rango de pH prefieren muchas plantas ornamentales?',
+      options: [
+        'Muy acido, cerca de 3',
+        'Ligeramente acido a neutro, cerca de 6 a 7',
+        'Muy alcalino, cerca de 10',
+        'El pH nunca influye'
+      ],
+      correctIndex: 1,
+      explanation: 'Un pH cercano a 6-7 facilita la disponibilidad de muchos nutrientes para las raices.'
+    },
+    {
+      category: 'Prevencion',
+      question: 'Cual es una buena practica para prevenir plagas?',
+      options: [
+        'Revisar hojas y tallos cada semana',
+        'Regar aunque el sustrato este mojado',
+        'Aplicar abono todos los dias',
+        'Mantener todas las plantas en oscuridad'
+      ],
+      correctIndex: 0,
+      explanation: 'La revision periodica permite detectar plagas temprano, antes de que se propaguen.'
+    },
+    {
+      category: 'Biologia vegetal',
+      question: 'Que es la clorofila?',
+      options: [
+        'Una vitamina para raices',
+        'Un pigmento verde que captura luz',
+        'Un tipo de agua mineral',
+        'Una enfermedad foliar'
+      ],
+      correctIndex: 1,
+      explanation: 'La clorofila da color verde y participa en la captura de energia luminosa.'
+    },
+    {
+      category: 'Nutrientes',
+      question: 'En que temporada suele aprovecharse mejor el abono?',
+      options: [
+        'Cuando la planta esta en crecimiento activo',
+        'Solo en la noche',
+        'Siempre en reposo invernal',
+        'Unicamente despues de podar'
+      ],
+      correctIndex: 0,
+      explanation: 'Durante crecimiento activo la planta demanda y aprovecha mejor los nutrientes disponibles.'
+    },
+    {
+      category: 'Nutrientes',
+      question: 'Que funcion cumple el potasio en las plantas?',
+      options: [
+        'Da color verde por si solo',
+        'Ayuda a regular agua y fortalecer tejidos',
+        'Elimina plagas al contacto',
+        'Sustituye completamente al fosforo'
+      ],
+      correctIndex: 1,
+      explanation: 'El potasio participa en regulacion hidrica, resistencia y funcionamiento general de tejidos vegetales.'
+    },
+    {
+      category: 'Propagacion',
+      question: 'Como se reproduce facilmente un pothos?',
+      options: [
+        'Por esquejes colocados en agua o sustrato',
+        'Solo por semillas raras',
+        'Por esporas bajo la hoja',
+        'Dividiendo sus flores'
+      ],
+      correctIndex: 0,
+      explanation: 'El pothos forma raices con facilidad desde nudos del tallo, por eso se propaga bien por esquejes.'
+    },
+    {
+      category: 'Humedad',
+      question: 'Que planta suele necesitar humedad ambiental alta?',
+      options: [
+        'Cactus',
+        'Echeveria',
+        'Calathea',
+        'Mammillaria'
+      ],
+      correctIndex: 2,
+      explanation: 'La Calathea es tropical; prefiere humedad ambiental alta y luz indirecta.'
+    },
+    {
+      category: 'Especies',
+      question: 'Que caracteriza a la Tradescantia zebrina?',
+      options: [
+        'Espinas duras en el tallo',
+        'Hojas con tonos morados y verdosos',
+        'Flores gigantes permanentes',
+        'Necesidad de sequia extrema'
+      ],
+      correctIndex: 1,
+      explanation: 'La Tradescantia zebrina destaca por hojas de tonos morado, verde y plateado, ademas de crecimiento rapido.'
+    },
+    {
+      category: 'Sanidad',
+      question: 'Como puede identificarse oidio en hojas?',
+      options: [
+        'Por polvo blanco sobre la superficie foliar',
+        'Por raices saliendo de la maceta',
+        'Por crecimiento de hojas nuevas',
+        'Por flores mas grandes'
+      ],
+      correctIndex: 0,
+      explanation: 'El oidio suele verse como una capa blanca similar a polvo sobre hojas y tallos.'
+    },
+    {
+      category: 'Poda',
+      question: 'Para que sirve la poda de mantenimiento?',
+      options: [
+        'Cortar raices sanas cada semana',
+        'Eliminar ramas u hojas secas y redirigir energia',
+        'Quitar todo el sustrato',
+        'Reemplazar el riego'
+      ],
+      correctIndex: 1,
+      explanation: 'Retirar tejido seco o danado ayuda a la planta a conservar energia y reduce focos de enfermedad.'
+    },
+    {
+      category: 'Riego',
+      question: 'Que riesgo produce el exceso de agua?',
+      options: [
+        'Pudricion de raices por falta de oxigeno',
+        'Mayor fotosintesis inmediata',
+        'Raices mas fuertes siempre',
+        'Eliminacion de toda plaga'
+      ],
+      correctIndex: 0,
+      explanation: 'El sustrato saturado reduce oxigeno disponible y favorece pudricion radicular.'
+    },
+    {
+      category: 'Luz',
+      question: 'Que planta tolera mejor condiciones de poca luz?',
+      options: [
+        'Pothos',
+        'Lavanda',
+        'Rosa de sol pleno',
+        'Cactus desertico'
+      ],
+      correctIndex: 0,
+      explanation: 'El pothos tolera luz baja mejor que muchas especies, aunque crece mas vigoroso con luz indirecta.'
+    }
   ],
 
-  // Sin userId — sesión local única
   start(onFinish) {
     this._onFinish = onFinish
-    this._current  = 0
-    this._correct  = 0
-    this._questions = this._shuffle([...this._allQuestions]).slice(0, 5)
+    this._current = 0
+    this._correct = 0
+    this._questions = this._buildSession()
 
     this._createOverlay()
     this._renderQuestion()
   },
 
+  _buildSession() {
+    return this._shuffle([...this._questionBank]).slice(0, this.SESSION_LENGTH)
+  },
+
   _createOverlay() {
     const overlay = document.createElement('div')
-    overlay.id        = 'quiz-overlay'
+    overlay.id = 'quiz-overlay'
     overlay.className = 'minigame-overlay'
     overlay.innerHTML = `
       <div class="minigame-container">
         <div class="minigame-header">
           <div>
-            <h2 class="minigame-title">❓ Quiz de Plantas</h2>
+            <h2 class="minigame-title">Quiz de Plantas</h2>
             <p class="minigame-instruction">
-              Responde correctamente para ganar XP y mantener tu racha
+              Responde correctamente para ganar XP y mantener tu racha.
             </p>
           </div>
           <div class="minigame-stats">
             <div class="mini-stat">
               <span class="mini-stat-label">Pregunta</span>
-              <span class="mini-stat-value" id="quiz-progress">1/5</span>
+              <span class="mini-stat-value" id="quiz-progress">1/${this.SESSION_LENGTH}</span>
             </div>
             <div class="mini-stat">
               <span class="mini-stat-label">Correctas</span>
@@ -139,36 +343,28 @@ const MiniGameQuiz = {
 
         <div id="quiz-question-area"></div>
         <div id="quiz-feedback" class="quiz-feedback hidden"></div>
-        <div id="quiz-final"    class="hidden"></div>
       </div>
     `
+
     document.body.appendChild(overlay)
     this._overlay = overlay
-
-    // ✅ Un solo listener delegado para todo el quiz
-    // Elimina la acumulación de handlers que causaba el bug
-    overlay.addEventListener('click', (e) => this._handleClick(e))
+    overlay.addEventListener('click', (event) => this._handleClick(event))
   },
 
-  // ✅ Delegación central — un handler para todas las interacciones
-  async _handleClick(e) {
-
-    // ── Clic en opción de respuesta ──────────────────────────────────────
-    const optionBtn = e.target.closest('.quiz-option-btn')
-    if (optionBtn && !optionBtn.disabled) {
-      await this._handleAnswer(optionBtn)
+  async _handleClick(event) {
+    const optionButton = event.target.closest('.quiz-option-btn')
+    if (optionButton && !optionButton.disabled) {
+      await this._handleAnswer(optionButton)
       return
     }
 
-    // ── Clic en "Siguiente / Ver resultado" ──────────────────────────────
-    if (e.target.id === 'btn-next-question') {
+    if (event.target.id === 'btn-next-question') {
       this._current++
       this._renderQuestion()
       return
     }
 
-    // ── Clic en "Continuar" en pantalla final ────────────────────────────
-    if (e.target.id === 'btn-quiz-done') {
+    if (event.target.id === 'btn-quiz-done') {
       this._overlay.remove()
       if (this._onFinish) this._onFinish(this._correct)
     }
@@ -180,112 +376,140 @@ const MiniGameQuiz = {
       return
     }
 
-    const q    = this._questions[this._current]
+    const question = this._questions[this._current]
     const area = this._overlay.querySelector('#quiz-question-area')
     const feedback = this._overlay.querySelector('#quiz-feedback')
 
     feedback.classList.add('hidden')
+    feedback.innerHTML = ''
 
     this._overlay.querySelector('#quiz-progress').textContent =
       `${this._current + 1}/${this._questions.length}`
 
     area.innerHTML = `
       <div class="quiz-question-card">
-        <p class="quiz-question-text">${q.question}</p>
+        <div class="quiz-category">${question.category}</div>
+        <p class="quiz-question-text">${question.question}</p>
         <div class="quiz-options">
-          ${q.options.map((opt, i) => `
-            <button class="quiz-option-btn" data-index="${i}">
-              <span class="quiz-opt-letter">${'ABCD'[i]}</span>
-              ${opt}
+          ${question.options.map((option, index) => `
+            <button class="quiz-option-btn" data-index="${index}">
+              <span class="quiz-opt-letter">${'ABCD'[index]}</span>
+              ${option}
             </button>
           `).join('')}
         </div>
       </div>
     `
-    // No se registran listeners aquí — el listener delegado del overlay
-    // captura los clics en .quiz-option-btn automáticamente ✅
   },
 
-  async _handleAnswer(btn) {
-    const question  = this._questions[this._current]
-    const selected  = parseInt(btn.dataset.index)
+  async _handleAnswer(button) {
+    const question = this._questions[this._current]
+    const selected = Number(button.dataset.index)
     const isCorrect = selected === question.correctIndex
 
-    // Deshabilita todas las opciones
-    this._overlay.querySelectorAll('.quiz-option-btn').forEach(b => {
-      b.disabled = true
-      if (parseInt(b.dataset.index) === question.correctIndex) b.classList.add('correct')
+    this._overlay.querySelectorAll('.quiz-option-btn').forEach((item) => {
+      item.disabled = true
+      if (Number(item.dataset.index) === question.correctIndex) {
+        item.classList.add('correct')
+      }
     })
-    if (!isCorrect) btn.classList.add('incorrect')
 
+    if (!isCorrect) button.classList.add('incorrect')
     if (isCorrect) this._correct++
+
     this._overlay.querySelector('#quiz-correct').textContent = this._correct
 
-    // Registra en BD                                         ✅ sin userId
-    const result = await window.gameAPI.submitQuiz(isCorrect)
-
-    // Notifica al HUD si ganó XP
-    if (result.xpResult) {
-      window.dispatchEvent(new CustomEvent('xp:gained', {    // ✅ window
+    const result = await this._submitAnswer(isCorrect)
+    if (result?.xpResult) {
+      window.dispatchEvent(new CustomEvent('xp:gained', {
         detail: result.xpResult
       }))
     }
 
-    // Muestra feedback con botón de siguiente
-    const feedbackEl = this._overlay.querySelector('#quiz-feedback')
-    feedbackEl.className = `quiz-feedback ${isCorrect ? 'correct' : 'incorrect'}`
-    feedbackEl.innerHTML = `
-      <p><strong>${isCorrect ? '✅ ¡Correcto!' : '❌ Incorrecto'}</strong></p>
+    this._showFeedback(question, isCorrect)
+  },
+
+  async _submitAnswer(isCorrect) {
+    try {
+      return await window.gameAPI.submitQuiz(isCorrect)
+    } catch (error) {
+      console.error('No se pudo registrar la respuesta del quiz:', error)
+      return { success: false, xpResult: null }
+    }
+  },
+
+  _showFeedback(question, isCorrect) {
+    const feedback = this._overlay.querySelector('#quiz-feedback')
+    const isLastQuestion = this._current + 1 >= this._questions.length
+
+    feedback.className = `quiz-feedback ${isCorrect ? 'correct' : 'incorrect'}`
+    feedback.innerHTML = `
+      <p><strong>${isCorrect ? 'Correcto' : 'Incorrecto'}</strong></p>
       <p>${question.explanation}</p>
       <button class="btn btn-primary" id="btn-next-question">
-        ${this._current + 1 < this._questions.length ? 'Siguiente →' : 'Ver resultado →'}
+        ${isLastQuestion ? 'Ver resultado' : 'Siguiente'}
       </button>
     `
-    feedbackEl.classList.remove('hidden')
-    // El listener de btn-next-question lo captura el delegado ✅
+    feedback.classList.remove('hidden')
   },
 
   _showFinalResult() {
-
     if (this._correct === this._questions.length) {
       window.gameAPI.grantQuizPerfectAchievement()
     }
-    const percentage = Math.round((this._correct / this._questions.length) * 100)
-    const message    = percentage >= 80
-      ? '¡Excelente dominio del cuidado de plantas!'
-      : percentage >= 60
-        ? 'Buen resultado. Sigue practicando para reforzar tu aprendizaje.'
-        : 'Hay conceptos por reforzar. El tutorial puede ayudarte.'
 
+    const percentage = Math.round((this._correct / this._questions.length) * 100)
+    const level = this._resultLevel(percentage)
     const streakNote = this._correct > 0
-      ? '🔥 Tu respuesta correcta contó para la racha de hoy.'
+      ? '<p class="result-streak">Tu respuesta correcta conto para la racha de hoy.</p>'
       : ''
 
     this._overlay.querySelector('.minigame-container').innerHTML = `
-      <div class="minigame-result">
-        <div class="result-icon">
-          ${percentage >= 80 ? '🌟' : percentage >= 60 ? '👍' : '📚'}
-        </div>
+      <div class="minigame-result quiz-result">
+        <div class="result-icon">${level.icon}</div>
         <h2 class="result-title">Resultado del Quiz</h2>
         <div class="result-score-big">
           ${this._correct}<span>/${this._questions.length}</span>
         </div>
-        <p class="result-message">${message}</p>
-        ${streakNote ? `<p class="result-streak">${streakNote}</p>` : ''}
-        <button class="btn btn-primary" id="btn-quiz-done">Continuar →</button>
+        <p class="result-message">${level.message}</p>
+        <div class="quiz-result-breakdown">
+          <span>Precision</span><strong>${percentage}%</strong>
+          <span>Banco disponible</span><strong>${this._questionBank.length} preguntas</strong>
+        </div>
+        ${streakNote}
+        <button class="btn btn-primary" id="btn-quiz-done">Continuar</button>
       </div>
     `
-    // btn-quiz-done lo captura el listener delegado ✅
   },
 
-  _shuffle(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1))
-      ;[arr[i], arr[j]] = [arr[j], arr[i]]
+  _resultLevel(percentage) {
+    if (percentage >= 80) {
+      return {
+        icon: '*',
+        message: 'Excelente dominio de conceptos de cuidado vegetal.'
+      }
     }
-    return arr
-  }
 
+    if (percentage >= 60) {
+      return {
+        icon: '+',
+        message: 'Buen resultado. Sigue practicando para reforzar decisiones de cuidado.'
+      }
+    }
+
+    return {
+      icon: '!',
+      message: 'Hay conceptos por reforzar. Revisa riego, luz, sustrato y poda.'
+    }
+  },
+
+  _shuffle(items) {
+    for (let index = items.length - 1; index > 0; index--) {
+      const target = Math.floor(Math.random() * (index + 1))
+      ;[items[index], items[target]] = [items[target], items[index]]
+    }
+    return items
+  }
 }
 
 window.MiniGameQuiz = MiniGameQuiz

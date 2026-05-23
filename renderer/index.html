@@ -1,19 +1,44 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
   <title>Plant Simulator</title>
   <link rel="stylesheet" href="styles/global.css" />
   <link rel="stylesheet" href="styles/menu.css" />
   <link rel="stylesheet" href="styles/nursery.css" />
   <link rel="stylesheet" href="styles/environment.css" />
   <link rel="stylesheet" href="styles/diagnosis.css" />
+  <link rel="stylesheet" href="styles/guide.css" />
+  <link rel="stylesheet" href="styles/slot-editor.css" />
   <link rel="stylesheet" href="styles/minigames.css" />
+  <link rel="stylesheet" href="styles/minigame-quiz.css" />
+  <link rel="stylesheet" href="styles/minigame-weekly.css" />
+  <link rel="stylesheet" href="styles/minigame-defense.css" />
+  <link rel="stylesheet" href="styles/minigame-pruning.css" />
   <link rel="stylesheet" href="styles/profile.css" />
+  <link rel="stylesheet" href="styles/splash.css" />
+  <link rel="stylesheet" href="styles/navbar.css" />
 </head>
+
 <body>
+
+
+
+  <!-- ══════════════════════════════════════════════════════
+     PANTALLA: INICIO
+     Punto de entrada del juego. Permite continuar o nueva partida.
+     ══════════════════════════════════════════════════════ -->
+  <div id="screen-splash" class="screen">
+  <div class="splash-container">
+    <div class="splash-buttons">
+      <button class="menu-img-btn btn-continuar" id="btn-continue-game" disabled aria-label="Continuar partida"></button>
+      <button class="menu-img-btn btn-nueva" id="btn-new-game" aria-label="Nueva partida"></button>
+    </div>
+  </div>
+</div>
 
   <!-- ══════════════════════════════════════════════════════
        PANTALLA: MENÚ PRINCIPAL
@@ -116,7 +141,7 @@
   <!-- ══════════════════════════════════════════════════════
        PANTALLA: MINIJUEGOS
        HU-13: plagas. HU-14: quiz.
-       La poda ya no es minijuego (RF-09: herramienta de cuidado).
+       La poda se conserva como herramienta real y se ofrece aqui como practica.
        ══════════════════════════════════════════════════════ -->
   <div id="screen-minigames" class="screen">
     <div class="minigames-hub">
@@ -130,14 +155,14 @@
 
         <div class="minigame-card">
           <div class="minigame-card-icon">🐛</div>
-          <h3 class="minigame-card-title">Control de plagas</h3>
+          <h3 class="minigame-card-title">Defensa del brote</h3>
           <p class="minigame-card-desc">
-            Analiza los síntomas de la planta y elige el tratamiento correcto
-            entre las opciones disponibles.
+            Protege un brote de plagas invasoras y evita afectar organismos
+            aliados del ecosistema.
           </p>
           <div class="minigame-card-meta">
-            <span class="minigame-card-xp">+20 XP si aciertas</span>
-            <span class="minigame-card-time">🎯 1 escenario</span>
+            <span class="minigame-card-xp">XP por desempeno</span>
+            <span class="minigame-card-time">60 segundos</span>
           </div>
           <button class="btn btn-primary" id="btn-start-pests">Jugar</button>
         </div>
@@ -156,12 +181,26 @@
           <button class="btn btn-primary" id="btn-start-quiz">Jugar</button>
         </div>
 
+        <div class="minigame-card">
+          <div class="minigame-card-icon">✂️</div>
+          <h3 class="minigame-card-title">Poda de precision</h3>
+          <p class="minigame-card-desc">
+            Practica como identificar hojas secas o danadas sin afectar tus
+            plantas reales.
+          </p>
+          <div class="minigame-card-meta">
+            <span class="minigame-card-xp">Modo practica</span>
+            <span class="minigame-card-time">Sin impacto</span>
+          </div>
+          <button class="btn btn-primary" id="btn-start-pruning">Practicar</button>
+        </div>
+
       </div>
     </div>
   </div>
 
 
-     <!-- ══════════════════════════════════════════════════════
+  <!-- ══════════════════════════════════════════════════════
      PANTALLA: MI PERFIL
      RF-26: estadísticas, nivel, logros.
      ══════════════════════════════════════════════════════ -->
@@ -188,11 +227,11 @@
         <div class="profile-panel active" id="tab-progress">
           <div class="progress-hero">
             <div class="progress-level-badge" id="profile-level-badge">1</div>
-             <div class="progress-level-info">
-                <p class="progress-level-label">Nivel actual</p>
-                <p class="progress-level-title" id="profile-level-title">Aprendiz</p>
-              </div>
+            <div class="progress-level-info">
+              <p class="progress-level-label">Nivel actual</p>
+              <p class="progress-level-title" id="profile-level-title">Aprendiz</p>
             </div>
+          </div>
 
           <div class="progress-xp-bar-container">
             <div class="progress-xp-labels">
@@ -258,7 +297,7 @@
         <!-- ── Pestaña: Logros ── -->
         <div class="profile-panel" id="tab-achievements">
           <div class="achievements-list" id="achievements-list">
-          <!-- generado por JS -->
+            <!-- generado por JS -->
           </div>
         </div>
 
@@ -266,16 +305,41 @@
     </div>
   </div>
 
-  <!-- Scripts en orden de dependencia.
-       MiniGamePruning.js eliminado: la poda es herramienta, no minijuego. -->
+  <!-- ══════════════════════════════════════════════════════
+     BARRA DE NAVEGACIÓN INFERIOR
+     Visible en todas las pantallas del juego (excepto splash)
+     ══════════════════════════════════════════════════════ -->
+<nav id="bottom-nav" class="bottom-nav hidden">
+  <button class="nav-btn active" id="nav-btn-environment" data-screen="environment">
+    <span class="nav-btn-icon">🏡</span>
+    <span class="nav-btn-label">Mi Jardín</span>
+  </button>
+  <button class="nav-btn" id="nav-btn-nursery" data-screen="nursery">
+    <span class="nav-btn-icon">🌱</span>
+    <span class="nav-btn-label">Vivero</span>
+  </button>
+  <button class="nav-btn" id="nav-btn-minigames" data-screen="minigames">
+    <span class="nav-btn-icon">🎮</span>
+    <span class="nav-btn-label">Minijuegos</span>
+  </button>
+  <button class="nav-btn" id="nav-btn-profile" data-screen="profile">
+    <span class="nav-btn-icon">📊</span>
+    <span class="nav-btn-label">Perfil</span>
+  </button>
+</nav>
+
+  <!-- Scripts en orden de dependencia. -->
   <script src="js/ScreenManager.js"></script>
   <script src="js/PlayerHUD.js"></script>
   <script src="js/Nursery.js"></script>
   <script src="js/Simulation.js"></script>
   <script src="js/Diagnosis.js"></script>
+  <script src="js/Guide.js"></script>
   <script src="js/CareActions.js"></script>
   <script src="js/Environment.js"></script>
-  <script src="js/MiniGamePests.js"></script>
+  <script src="js/SlotEditor.js"></script>
+  <script src="js/MiniGameDefense.js"></script>
+  <script src="js/MiniGamePruning.js"></script>
   <script src="js/MiniGameQuiz.js"></script>
   <script src="js/WeeklyReview.js"></script>
   <script src="js/ProfileScreen.js"></script>
@@ -283,4 +347,5 @@
   <script src="index.js"></script>
 
 </body>
+
 </html>
