@@ -557,8 +557,8 @@ function getLocationEffect(plant) {
   return {
     isCompatible,
     roomLight,
-    // La luz incorrecta debe notarse incluso si humedad y nutrientes estan bien.
-    healthDelta: isCompatible ? 0 : -3
+    // La luz incorrecta debe notarse, pero sin castigar tan rapido al jugador.
+    healthDelta: isCompatible ? 0 : -2
   }
 }
 
@@ -687,8 +687,8 @@ function simulateDays(daysToAdvance) {
         nutrientes = Math.max(0, nutrientes - 1)
 
         // Salud según humedad y nutrientes
-        if      (humedad < 20)  salud = Math.max(0,   salud - 5)
-        else if (humedad < 40)  salud = Math.max(0,   salud - 3)
+        if      (humedad < 20)  salud = Math.max(0,   salud - 3)
+        else if (humedad < 40)  salud = Math.max(0,   salud - 2)
         else if (humedad <= 75) {
           // Rango óptimo de humedad
           if (nutrientes > 75) {
@@ -702,8 +702,8 @@ function simulateDays(daysToAdvance) {
             salud = Math.min(100, salud + 1)
           }
         }
-        else if (humedad <= 90) salud = Math.max(0,   salud - 3)
-        else                    salud = Math.max(0,   salud - 5)
+        else if (humedad <= 90) salud = Math.max(0,   salud - 2)
+        else                    salud = Math.max(0,   salud - 3)
 
         if (locationEffect.healthDelta < 0) {
           salud = Math.max(0, salud + locationEffect.healthDelta)

@@ -406,6 +406,35 @@ const Environment = {
     return 'Saludable'
   },
 
+  _getHumidityState(humedad) {
+    if (humedad < 40) return 'Baja'
+    if (humedad <= 75) return 'Optima'
+    return 'Saturada'
+  },
+
+  _getNutrientState(nutrientes) {
+    if (nutrientes < 30) return 'Bajos'
+    if (nutrientes <= 75) return 'Optimos'
+    return 'Exceso'
+  },
+
+  _getCareMeterHTML({ icon, label, value, state, type = 'balanced' }) {
+    const safeValue = Math.max(0, Math.min(100, Number(value) || 0))
+
+    return `
+    <div class="care-meter-row">
+      <span class="care-meter-label">
+        <span class="care-meter-icon">${icon}</span>
+        ${label}
+      </span>
+      <div class="care-meter-track care-meter-${type}" aria-label="${label}: ${safeValue}">
+        <span class="care-meter-marker" style="left:${safeValue}%"></span>
+      </div>
+      <span class="care-meter-state">${state}</span>
+    </div>
+  `
+  },
+
   async _openCarePanel(plant) {
     window.dispatchEvent(new CustomEvent('tutorial:care-panel:opened', {
       detail: { id_registro: plant.id_registro }
@@ -453,16 +482,27 @@ const Environment = {
         alt="${currentPlant.nombre_planta}"
       />
       <div class="care-panel-bars">
-        ${this._getHumidityBarHTML(currentPlant.humedad, currentLevel)}
-        <div class="diag-bar-row">
-          <span class="diag-bar-label">❤️ Salud</span>
-          <div class="diag-bar-bg">
-            <div class="diag-bar-fill diag-bar-health"
-                 style="width:${currentPlant.salud}%"></div>
-          </div>
-          <span class="diag-bar-val">${this._getHealthState(currentPlant.salud)}</span>
-        </div>
-        ${this._getNutrientBarHTML(currentNutrientes, currentLevel)}
+        ${this._getCareMeterHTML({
+        icon: '💧',
+        label: 'Humedad',
+        value: currentPlant.humedad,
+        state: currentLevel <= 2 ? this._getHumidityState(currentPlant.humedad) : '',
+        type: 'balanced'
+      })}
+        ${this._getCareMeterHTML({
+        icon: '&hearts;',
+        label: 'Salud',
+        value: currentPlant.salud,
+        state: this._getHealthState(currentPlant.salud),
+        type: 'health'
+      })}
+        ${this._getCareMeterHTML({
+        icon: '🌿',
+        label: 'Nutrientes',
+        value: currentNutrientes,
+        state: currentLevel <= 2 ? this._getNutrientState(currentNutrientes) : '',
+        type: 'balanced'
+      })}
       </div>
       <div class="care-panel-actions">
         <button class="btn btn-primary btn-pixel care-action-btn" id="btn-water">
@@ -476,13 +516,13 @@ const Environment = {
                 ${currentPruneAvailable && pruneUnlocked ? '' : 'disabled'}>
           ${currentPruneLabel}
         </button>
-      </div>
       ${currentPlant.ubicacion ? `
         <button class="btn btn-ghost btn-pixel care-action-btn" id="btn-move-plant"
-                style="margin-top:0.5rem; width:100%">
+                style="width:100%">
           📦 Cambiar de lugar
         </button>
       ` : ''}
+      </div>
     `
     }
 

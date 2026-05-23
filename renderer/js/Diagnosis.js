@@ -8,6 +8,61 @@ const Diagnosis = {
   },
 
   _scenarios: {
+    WATER_LUZ_INCORRECTA: {
+      question:    'Antes de regar, que otra causa podria explicar el deterioro?',
+      situation:   'La planta no mejora aunque el problema no parece ser solo falta de agua.',
+      options: [
+        'Revisar si la luz del lugar coincide con la planta',
+        'Regar mas para compensar cualquier problema',
+        'Podarla aunque no tenga hojas secas'
+      ],
+      correctIndex: 0,
+      explanation:  'No todos los problemas se resuelven con agua. Si la luz no coincide, la planta puede perder salud lentamente.'
+    },
+    FERTILIZE_NUTRIENTES_BAJOS: {
+      question:    'Cuando conviene aplicar abono?',
+      situation:   'La planta muestra desgaste gradual y el sustrato podria necesitar apoyo.',
+      options: [
+        'Cuando los nutrientes estan bajos o la recuperacion se vuelve lenta',
+        'Siempre que la planta se vea sana',
+        'Cada vez que se riega'
+      ],
+      correctIndex: 0,
+      explanation:  'El abono es una ayuda gradual. Funciona mejor cuando el sustrato esta pobre, no como rutina permanente.'
+    },
+    FERTILIZE_NUTRIENTES_EXCESO: {
+      question:    'Que riesgo tiene abonar sin necesidad?',
+      situation:   'La planta ya tiene suficiente alimento en el sustrato.',
+      options: [
+        'Puede estresar las raices; es mejor esperar',
+        'Acelera siempre el crecimiento',
+        'Corrige problemas de luz'
+      ],
+      correctIndex: 0,
+      explanation:  'El exceso de nutrientes tambien es un error de cuidado. Observar antes de abonar evita estresar la raiz.'
+    },
+    PRUNE_NECESARIA: {
+      question:    'Que senal justifica usar la poda?',
+      situation:   'La planta muestra senales de que podria beneficiarse de un corte cuidadoso.',
+      options: [
+        'Retirar hojas secas o crecimiento deteriorado para concentrar energia',
+        'Cortar hojas sanas para que crezca mas rapido',
+        'Podar cualquier planta una vez por semana'
+      ],
+      correctIndex: 0,
+      explanation:  'La poda debe tener proposito. Quitar partes deterioradas ayuda, pero cortar sin necesidad estresa la planta.'
+    },
+    PRUNE_NO_NECESARIA: {
+      question:    'Que conviene hacer si una planta no necesita poda?',
+      situation:   'La planta no muestra senales claras para cortar.',
+      options: [
+        'Esperar y observar antes de podar',
+        'Podarla para prevenir cualquier problema',
+        'Abonarla para reemplazar la poda'
+      ],
+      correctIndex: 0,
+      explanation:  'Podar sin necesidad puede debilitar una planta sana. La observacion tambien es una decision de cuidado.'
+    },
     SANA_EXCESO_AGUA: {
       question:    '¿Qué deberías hacer si la tierra está saturada?',
       situation:   'Tu planta tiene buen aspecto, pero la tierra está demasiado húmeda.',
@@ -106,13 +161,35 @@ const Diagnosis = {
 
     if (nivel <= 2) return true
     if (nivel <= 4) return Math.random() < 0.33
-    return plant.estado_planta === 'MARCHITA' || plant.estado_planta === 'ENFERMA'
+    const nutrientes = plant.nutrientes ?? 50
+    return plant.estado_planta === 'MARCHITA' ||
+      plant.estado_planta === 'ENFERMA' ||
+      this._hasWrongLight(plant) ||
+      nutrientes < 30 ||
+      nutrientes > 75
   },
 
-  _selectScenario(plant) {
+  _selectScenario(plant, actionType) {
     const { estado_planta, humedad } = plant
+    const nutrientes = plant.nutrientes ?? 50
 
     if (estado_planta === 'MUERTA')   return this._scenarios.MUERTA
+
+    if ((actionType === 'water' || actionType === 'drain') && this._hasWrongLight(plant)) {
+      return this._scenarios.WATER_LUZ_INCORRECTA
+    }
+
+    if (actionType === 'fertilize') {
+      if (nutrientes > 75) return this._scenarios.FERTILIZE_NUTRIENTES_EXCESO
+      if (nutrientes < 30) return this._scenarios.FERTILIZE_NUTRIENTES_BAJOS
+    }
+
+    if (actionType === 'prune') {
+      return plant.requiere_poda_activa === 1
+        ? this._scenarios.PRUNE_NECESARIA
+        : this._scenarios.PRUNE_NO_NECESARIA
+    }
+
     if (estado_planta === 'ENFERMA')  return humedad > 70
       ? this._scenarios.ENFERMA_EXCESO
       : this._scenarios.ENFERMA
@@ -123,6 +200,28 @@ const Diagnosis = {
     if (humedad > 75) return this._scenarios.SANA_EXCESO_AGUA
     if (humedad < 40) return this._scenarios.SANA_NECESITA_AGUA
     return this._scenarios.SANA
+  },
+
+  _roomLights: {
+    'SALA': 'INDIRECTA',
+    'JARDIN': 'DIRECTA',
+    'JARDÍN': 'DIRECTA',
+    'DORMITORIO': 'INDIRECTA'
+  },
+
+  _roomLight(ubicacion) {
+    return this._roomLights[ubicacion] || null
+  },
+
+  _isLightCompatible(requiredLight, roomLight) {
+    if (!requiredLight || !roomLight) return true
+    if (requiredLight === roomLight) return true
+    return requiredLight === 'SOMBRA' && roomLight === 'INDIRECTA'
+  },
+
+  _hasWrongLight(plant) {
+    const roomLight = this._roomLight(plant.ubicacion)
+    return roomLight !== null && !this._isLightCompatible(plant.tipo_luz, roomLight)
   },
 
   _getHumidityBarHTML(humedad) {
@@ -167,7 +266,7 @@ const Diagnosis = {
     if (!shouldShow) return true
 
     return new Promise((resolve) => {
-      const scenario    = this._selectScenario(plant)
+      const scenario    = this._selectScenario(plant, actionType)
       let drainExecuted = false   // ✅ variable local, no en el objeto escenario
 
       const overlay = document.createElement('div')

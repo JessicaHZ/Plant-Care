@@ -4,6 +4,13 @@ const WeeklyReview = {
   _currentWeek: 0,
   _running: false,   // ✅ evita ejecuciones simultáneas
 
+  _recommendations: {
+    riego: 'Antes de regar, confirma si la humedad esta baja. Si la tierra sigue humeda o saturada, espera o drena.',
+    abono: 'Usa abono cuando los nutrientes esten bajos. Abonar una planta estable puede estresar las raices.',
+    poda: 'Poda solo cuando la planta lo necesite. Observa hojas secas o crecimiento desordenado antes de cortar.',
+    ubicacion: 'Compara la luz requerida por la planta con la luz de la habitacion antes de colocarla.'
+  },
+
   async checkAndRun(currentDay) {
     // ✅ Si ya hay una revisión activa, ignorar llamadas adicionales
     if (this._running) return false
@@ -34,14 +41,17 @@ const WeeklyReview = {
       return
     }
 
-    const mostHarmfulIndex = this._actions.reduce(
+    const visibleActions = this._actions.filter(action => action.errorCount > 0)
+    const mostHarmfulIndex = visibleActions.reduce(
       (maxI, a, i, arr) => a.errorCount > arr[maxI].errorCount ? i : maxI,
       0
     )
-    const getFrequencyLabel = (index) => {
-      if (index === 0) return 'Más frecuente'
-      if (index === 1) return 'Frecuente'
-      return 'Ocasional'
+    const mostHarmfulAction = visibleActions[mostHarmfulIndex]
+    const getFrequencyLabel = (action, index) => {
+      const times = action.errorCount === 1 ? '1 vez' : `${action.errorCount} veces`
+      if (index === 0) return `Más frecuente: ${times}`
+      if (index === 1) return `Frecuente: ${times}`
+      return `Ocasional: ${times}`
     }
 
     const overlay = document.createElement('div')
@@ -63,17 +73,17 @@ const WeeklyReview = {
         <div class="weekly-actions-summary">
           <p class="weekly-section-label">Patrones de cuidado observados esta semana:</p>
           <div class="weekly-actions-list">
-            ${this._actions.map((action, i) => `
+            ${visibleActions.map((action, i) => `
               <div class="weekly-action-item">
                 <span class="weekly-action-num">${i + 1}</span>
                 <div class="weekly-action-info">
                   <span class="weekly-action-label">${action.label}</span>
                   <div class="weekly-action-bar-bg">
                     <div class="weekly-action-bar-fill"
-                         style="width: ${Math.min(100, action.errorCount * 20)}%">
+                         style="width: ${Math.min(100, (action.errorCount / mostHarmfulAction.errorCount) * 100)}%">
                     </div>
                   </div>
-                  <span class="weekly-action-count">${getFrequencyLabel(i)}</span>
+                  <span class="weekly-action-count">${getFrequencyLabel(action, i)}</span>
                 </div>
               </div>
             `).join('')}
@@ -85,7 +95,7 @@ const WeeklyReview = {
             ¿Cuál de estas decisiones crees que fue la más perjudicial para tus plantas?
           </p>
           <div class="weekly-options" id="weekly-options">
-            ${this._actions.map((action, i) => `
+            ${visibleActions.map((action, i) => `
               <button class="weekly-option-btn" data-index="${i}">
                 ${action.label}
               </button>
@@ -122,8 +132,9 @@ const WeeklyReview = {
           }))
         }
 
-        const mostHarmful = this._actions[mostHarmfulIndex]
-        const selected    = this._actions[selectedIndex]
+        const mostHarmful = visibleActions[mostHarmfulIndex]
+        const selected    = visibleActions[selectedIndex]
+        const recommendation = this._recommendations[mostHarmful.key] || mostHarmful.explanation
 
         const resultEl = overlay.querySelector('#weekly-result')
         resultEl.className = 'weekly-result'
@@ -142,8 +153,7 @@ const WeeklyReview = {
             ` : ''}
             <p class="weekly-explanation">💡 ${mostHarmful.explanation}</p>
             <p class="weekly-advice">
-              La próxima semana observa con más cuidado:
-              <strong>${mostHarmful.label}</strong>
+              Recomendación: <strong>${recommendation}</strong>
             </p>
           </div>
           <button class="btn btn-primary weekly-continue-btn" id="btn-weekly-done">

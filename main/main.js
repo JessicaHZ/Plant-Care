@@ -1,9 +1,11 @@
-const { app, BrowserWindow, Menu } = require('electron')
+const { app, BrowserWindow, Menu, dialog } = require('electron')
 const path = require('path')
 const { initializeDatabase, saveLastClose } = require('./database')
 const { registerIpcHandlers } = require('./ipc-handlers')
 
 function createGameWindow() {
+  let closeConfirmed = false
+
   const gameWindow = new BrowserWindow({
     width:           1280,
     height:          720,
@@ -25,6 +27,29 @@ function createGameWindow() {
   gameWindow.maximize()
 
   gameWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
+
+  gameWindow.on('close', async (event) => {
+    if (closeConfirmed) return
+
+    event.preventDefault()
+
+    const { response } = await dialog.showMessageBox(gameWindow, {
+      type: 'question',
+      buttons: ['Salir', 'Cancelar'],
+      defaultId: 1,
+      cancelId: 1,
+      noLink: true,
+      title: 'Salir del juego',
+      message: '¿Quieres salir del juego?',
+      detail: 'Tu progreso se conserva y podrás continuar después.'
+    })
+
+    if (response === 0) {
+      closeConfirmed = true
+      saveLastClose()
+      gameWindow.close()
+    }
+  })
 
   // DevTools solo en desarrollo (no en build final)
   if (!app.isPackaged) {

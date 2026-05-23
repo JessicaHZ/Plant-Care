@@ -220,15 +220,15 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 230px;
+  width: min(560px, calc(100% - 2rem));
   background:
-    linear-gradient(180deg, rgba(95, 58, 36, 0.92), rgba(55, 34, 25, 0.9));
-  border: 2px solid rgba(42, 24, 16, 0.88);
-  border-radius: 14px;
-  padding: 1rem;
+    linear-gradient(180deg, rgba(132, 78, 43, 0.96), rgba(83, 47, 29, 0.97));
+  border: 3px solid rgba(55, 31, 20, 0.92);
+  border-radius: 10px;
+  padding: 1rem 1.1rem 1.05rem;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.7rem;
   z-index: 10;
   /* Sombra para que destaque sobre el fondo de la habitación */
   box-shadow:
@@ -245,18 +245,100 @@
 }
 
 .care-panel-name {
-  font-size: 1rem;
+  font-size: 1.22rem;
   font-weight: 600;
-  color: #9be36f;
+  color: #fff1d5;
+  text-shadow: 0 2px 0 rgba(42, 24, 16, 0.7);
 }
 
 .care-panel-sprite {
   width: 100%;
-  height: 104px;
+  height: 150px;
   object-fit: contain;
 }
 
-.care-panel-bars { display: flex; flex-direction: column; gap: 0.4rem; }
+.care-panel-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.15rem 0.15rem 0.3rem;
+}
+
+.care-meter-row {
+  display: grid;
+  grid-template-columns: 120px minmax(150px, 1fr) 78px;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.care-meter-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  color: #fff1d5;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-shadow: 0 2px 0 rgba(42, 24, 16, 0.72);
+}
+
+.care-meter-icon {
+  width: 1.1rem;
+  text-align: center;
+}
+
+.care-meter-track {
+  position: relative;
+  height: 16px;
+  border: 2px solid rgba(42, 24, 16, 0.92);
+  border-radius: 999px;
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.34),
+    0 1px 0 rgba(255, 241, 213, 0.18);
+}
+
+.care-meter-balanced {
+  background:
+    linear-gradient(90deg,
+      #b3302d 0%,
+      #d9533d 20%,
+      #dfb34f 34%,
+      #75c86a 40%,
+      #70c45f 72%,
+      #5f783d 80%,
+      #4f4a2c 91%,
+      #3f2d20 100%);
+}
+
+.care-meter-health {
+  background:
+    linear-gradient(90deg,
+      #c93b38 0%,
+      #dfb34f 40%,
+      #79c86b 70%,
+      #5fa85b 100%);
+}
+
+.care-meter-marker {
+  position: absolute;
+  left: 50%;
+  bottom: -11px;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 11px solid #fff8e8;
+  filter: drop-shadow(0 2px 0 rgba(42, 24, 16, 0.9));
+}
+
+.care-meter-state {
+  color: #fff8e8;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-align: left;
+  text-shadow: 0 2px 0 rgba(42, 24, 16, 0.72);
+}
 
 .care-panel-days {
   font-size: 0.72rem;
@@ -265,22 +347,49 @@
 }
 
 .care-panel-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  align-items: stretch;
 }
 
 .care-action-btn {
-  font-size: 0.86rem;
-  min-height: 38px;
-  padding: 7px 10px 9px;
+  font-size: 0.82rem;
+  min-height: 58px;
+  padding: 8px 10px 10px;
   width: 100%;
+  white-space: normal;
+  line-height: 1.15;
 }
 
 #btn-fertilize.btn-pixel {
   --pixel-btn-bg: #6f833c;
   --pixel-btn-bg-light: #a6b85b;
   --pixel-btn-shadow: #435223;
+}
+
+@media (max-width: 720px) {
+  .care-panel {
+    width: min(380px, calc(100% - 1rem));
+  }
+
+  .care-panel-sprite {
+    height: 124px;
+  }
+
+  .care-meter-row {
+    grid-template-columns: 98px minmax(120px, 1fr);
+    gap: 0.5rem;
+  }
+
+  .care-meter-state {
+    grid-column: 2;
+    margin-top: -0.2rem;
+  }
+
+  .care-panel-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 /* ── Slots de plantas ──────────────────────────────────────── */

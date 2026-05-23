@@ -176,6 +176,10 @@ const CareActions = {
     }
 
     if (onComplete) onComplete(result)
+
+    window.dispatchEvent(new CustomEvent('tutorial:care-action:completed', {
+      detail: { errorType, result }
+    }))
   },
 
   // Verifica si el contador de errores supera el umbral (5 errores).

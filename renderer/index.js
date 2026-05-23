@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // ── Navegación inferior ───────────────────────────────────────────────
   initBottomNav()
+  initBackButtons()
   SlotEditor.init()
 
   // ── Eventos globales ──────────────────────────────────────────────────
@@ -111,27 +112,65 @@ document.addEventListener('DOMContentLoaded', async () => {
       switch (screen) {
         case 'environment':
           ScreenManager.show('environment')
+          showBottomNav()
           await Environment.init()
           window.dispatchEvent(new CustomEvent('tutorial:screen:environment'))
           break
         case 'nursery':
           ScreenManager.show('nursery')
+          hideBottomNav()
           await Nursery.init()
           window.dispatchEvent(new CustomEvent('tutorial:screen:nursery'))
           break
         case 'minigames':
           ScreenManager.show('minigames')
+          hideBottomNav()
           break
         case 'profile':
           ScreenManager.show('profile')
+          hideBottomNav()
           await ProfileScreen.init()
           break
       }
     })
   }
 
+  function initBackButtons() {
+    document.getElementById('btn-env-back')?.addEventListener('click', goToStart)
+    document.getElementById('btn-nursery-back')?.addEventListener('click', goToGarden)
+    document.getElementById('btn-minigames-back')?.addEventListener('click', goToGarden)
+    document.getElementById('btn-profile-back')?.addEventListener('click', goToGarden)
+  }
+
+  function goToStart() {
+    ScreenManager.show('splash')
+    hideBottomNav()
+    PlayerHUD.hide()
+  }
+
+  async function goToGarden() {
+    ScreenManager.show('environment')
+    showBottomNav()
+    setActiveNavButton('environment')
+    await Environment.init()
+    window.dispatchEvent(new CustomEvent('tutorial:screen:environment'))
+  }
+
   function showBottomNav() {
     document.getElementById('bottom-nav')?.classList.remove('hidden')
+  }
+
+  function hideBottomNav() {
+    document.getElementById('bottom-nav')?.classList.add('hidden')
+  }
+
+  function setActiveNavButton(screenName) {
+    const nav = document.getElementById('bottom-nav')
+    if (!nav) return
+
+    nav.querySelectorAll('.nav-btn').forEach((btn) => {
+      btn.classList.toggle('active', btn.dataset.screen === screenName)
+    })
   }
 
   async function _enterGame(forceTutorial = false) {
@@ -139,6 +178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ScreenManager.show('environment')
     showBottomNav()
     PlayerHUD.init()
+    PlayerHUD.show()
     CareActions.init()
 
     // Fase 2 — en paralelo

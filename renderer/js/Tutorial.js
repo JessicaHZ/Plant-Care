@@ -9,7 +9,7 @@ const Tutorial = {
   _steps: [
     {
       mood: 'happy',
-      message: 'Hola. Te acompañare mientras preparas tu primera planta.',
+      message: 'Objetivo: preparar tu primera planta y ver como responde con el tiempo.',
       actionLabel: 'Comenzar',
       next: 'manual'
     },
@@ -27,37 +27,49 @@ const Tutorial = {
     },
     {
       mood: 'normal',
-      message: 'Cada ficha muestra luz, riego, dificultad y nombre cientifico.',
+      message: 'Objetivo: revisar la ficha. Fijate en luz, riego, dificultad y nombre cientifico.',
       actionLabel: 'Entendido',
       next: 'manual'
     },
     {
       mood: 'happy',
-      message: 'Elige una planta para empezar. Luego la llevaremos a tu jardin.',
+      message: 'Objetivo: adquirir una planta. Puedes tener varias, pero empieza con una.',
       anchorId: 'btn-acquire-plant',
       waitFor: 'plant:acquired'
     },
     {
       mood: 'normal',
-      message: 'Vuelve a Mi Jardin. El patio tiene luz directa; las habitaciones, luz indirecta.',
-      anchorId: 'nav-btn-environment',
+      message: 'Vuelve a Mi Jardin con el boton Volver. El patio tiene luz directa; las habitaciones, luz indirecta.',
+      anchorId: 'btn-nursery-back',
       waitFor: 'tutorial:screen:environment'
     },
     {
       mood: 'thinking',
-      message: 'Arrastra tu planta a un espacio disponible. Observa si la luz le conviene.',
+      message: 'Objetivo: colocar la planta. La luz del lugar afectara su salud con los dias.',
       anchorId: 'env-side-panel',
       waitFor: 'tutorial:plant:placed'
     },
     {
       mood: 'normal',
-      message: 'Abre el panel de la planta. Antes de actuar, observa su estado.',
+      message: 'Objetivo: abrir el panel de cuidado. Desde ahi puedes regar, abonar o podar cuando corresponda.',
       anchorId: 'room-area',
       waitFor: 'tutorial:care-panel:opened'
     },
     {
       mood: 'thinking',
-      message: 'El diagnostico te ayuda a pensar antes de regar, abonar o podar.',
+      message: 'Objetivo: realiza una accion de cuidado. Al elegir regar o abonar, responde el diagnostico antes de actuar.',
+      anchorId: 'room-area',
+      waitFor: 'tutorial:care-action:completed'
+    },
+    {
+      mood: 'thinking',
+      message: 'Objetivo: avanza un dia. El tiempo simulado convierte tus decisiones en consecuencias visibles.',
+      anchorId: 'btn-advance-day',
+      waitFor: 'simulation:tick'
+    },
+    {
+      mood: 'normal',
+      message: 'Cada semana recibiras una revision: si hubo errores, reflexionas; si no, se reconoce tu buen cuidado.',
       actionLabel: 'Entendido',
       next: 'manual'
     },
@@ -104,7 +116,7 @@ const Tutorial = {
     }
 
     Guide.show({
-      title: 'Guia del vivero',
+      title: `Guia inicial ${this._currentStep + 1}/${this._steps.length}`,
       mood: step.mood,
       message: step.message,
       anchorId: step.anchorId,

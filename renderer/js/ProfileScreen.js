@@ -176,6 +176,36 @@ const ProfileScreen = {
     set('stat-diagnosticos',       stats.diagnosticos_correctos)
     set('stat-plantas-muertas',    stats.plantas_muertas)
     set('stat-racha',              progress.racha_dias)
+    this._renderRecommendation(stats)
+  },
+
+  _renderRecommendation(stats) {
+    const textEl = document.getElementById('profile-recommendation-text')
+    if (!textEl) return
+
+    const patterns = [
+      {
+        count: stats.errores_riego || 0,
+        message: 'Tu principal patron de error es el riego. Antes de regar, revisa si la humedad esta baja; si la tierra sigue humeda o saturada, espera o drena.'
+      },
+      {
+        count: stats.errores_abono || 0,
+        message: 'Tu principal patron de error es el abono. Usalo cuando los nutrientes esten bajos; abonar demasiado puede estresar las raices.'
+      },
+      {
+        count: stats.errores_poda || 0,
+        message: 'Tu principal patron de error es la poda. Poda solo cuando la planta lo necesite y evita cortar plantas que no requieren esta herramienta.'
+      },
+      {
+        count: stats.errores_ubicacion || 0,
+        message: 'Tu principal patron de error es la ubicacion. Compara la luz requerida por la planta con la luz de cada habitacion antes de colocarla.'
+      }
+    ].sort((a, b) => b.count - a.count)
+
+    const mainPattern = patterns[0]
+    textEl.textContent = mainPattern.count > 0
+      ? mainPattern.message
+      : 'Aun no hay errores registrados. Manten el habito de observar humedad, nutrientes, luz y necesidad de poda antes de actuar.'
   },
 
   // ── Pestaña Logros ────────────────────────────────────────────────────────
