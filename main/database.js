@@ -13,7 +13,8 @@ function initializeDatabase() {
     CREATE TABLE IF NOT EXISTS progreso (
       nivel          INTEGER NOT NULL DEFAULT 1,
       experiencia    INTEGER NOT NULL DEFAULT 0,
-      racha_dias     INTEGER NOT NULL DEFAULT 0
+      racha_dias     INTEGER NOT NULL DEFAULT 0,
+      dia_actual      INTEGER NOT NULL DEFAULT 1
     )
   `)
   // ── Estadísticas de desempeño ────────────────────────────────────────────
@@ -94,6 +95,7 @@ function initializeDatabase() {
       nivel          INTEGER NOT NULL DEFAULT 1,
       experiencia    INTEGER NOT NULL DEFAULT 0,
       racha_dias     INTEGER NOT NULL DEFAULT 0,
+      dia_actual      INTEGER NOT NULL DEFAULT 1,
       ultimo_cierre  INTEGER DEFAULT NULL,   -- ✅ timestamp Unix en ms
       tutorial_completado  INTEGER NOT NULL DEFAULT 0 
     )
@@ -109,6 +111,7 @@ function initializeDatabase() {
     `ALTER TABLE plantas_usuario ADD COLUMN pos_x TEXT DEFAULT NULL`,  // ✅ nuevo
     `ALTER TABLE plantas_usuario ADD COLUMN pos_y TEXT DEFAULT NULL`,  // ✅ nuevo
     `ALTER TABLE progreso ADD COLUMN ultimo_cierre INTEGER DEFAULT NULL`,
+    `ALTER TABLE progreso ADD COLUMN dia_actual INTEGER NOT NULL DEFAULT 1`,
     // Agregamos la columna en forma segura: SQLite no permite añadir
     // restricciones UNIQUE/NOT NULL en ALTER TABLE, así que añadimos
     // solo la columna con un DEFAULT y creamos un índice único después.
@@ -125,6 +128,8 @@ function initializeDatabase() {
   for (const migration of safeMigrations) {
     try { db.exec(migration) } catch (_) { /* columna ya existe */ }
   }
+
+  migrateCurrentDayFromPlantState()
 
   // Asegurar unicidad de `clave_logro` en instalaciones antiguas
   try {
@@ -180,6 +185,21 @@ function updateProgress(fields) {
   const keys = Object.keys(fields)
   const setClause = keys.map(k => `${k} = @${k}`).join(', ')
   db.prepare(`UPDATE progreso SET ${setClause}`).run(fields)
+}
+
+function migrateCurrentDayFromPlantState() {
+  const progress = db.prepare(`SELECT dia_actual FROM progreso LIMIT 1`).get()
+  if (!progress || progress.dia_actual > 1) return
+
+  const maxDayResult = db.prepare(`
+    SELECT MAX(dias_transcurridos) AS maxDay
+    FROM plantas_usuario
+  `).get()
+  const maxDay = maxDayResult?.maxDay || 0
+
+  if (maxDay > 0) {
+    updateProgress({ dia_actual: maxDay + 1 })
+  }
 }
 
 // Catálogo de 20 plantas reales.
@@ -591,6 +611,8 @@ function placePlantInRoom(id_registro, ubicacion, pos_x = null, pos_y = null) {
 // Incrementa contadores en la tabla estadísticas (singleton).
 // Uso: updateStats({ errores_riego: 1, acciones_totales: 1 })
 function updateStats(updates) {
+  getStats()
+
   const weeklyErrorFields = {
     errores_riego: 'errores_riego_semana',
     errores_abono: 'errores_abono_semana',
@@ -624,6 +646,11 @@ function updateStats(updates) {
   if (!setClauses) return
 
   db.prepare(`UPDATE estadisticas SET ${setClauses}`).run(normalizedUpdates)
+}
+
+function resetDailyCorrectActions() {
+  getStats()
+  db.prepare('UPDATE estadisticas SET acciones_correctas_hoy = 0').run()
 }
 
 // ── Actualiza XP y nivel del jugador ──────────────────────────────────────
@@ -661,6 +688,9 @@ function getStats() {
 // Esta es la función más importante del motor de simulación.
 // Avanza N días simulados para todas las plantas del jugador.
 function simulateDays(daysToAdvance) {
+  const safeDays = Math.max(0, Math.floor(Number(daysToAdvance) || 0))
+  if (safeDays === 0) return []
+
   const plants  = getUserPlants()
   const results = []
 
@@ -673,7 +703,7 @@ function simulateDays(daysToAdvance) {
       const locationEffect = getLocationEffect(plant)
       const pruningInterval = getPruningIntervalDays(plant.tipo_poda)
 
-      for (let d = 0; d < daysToAdvance; d++) {
+      for (let d = 0; d < safeDays; d++) {
         dias_transcurridos++
         dias_sin_regar++
 
@@ -695,11 +725,14 @@ function simulateDays(daysToAdvance) {
             // Exceso de nutrientes: deterioro leve por día.
             salud = Math.max(0, salud - 1)
           } else if (nutrientes >= 30) {
-            // ✅ Nutrientes óptimos — recuperación normal + bonus
-            salud = Math.min(100, salud + 2)
+            // Recuperación asistida: una planta dañada responde más rápido
+            // cuando el jugador ya corrigió humedad y nutrientes.
+            const recovery = salud <= 50 ? 4 : 2
+            salud = Math.min(100, salud + recovery)
           } else {
-            // ✅ Nutrientes bajos — recuperación lenta
-            salud = Math.min(100, salud + 1)
+            // Con nutrientes bajos todavía puede recuperarse, pero más lento.
+            const recovery = salud <= 50 ? 2 : 1
+            salud = Math.min(100, salud + recovery)
           }
         }
         else if (humedad <= 90) salud = Math.max(0,   salud - 2)
@@ -747,9 +780,27 @@ function simulateDays(daysToAdvance) {
     }
   })()
 
-  updateStreak(getStats()?.acciones_correctas > 0)
+  const progress = getProgress()
+  updateProgress({ dia_actual: Math.max(1, (progress.dia_actual || 1) + safeDays) })
+
+  processStreakForAdvancedDays(safeDays)
   checkAndGrantAchievements()
   return results
+}
+
+function processStreakForAdvancedDays(daysToAdvance) {
+  const safeDays = Math.max(0, Math.floor(Number(daysToAdvance) || 0))
+  if (safeDays === 0) return
+
+  const stats = getStats()
+  const hadCorrectActionToday = (stats?.acciones_correctas_hoy || 0) > 0
+
+  updateStreak(hadCorrectActionToday)
+  resetDailyCorrectActions()
+
+  if (safeDays > 1) {
+    updateStreak(false)
+  }
 }
 
 // ── Acciones de cuidado ───────────────────────────────────────────────────
@@ -793,7 +844,7 @@ function waterPlant(id_registro) {
       `Tu ${plant.nombre_planta} respondió bien al riego.`
     xpGained = 15
     isError = false
-    updateStats({ acciones_correctas: 1, acciones_totales: 1 })
+    updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
 
   } else {
     // ✅ Riego urgente — estaba muy seca
@@ -801,7 +852,7 @@ function waterPlant(id_registro) {
       `Riega con cuidado y observa si las hojas se recuperan.`
     xpGained = 15
     isError = false
-    updateStats({ acciones_correctas: 1, acciones_totales: 1 })
+    updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
   }
 
   updatePlantState(id_registro, {
@@ -861,7 +912,7 @@ function fertilizePlant(id_registro) {
     newNutrientes = Math.min(100, nutrientes + 25)
     healthChange = 0    // no cura inmediatamente — la recuperación es gradual
     isError = false
-    updateStats({ acciones_correctas: 1, acciones_totales: 1 })
+    updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
   }
 
   const newSalud = Math.min(100, Math.max(0, plant.salud + healthChange))
@@ -909,7 +960,7 @@ function drainPlant(id_registro) {
       `Drenar ayudó a sacar el exceso de agua y proteger las raíces.`
     xpGained = 12
     isError = false
-    updateStats({ acciones_correctas: 1, acciones_totales: 1 })
+    updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
   }
 
   updatePlantState(id_registro, { humedad: newHumedad })
@@ -1256,7 +1307,7 @@ function resetGame() {
   db.prepare('DELETE FROM plantas_usuario').run()
   db.prepare('DELETE FROM estadisticas').run()
   db.prepare('DELETE FROM logros').run()
-  db.prepare('UPDATE progreso SET nivel = 1, experiencia = 0, racha_dias = 0, tutorial_completado = 0, ultimo_cierre = NULL').run()
+  db.prepare('UPDATE progreso SET nivel = 1, experiencia = 0, racha_dias = 0, dia_actual = 1, tutorial_completado = 0, ultimo_cierre = NULL').run()
 }
 
 // Resetea el tutorial para que vuelva a mostrarse.

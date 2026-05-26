@@ -16,7 +16,7 @@ const Simulation = {
   MS_PER_GAME_DAY: 10 * 60 * 1000,  // 10 minutos reales = 1 día de juego
 
   async init() {
-    await this._syncDayFromPlants()
+    await this._syncDayFromProgress()
     this._updateDayDisplay()
     this._startAutoTimer()
   },
@@ -72,12 +72,19 @@ const Simulation = {
 
   getDay() { return this._currentDay },
 
-  async _syncDayFromPlants() {
+  async _syncDayFromProgress() {
+    const progressResult = await window.gameAPI.getProgress()
+    if (progressResult.success && progressResult.progress?.dia_actual) {
+      this._currentDay = Math.max(1, progressResult.progress.dia_actual)
+      return
+    }
+
     const result = await window.gameAPI.getUserPlants()
+    this._currentDay = 1
     if (!result.success || result.plants.length === 0) return
 
     const maxDay = Math.max(...result.plants.map(p => p.dias_transcurridos))
-    if (maxDay > 0) this._currentDay = maxDay
+    if (maxDay > 0) this._currentDay = maxDay + 1
   },
 
   _updateDayDisplay() {

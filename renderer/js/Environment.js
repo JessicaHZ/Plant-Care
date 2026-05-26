@@ -26,11 +26,11 @@ const Environment = {
       { id: 'jardin-11', x: 59, y: 60.4 },
     ],
     'SALA': [
-      { id: 'sala-1', x: 52.8, y: 75.9 },
+      { id: 'sala-1', x: 55.5, y: 74.7 },
       { id: 'sala-2', x: 80.8, y: 75.3 },
-      { id: 'sala-3', x: 45.3, y: 55.3 },
-      { id: 'sala-4', x: 54.2, y: 55.6 },
-      { id: 'sala-5', x: 66.1, y: 55.3 },
+      { id: 'sala-3', x: 45.9, y: 56.7 },
+      { id: 'sala-4', x: 56.5, y: 56.9 },
+      { id: 'sala-5', x: 67.8, y: 57 },
       { id: 'sala-6', x: 89.9, y: 94.5 },
     ],
     'DORMITORIO': [
