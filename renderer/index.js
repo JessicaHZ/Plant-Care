@@ -212,12 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function _processOfflineDays(days) {
-    const result = await window.gameAPI.advanceDays(days)
-
-    if (result.success) {
-      Simulation._currentDay += days
-      Simulation._updateDayDisplay()
-    }
+    await Simulation.advanceDays(days)
 
     const pr = await window.gameAPI.getUserPlants()
     const needsAttention = pr.success
@@ -239,7 +234,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           ⚠️ ${plantsNeedingAttention.length} planta${plantsNeedingAttention.length > 1 ? 's necesitan' : ' necesita'} atención:
           ${plantsNeedingAttention.map(p => p.nombre_planta).join(', ')}
          </p>`
-      : `<p style="color:#66bb6a; margin-top:0.75rem">✅ Tus plantas están bien por ahora.</p>`
+      : `<p style="color:#66bb6a; margin-top:0.75rem">Tus plantas siguen sanas.</p>`
 
     overlay.innerHTML = `
       <div class="diagnosis-modal">

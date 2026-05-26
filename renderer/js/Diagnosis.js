@@ -190,12 +190,16 @@ const Diagnosis = {
         : this._scenarios.PRUNE_NO_NECESARIA
     }
 
-    if (estado_planta === 'ENFERMA')  return humedad > 70
-      ? this._scenarios.ENFERMA_EXCESO
-      : this._scenarios.ENFERMA
-    if (estado_planta === 'MARCHITA') return humedad > 70
-      ? this._scenarios.MARCHITA_EXCESO
-      : this._scenarios.MARCHITA
+    if (estado_planta === 'ENFERMA') {
+      return humedad > 70
+        ? this._scenarios.ENFERMA_EXCESO
+        : this._scenarios.ENFERMA
+    }
+    if (estado_planta === 'MARCHITA') {
+      return humedad > 70
+        ? this._scenarios.MARCHITA_EXCESO
+        : this._scenarios.MARCHITA
+    }
 
     if (humedad > 75) return this._scenarios.SANA_EXCESO_AGUA
     if (humedad < 40) return this._scenarios.SANA_NECESITA_AGUA
@@ -374,6 +378,10 @@ const Diagnosis = {
             resultTextEl.textContent = answeredCorrectly
               ? 'Correcto. Observaste bien las señales.'
               : 'No era la causa principal. Revisa las señales de la planta.'
+          }
+
+          if (diagResult.streakEvent?.changed) {
+            resultTextEl.textContent += ` ${diagResult.streakEvent.message}.`
           }
 
           resultTextEl.className    = `diag-result-text ${answeredCorrectly ? 'correct' : 'incorrect'}`

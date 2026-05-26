@@ -3,6 +3,7 @@ const Environment = {
   _userPlants: [],
   _currentRoom: 'SALA',
   _tickHandler: null,
+  _screenHandler: null,
 
   _rooms: {
     'SALA': { label: 'Sala', icon: '🛋️', luz: 'INDIRECTA', sprite: 'sala' },
@@ -43,9 +44,11 @@ const Environment = {
   },
 
   async init() {
+    this.closeCarePanel()
     await this._loadUserPlants()
     this._bindRoomTabs()
     this._bindSimulation()
+    this._bindScreenChanges()
     this._renderCurrentRoom()
 
     if (this._tickHandler) {
@@ -62,13 +65,33 @@ const Environment = {
 
   _bindRoomTabs() {
     document.querySelectorAll('.room-tab').forEach(tab => {
+      if (tab.dataset.bound === 'true') return
+      tab.dataset.bound = 'true'
+
       tab.addEventListener('click', () => {
+        this.closeCarePanel()
         document.querySelectorAll('.room-tab').forEach(t => t.classList.remove('active'))
         tab.classList.add('active')
         this._currentRoom = tab.dataset.room
         this._renderCurrentRoom()
       })
     })
+  },
+
+  _bindScreenChanges() {
+    if (this._screenHandler) return
+
+    this._screenHandler = ({ detail }) => {
+      if (detail?.to !== 'environment') {
+        this.closeCarePanel()
+      }
+    }
+
+    window.addEventListener('screen:changed', this._screenHandler)
+  },
+
+  closeCarePanel() {
+    document.querySelectorAll('.care-panel').forEach(panel => panel.remove())
   },
 
   _bindSimulation() {
@@ -419,7 +442,7 @@ const Environment = {
   },
 
   _getCareMeterHTML({ icon, label, value, state, type = 'balanced' }) {
-    const safeValue = Math.max(0, Math.min(100, Number(value) || 0))
+    const safeValue = NumberUtils.clamp(Number(value) || 0, 0, 100)
 
     return `
     <div class="care-meter-row">
@@ -450,13 +473,7 @@ const Environment = {
 
     const progressResult = await window.gameAPI.getProgress()
     const playerLevel = progressResult.success ? progressResult.progress.nivel : 1
-    const pruneAvailable = plant.tipo_poda !== 'NUNCA' && plant.requiere_poda_activa === 1
     const pruneUnlocked = playerLevel >= 2
-    const nutrientes = plant.nutrientes ?? 50
-
-    const pruneLabel = !pruneUnlocked
-      ? '✂️ Podar 🔒 (nivel 2)'
-      : pruneAvailable ? '✂️ Podar' : '✂️ No necesita poda'
 
     const panel = document.createElement('div')
     panel.className = 'care-panel'
@@ -651,7 +668,7 @@ const Environment = {
     }
   },
 
-  async _onSimulationTick(results) {
+  async _onSimulationTick(_results) {
     await this._loadUserPlants()
     this._renderCurrentRoom()
   },

@@ -1,140 +1,16 @@
-const Database = require('better-sqlite3')
-const path = require('path')
-const { app } = require('electron')
-const DB_PATH = path.join(app.getPath('userData'), 'game.db')
-const db = new Database(DB_PATH)
+const { db, DB_PATH } = require('./database/connection')
+const { initializeSchema, initializeSchemaIndexes } = require('./database/schema')
+const { clamp, toNonNegativeInteger } = require('./utils/number-utils')
 const MAX_PLAYER_LEVEL = 5
+let responsibleCareAwardedThisSession = false
+let streakBlockedThisSession = false
 
 function initializeDatabase() {
-
-  // ── Progreso del jugador (reemplaza BD Usuario) ──────────────────────────
-  // nivel >= 2 desbloquea la herramienta de poda (RF-09).
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS progreso (
-      nivel          INTEGER NOT NULL DEFAULT 1,
-      experiencia    INTEGER NOT NULL DEFAULT 0,
-      racha_dias     INTEGER NOT NULL DEFAULT 0,
-      dia_actual      INTEGER NOT NULL DEFAULT 1
-    )
-  `)
-  // ── Estadísticas de desempeño ────────────────────────────────────────────
-  // diagnosticos_correctos alimenta RF-31 (LM4) y el cálculo de XP adicional.
-  // semana_simulada_actual controla la activación de RF-32 (LM5).
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS estadisticas (
-      id_estadistica         INTEGER PRIMARY KEY AUTOINCREMENT,
-      acciones_totales       INTEGER NOT NULL DEFAULT 0,
-      acciones_correctas     INTEGER NOT NULL DEFAULT 0,
-      errores_riego          INTEGER NOT NULL DEFAULT 0,
-      errores_abono          INTEGER NOT NULL DEFAULT 0,
-      errores_poda           INTEGER NOT NULL DEFAULT 0,
-      errores_ubicacion      INTEGER NOT NULL DEFAULT 0,
-      errores_riego_semana    INTEGER NOT NULL DEFAULT 0,
-      errores_abono_semana    INTEGER NOT NULL DEFAULT 0,
-      errores_poda_semana     INTEGER NOT NULL DEFAULT 0,
-      errores_ubicacion_semana INTEGER NOT NULL DEFAULT 0,
-      diagnosticos_correctos INTEGER NOT NULL DEFAULT 0,
-      plantas_muertas        INTEGER NOT NULL DEFAULT 0,
-      semana_simulada_actual INTEGER NOT NULL DEFAULT 0
-    )
-  `)
-  // ── Catálogo de plantas del vivero ───────────────────────────────────────
-  // nombre_cientifico y tipo_planta son campos nativos (RF-04, LM1).
-  // tipo_poda determina si la herramienta de poda aplica (RF-09).
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS plantas (
-      id_planta        INTEGER PRIMARY KEY AUTOINCREMENT,
-      nombre_planta    TEXT    NOT NULL,
-      nombre_cientifico TEXT   NOT NULL DEFAULT '',
-      tipo_planta      TEXT    NOT NULL DEFAULT 'OTRO',
-      tipo_luz         TEXT    NOT NULL,
-      frecuencia_riego INTEGER NOT NULL,
-      nivel_dificultad TEXT    NOT NULL,
-      tipo_poda        TEXT    NOT NULL DEFAULT 'NUNCA',
-      descripcion      TEXT    NOT NULL,
-      sprite_key       TEXT    NOT NULL
-    )
-  `)
-
-  // ── Plantas adquiridas por el jugador ────────────────────────────────────
-  // requiere_poda_activa: se activa según tipo_poda y dias_transcurridos (RF-09).
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS plantas_usuario (
-      id_registro          INTEGER PRIMARY KEY AUTOINCREMENT,
-      id_planta            INTEGER NOT NULL,
-      estado_planta        TEXT    NOT NULL DEFAULT 'SANA',
-      ubicacion            TEXT    DEFAULT NULL,
-      humedad              INTEGER NOT NULL DEFAULT 50,
-      salud                INTEGER NOT NULL DEFAULT 100,
-      dias_sin_regar       INTEGER NOT NULL DEFAULT 0,
-      ultimo_riego         INTEGER NOT NULL DEFAULT 0,
-      dias_transcurridos   INTEGER NOT NULL DEFAULT 0,
-      requiere_poda_activa INTEGER NOT NULL DEFAULT 0,
-      ultimo_poda          INTEGER NOT NULL DEFAULT 0,
-      adquirida_en         TEXT    NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY (id_planta) REFERENCES plantas(id_planta)
-    )
-  `)
-
-  // ── Logros obtenidos ─────────────────────────────────────────────────────
-  // tipo_logro: PROGRESO / EDUCATIVO / RACHA / EVALUACION.
-  // EVALUACION se desbloquea por revisión semanal activa (RF-32, LM5).
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS logros (
-      id_logro          INTEGER PRIMARY KEY AUTOINCREMENT,
-      clave_logro       TEXT    UNIQUE NOT NULL DEFAULT '',
-      nombre_logro      TEXT    NOT NULL,
-      descripcion_logro TEXT    NOT NULL,
-      fecha_obtencion   TEXT    NOT NULL,
-      tipo_logro        TEXT    NOT NULL DEFAULT 'PROGRESO'
-    )
-  `)
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS progreso (
-      nivel          INTEGER NOT NULL DEFAULT 1,
-      experiencia    INTEGER NOT NULL DEFAULT 0,
-      racha_dias     INTEGER NOT NULL DEFAULT 0,
-      dia_actual      INTEGER NOT NULL DEFAULT 1,
-      ultimo_cierre  INTEGER DEFAULT NULL,   -- ✅ timestamp Unix en ms
-      tutorial_completado  INTEGER NOT NULL DEFAULT 0 
-    )
-  `)
-
-  // ── Migraciones seguras para BDs existentes ──────────────────────────────
-  // Cada bloque agrega columnas nuevas sin romper datos previos.
-  const safeMigrations = [
-    `ALTER TABLE plantas ADD COLUMN nombre_cientifico TEXT NOT NULL DEFAULT ''`,
-    `ALTER TABLE plantas ADD COLUMN tipo_planta TEXT NOT NULL DEFAULT 'OTRO'`,
-    `ALTER TABLE plantas_usuario ADD COLUMN requiere_poda_activa INTEGER NOT NULL DEFAULT 0`,
-    `ALTER TABLE plantas_usuario ADD COLUMN ultimo_poda INTEGER NOT NULL DEFAULT 0`,
-    `ALTER TABLE plantas_usuario ADD COLUMN pos_x TEXT DEFAULT NULL`,  // ✅ nuevo
-    `ALTER TABLE plantas_usuario ADD COLUMN pos_y TEXT DEFAULT NULL`,  // ✅ nuevo
-    `ALTER TABLE progreso ADD COLUMN ultimo_cierre INTEGER DEFAULT NULL`,
-    `ALTER TABLE progreso ADD COLUMN dia_actual INTEGER NOT NULL DEFAULT 1`,
-    // Agregamos la columna en forma segura: SQLite no permite añadir
-    // restricciones UNIQUE/NOT NULL en ALTER TABLE, así que añadimos
-    // solo la columna con un DEFAULT y creamos un índice único después.
-    `ALTER TABLE logros ADD COLUMN clave_logro TEXT DEFAULT ''`,
-    `ALTER TABLE estadisticas ADD COLUMN acciones_correctas_hoy INTEGER NOT NULL DEFAULT 0`,
-    `ALTER TABLE estadisticas ADD COLUMN errores_riego_semana INTEGER NOT NULL DEFAULT 0`,
-    `ALTER TABLE estadisticas ADD COLUMN errores_abono_semana INTEGER NOT NULL DEFAULT 0`,
-    `ALTER TABLE estadisticas ADD COLUMN errores_poda_semana INTEGER NOT NULL DEFAULT 0`,
-    `ALTER TABLE estadisticas ADD COLUMN errores_ubicacion_semana INTEGER NOT NULL DEFAULT 0`,
-    `ALTER TABLE progreso ADD COLUMN tutorial_completado INTEGER NOT NULL DEFAULT 0`,
-    `ALTER TABLE plantas_usuario ADD COLUMN nutrientes INTEGER NOT NULL DEFAULT 50`,  
-    
-  ]
-  for (const migration of safeMigrations) {
-    try { db.exec(migration) } catch (_) { /* columna ya existe */ }
-  }
+  initializeSchema(db)
 
   migrateCurrentDayFromPlantState()
 
-  // Asegurar unicidad de `clave_logro` en instalaciones antiguas
-  try {
-    db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_logros_clave_logro ON logros(clave_logro)`)
-  } catch (_) { /* índice ya existe o tabla no tiene la columna */ }
+  initializeSchemaIndexes(db)
 
   // Migración de logros existentes para preservar clave_texto
   const legacyAchievementMap = {
@@ -508,6 +384,7 @@ function acquirePlant(id_planta) {
     INSERT INTO plantas_usuario (id_planta) VALUES (?)
   `).run(id_planta)
 
+  checkAndGrantAchievements()
   return result.lastInsertRowid
 }
 
@@ -648,11 +525,6 @@ function updateStats(updates) {
   db.prepare(`UPDATE estadisticas SET ${setClauses}`).run(normalizedUpdates)
 }
 
-function resetDailyCorrectActions() {
-  getStats()
-  db.prepare('UPDATE estadisticas SET acciones_correctas_hoy = 0').run()
-}
-
 // ── Actualiza XP y nivel del jugador ──────────────────────────────────────
 // Suma XP al jugador y recalcula su nivel.
 // Formula: nivel = min(5, floor(XP / 100) + 1)
@@ -688,11 +560,12 @@ function getStats() {
 // Esta es la función más importante del motor de simulación.
 // Avanza N días simulados para todas las plantas del jugador.
 function simulateDays(daysToAdvance) {
-  const safeDays = Math.max(0, Math.floor(Number(daysToAdvance) || 0))
-  if (safeDays === 0) return []
+  const safeDays = toNonNegativeInteger(daysToAdvance)
+  if (safeDays === 0) return { results: [], streakEvent: null }
 
   const plants  = getUserPlants()
   const results = []
+  let streakEvent = null
 
   db.transaction(() => {
     for (const plant of plants) {
@@ -763,6 +636,7 @@ function simulateDays(daysToAdvance) {
 
       if (estado_planta === 'MUERTA' && plant.estado_planta !== 'MUERTA') {
         updateStats({ plantas_muertas: 1 })
+        if (!streakEvent) streakEvent = resetStreakForPlantDeath()
       }
 
       results.push({
@@ -783,24 +657,8 @@ function simulateDays(daysToAdvance) {
   const progress = getProgress()
   updateProgress({ dia_actual: Math.max(1, (progress.dia_actual || 1) + safeDays) })
 
-  processStreakForAdvancedDays(safeDays)
   checkAndGrantAchievements()
-  return results
-}
-
-function processStreakForAdvancedDays(daysToAdvance) {
-  const safeDays = Math.max(0, Math.floor(Number(daysToAdvance) || 0))
-  if (safeDays === 0) return
-
-  const stats = getStats()
-  const hadCorrectActionToday = (stats?.acciones_correctas_hoy || 0) > 0
-
-  updateStreak(hadCorrectActionToday)
-  resetDailyCorrectActions()
-
-  if (safeDays > 1) {
-    updateStreak(false)
-  }
+  return { results, streakEvent }
 }
 
 // ── Acciones de cuidado ───────────────────────────────────────────────────
@@ -862,8 +720,9 @@ function waterPlant(id_registro) {
   })
 
   const xpResult = addExperience(xpGained)
+  const streakEvent = isError ? null : recordResponsibleCareSession()
   checkAndGrantAchievements()
-  return { success: true, feedback, xpGained, isError, xpResult }
+  return { success: true, feedback, xpGained, isError, xpResult, streakEvent }
 }
 
 // El abono aporta nutrientes al sustrato — no cura directamente.
@@ -915,15 +774,16 @@ function fertilizePlant(id_registro) {
     updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
   }
 
-  const newSalud = Math.min(100, Math.max(0, plant.salud + healthChange))
+  const newSalud = clamp(plant.salud + healthChange, 0, 100)
   updatePlantState(id_registro, {
     salud: newSalud,
     nutrientes: newNutrientes
   })
 
   const xpResult = addExperience(xpGained)
+  const streakEvent = isError ? null : recordResponsibleCareSession()
   checkAndGrantAchievements()
-  return { success: true, feedback, xpGained, isError, xpResult }
+  return { success: true, feedback, xpGained, isError, xpResult, streakEvent }
 }
 
 // Drena el exceso de agua de una planta.
@@ -965,8 +825,9 @@ function drainPlant(id_registro) {
 
   updatePlantState(id_registro, { humedad: newHumedad })
   const xpResult = addExperience(xpGained)
+  const streakEvent = isError ? null : recordResponsibleCareSession()
   checkAndGrantAchievements()
-  return { success: true, feedback, xpGained, isError, xpResult }
+  return { success: true, feedback, xpGained, isError, xpResult, streakEvent }
 }
 // RF-09: la poda requiere nivel >= 2, tipo_poda !== 'NUNCA'
 // y requiere_poda_activa === true.
@@ -1023,6 +884,7 @@ function prunePlant(id_registro) {
   })
   updateStats({ acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 })
   const xpResult = addExperience(20)
+  const streakEvent = recordResponsibleCareSession()
   checkAndGrantAchievements()
 
   return {
@@ -1030,7 +892,8 @@ function prunePlant(id_registro) {
     feedback: `Poda realizada con cuidado. Tu ${plant.nombre_planta} puede concentrar energía en brotes sanos.`,
     xpGained: 20,
     isError: false,
-    xpResult
+    xpResult,
+    streakEvent
   }
 }
 
@@ -1119,11 +982,8 @@ function recordWeeklyReview(wasCorrect, reviewedWeek = null) {
     : null
 
   if (currentWeek === null) {
-    const maxDayResult = db.prepare(
-      'SELECT MAX(dias_transcurridos) as maxDay FROM plantas_usuario'
-    ).get()
-    const maxDay = maxDayResult?.maxDay || 0
-    currentWeek = Math.floor(maxDay / 7)
+    const progress = getProgress()
+    currentWeek = Math.floor((progress.dia_actual || 1) / 7)
   }
 
   const stats = getStats()
@@ -1207,13 +1067,41 @@ function getAchievements() {
 
 // Incrementa la racha si el jugador tuvo acciones correctas hoy.
 // Resetea a 0 si no cumplió el requisito educativo (RF-22).
-function updateStreak(hadCorrectActionToday) {
+function recordResponsibleCareSession() {
+  if (streakBlockedThisSession) {
+    return { changed: false, reason: 'blocked' }
+  }
+  if (responsibleCareAwardedThisSession) {
+    return { changed: false, reason: 'already_awarded' }
+  }
+
   const progress = getProgress()
-  const newStreak = hadCorrectActionToday
-    ? progress.racha_dias + 1
-    : 0
+  const newStreak = progress.racha_dias + 1
   updateProgress({ racha_dias: newStreak })
-  return newStreak
+  responsibleCareAwardedThisSession = true
+
+  return {
+    changed: true,
+    newStreak,
+    message: 'Racha de cuidado aumentada'
+  }
+}
+
+function resetStreakForPlantDeath() {
+  const progress = getProgress()
+  updateProgress({ racha_dias: 0 })
+  streakBlockedThisSession = true
+  responsibleCareAwardedThisSession = false
+
+  return {
+    changed: progress.racha_dias > 0,
+    newStreak: 0,
+    message: 'Perdiste la racha porque una planta murió'
+  }
+}
+
+function updateStreak() {
+  return recordResponsibleCareSession()
 }
 
 // Verifica y asigna logros según el estado actual del jugador (RF-21).
@@ -1240,35 +1128,43 @@ function checkAndGrantAchievements() {
   }
 
   // ── Logros de progreso ──────────────────────────────────────────────
-  if (plants.length >= 1)
+  if (plants.length >= 1) {
     grant('primera_planta', 'Primer Brote', 'Adquiere tu primera planta', 'PROGRESO')
+  }
 
-  if (plants.length >= 5)
+  if (plants.length >= 5) {
     grant('cinco_plantas', 'Pequeño Jardín', 'Ten 5 plantas en tu colección', 'PROGRESO')
+  }
 
-  if (progress.nivel >= 2)
+  if (progress.nivel >= 2) {
     grant('primer_nivel', 'Cuidador Novato', 'Alcanza el nivel 2', 'PROGRESO')
+  }
 
-  if (progress.nivel >= 3)
+  if (progress.nivel >= 3) {
     grant('planta_nivel3', 'Verde Experto', 'Alcanza el nivel 3', 'PROGRESO')
+  }
 
   // ── Logros educativos ───────────────────────────────────────────────
-  if (stats.diagnosticos_correctos >= 10)
+  if (stats.diagnosticos_correctos >= 10) {
     grant('diagnostico_perfecto', 'Ojo Clínico', 'Acierta 10 diagnósticos previos', 'EDUCATIVO')
+  }
 
   // Semana perfecta: completó una semana sin ningún error
   const totalErrors = stats.errores_riego + stats.errores_abono +
     stats.errores_poda + stats.errores_ubicacion
   const semana = stats.semana_simulada_actual
-  if (semana >= 1 && totalErrors === 0)
+  if (semana >= 1 && totalErrors === 0) {
     grant('sin_errores_semana', 'Semana Perfecta', 'Completa una semana sin errores de cuidado', 'EDUCATIVO')
+  }
 
   // ── Logros de racha ─────────────────────────────────────────────────
-  if (progress.racha_dias >= 5)
+  if (progress.racha_dias >= 5) {
     grant('racha_5', 'Constante', 'Mantén una racha de 5 días', 'RACHA')
+  }
 
-  if (progress.racha_dias >= 10)
+  if (progress.racha_dias >= 10) {
     grant('racha_10', 'Dedicado', 'Mantén una racha de 10 días', 'RACHA')
+  }
 }
 
 function grantQuizPerfectAchievement() {
@@ -1308,6 +1204,8 @@ function resetGame() {
   db.prepare('DELETE FROM estadisticas').run()
   db.prepare('DELETE FROM logros').run()
   db.prepare('UPDATE progreso SET nivel = 1, experiencia = 0, racha_dias = 0, dia_actual = 1, tutorial_completado = 0, ultimo_cierre = NULL').run()
+  responsibleCareAwardedThisSession = false
+  streakBlockedThisSession = false
 }
 
 // Resetea el tutorial para que vuelva a mostrarse.
@@ -1354,6 +1252,7 @@ module.exports = {
   getOfflineDays,
   getAchievements,
   updateStreak,
+  recordResponsibleCareSession,
   checkAndGrantAchievements,
   grantQuizPerfectAchievement,
   isTutorialCompleted,

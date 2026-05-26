@@ -1,5 +1,6 @@
 const { ipcMain } = require('electron')
 const db = require('./database')
+const { clampInteger } = require('./utils/number-utils')
 
 // Registra todos los canales IPC entre el proceso main y el renderer.
 // Se invoca una sola vez desde main.js al iniciar la app.
@@ -72,8 +73,12 @@ function registerIpcHandlers() {
   // Avanza N días simulados y actualiza el estado de todas las plantas.
   ipcMain.handle('simulation:advance', async (event, days) => {
     try {
-      const results = db.simulateDays(days)
-      return { success: true, results }
+      const simulation = db.simulateDays(days)
+      return {
+        success: true,
+        results: simulation.results,
+        streakEvent: simulation.streakEvent
+      }
     } catch (error) {
       console.error('Error en simulación:', error)
       return { success: false, error: 'Error en la simulación' }
@@ -122,7 +127,9 @@ function registerIpcHandlers() {
       if (wasCorrect) {
         db.updateStats({ diagnosticos_correctos: 1 })
         const xpResult = db.addExperience(10)
-        return { success: true, xpGained: 10, xpResult }
+        const streakEvent = db.recordResponsibleCareSession()
+        db.checkAndGrantAchievements()
+        return { success: true, xpGained: 10, xpResult, streakEvent }
       }
       return { success: true, xpGained: 0 }
     } catch (error) {
@@ -172,7 +179,7 @@ function registerIpcHandlers() {
   // Registra Defensa del Brote con recompensa calculada por desempeno.
   ipcMain.handle('minigame:defense:complete', async (event, xpAmount) => {
     try {
-      const safeXp = Math.max(0, Math.min(300, Math.floor(Number(xpAmount) || 0)))
+      const safeXp = clampInteger(xpAmount, 0, 300)
       const xpResult = safeXp > 0 ? db.addExperience(safeXp) : null
 
       db.updateStats(
@@ -180,6 +187,7 @@ function registerIpcHandlers() {
           ? { acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 }
           : { acciones_totales: 1 }
       )
+      db.checkAndGrantAchievements()
 
       return { success: true, xpGained: safeXp, xpResult }
     } catch (error) {
@@ -242,6 +250,7 @@ function registerIpcHandlers() {
       db.fixWeeklyCounter(value)
       return { success: true }
     } catch (error) {
+      console.error('Error corrigiendo contador semanal:', error)
       return { success: false }
     }
   })
@@ -251,6 +260,7 @@ function registerIpcHandlers() {
       db.clearUserPlants()
       return { success: true }
     } catch (error) {
+      console.error('Error limpiando plantas del jugador:', error)
       return { success: false }
     }
   })
@@ -271,6 +281,7 @@ function registerIpcHandlers() {
       const days = db.getOfflineDays()
       return { success: true, days }
     } catch (error) {
+      console.error('Error calculando dias offline:', error)
       return { success: true, days: 0 }
     }
   })
@@ -280,6 +291,7 @@ function registerIpcHandlers() {
       const achievements = db.getAchievements()
       return { success: true, achievements }
     } catch (error) {
+      console.error('Error cargando logros:', error)
       return { success: false, achievements: [] }
     }
   })
@@ -289,6 +301,7 @@ function registerIpcHandlers() {
       db.grantQuizPerfectAchievement()
       return { success: true }
     } catch (error) {
+      console.error('Error otorgando logro de quiz perfecto:', error)
       return { success: false }
     }
   })
@@ -298,6 +311,7 @@ function registerIpcHandlers() {
       const completed = db.isTutorialCompleted()
       return { success: true, completed }
     } catch (error) {
+      console.error('Error consultando estado del tutorial:', error)
       return { success: true, completed: false }
     }
   })
@@ -307,6 +321,7 @@ function registerIpcHandlers() {
       db.completeTutorial()
       return { success: true }
     } catch (error) {
+      console.error('Error completando tutorial:', error)
       return { success: false }
     }
   })
@@ -316,6 +331,7 @@ function registerIpcHandlers() {
       db.resetGame()
       return { success: true }
     } catch (error) {
+      console.error('Error reiniciando partida:', error)
       return { success: false }
     }
   })
@@ -325,6 +341,7 @@ function registerIpcHandlers() {
       db.resetTutorial()
       return { success: true }
     } catch (error) {
+      console.error('Error reiniciando tutorial:', error)
       return { success: false }
     }
   })

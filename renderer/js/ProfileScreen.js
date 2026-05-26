@@ -136,7 +136,7 @@ const ProfileScreen = {
       : '¡Nivel máximo alcanzado!'
 
     document.getElementById('profile-xp-fill').style.width =
-      `${Math.min(100, Math.max(0, xpProgress))}%`
+      `${NumberUtils.clamp(xpProgress, 0, 100)}%`
 
     // Lista de niveles
     const list = document.getElementById('profile-levels-list')
@@ -247,6 +247,9 @@ const ProfileScreen = {
 
   _bindTabs() {
     document.querySelectorAll('.profile-tab').forEach(tab => {
+      if (tab.dataset.bound === 'true') return
+      tab.dataset.bound = 'true'
+
       tab.addEventListener('click', () => {
         // Activa la pestaña seleccionada
         document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'))

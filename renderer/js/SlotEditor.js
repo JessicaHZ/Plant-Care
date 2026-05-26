@@ -50,8 +50,8 @@ const SlotEditor = {
     const x = ((e.clientX - rect.left) / rect.width) * 100
     const y = ((e.clientY - rect.top) / rect.height) * 100
 
-    slot.x = Math.max(0, Math.min(100, Number(x.toFixed(1))))
-    slot.y = Math.max(0, Math.min(100, Number(y.toFixed(1))))
+    slot.x = NumberUtils.clamp(Number(x.toFixed(1)), 0, 100)
+    slot.y = NumberUtils.clamp(Number(y.toFixed(1)), 0, 100)
 
     Environment.refreshCurrentRoom()
     editor._renderPanel()

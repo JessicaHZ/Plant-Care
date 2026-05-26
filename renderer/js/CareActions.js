@@ -163,6 +163,9 @@ const CareActions = {
 
     const toastType = result.isError ? 'warning' : 'success'
     this._showToast(result.feedback, toastType)
+    if (result.streakEvent?.changed) {
+      setTimeout(() => this._showToast(result.streakEvent.message, 'success'), 1300)
+    }
 
     if (result.xpResult) {
       window.dispatchEvent(new CustomEvent('xp:gained', {

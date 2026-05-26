@@ -238,6 +238,9 @@ const Nursery = {
     const filterBtns = document.querySelectorAll('.nursery-filter-btn')
 
     filterBtns.forEach(btn => {
+      if (btn.dataset.bound === 'true') return
+      btn.dataset.bound = 'true'
+
       btn.addEventListener('click', () => {
         filterBtns.forEach(b => b.classList.remove('active'))
         btn.classList.add('active')
@@ -251,10 +254,13 @@ const Nursery = {
       })
     })
 
-    document.getElementById('btn-close-detail')
-      ?.addEventListener('click', () => {
+    const closeBtn = document.getElementById('btn-close-detail')
+    if (closeBtn && closeBtn.dataset.bound !== 'true') {
+      closeBtn.dataset.bound = 'true'
+      closeBtn.addEventListener('click', () => {
         document.getElementById('nursery-detail').classList.remove('open')
       })
+    }
   }
 
 }

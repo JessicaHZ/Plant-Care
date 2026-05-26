@@ -5,6 +5,7 @@ const Tutorial = {
   _currentStep: 0,
   _active: false,
   _listeners: [],
+  _screenListener: null,
 
   _steps: [
     {
@@ -85,8 +86,11 @@ const Tutorial = {
     const result = await window.gameAPI.isTutorialCompleted()
     if (result.completed) return
 
+    if (this._active) this.cancel()
+
     this._active = true
     this._currentStep = 0
+    this._bindScreenListener()
     this._renderStep()
   },
 
@@ -129,6 +133,39 @@ const Tutorial = {
     }
   },
 
+  _bindScreenListener() {
+    if (this._screenListener) return
+
+    this._screenListener = ({ detail }) => {
+      if (!this._active) return
+
+      const currentScreen = detail?.to
+      if (currentScreen === 'splash') {
+        this.cancel()
+        return
+      }
+
+      if (!this._isTutorialScreen(currentScreen)) {
+        Guide.hide()
+        return
+      }
+
+      setTimeout(() => this._renderStep(), 0)
+    }
+
+    window.addEventListener('screen:changed', this._screenListener)
+  },
+
+  _unbindScreenListener() {
+    if (!this._screenListener) return
+    window.removeEventListener('screen:changed', this._screenListener)
+    this._screenListener = null
+  },
+
+  _isTutorialScreen(screenName) {
+    return screenName === 'environment' || screenName === 'nursery'
+  },
+
   _waitFor(eventName, handler) {
     const listener = () => handler()
     window.addEventListener(eventName, listener, { once: true })
@@ -156,8 +193,17 @@ const Tutorial = {
     if (!this._active) return
     this._active = false
     this._clearListeners()
+    this._unbindScreenListener()
     Guide.hide()
     await window.gameAPI.completeTutorial()
+  },
+
+  cancel() {
+    if (!this._active) return
+    this._active = false
+    this._clearListeners()
+    this._unbindScreenListener()
+    Guide.hide()
   }
 }
 

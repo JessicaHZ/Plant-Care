@@ -32,12 +32,24 @@ const Simulation = {
     const result = await window.gameAPI.advanceDays(days)
 
     if (result.success) {
-      this._currentDay += days
+      await this._syncDayFromProgress()
       this._updateDayDisplay()
 
       window.dispatchEvent(new CustomEvent('simulation:tick', {
         detail: { results: result.results, day: this._currentDay }
       }))
+
+      if (result.streakEvent?.changed) {
+        this._showSimulationMessage(result.streakEvent.message, 'warning')
+      } else {
+        const attentionCount = this._countPlantsNeedingAttention(result.results)
+        if (attentionCount > 0) {
+          const message = attentionCount === 1
+            ? 'Una planta necesita atención.'
+            : `${attentionCount} plantas necesitan atención.`
+          this._showSimulationMessage(message, 'warning')
+        }
+      }
     }
 
     return result
@@ -55,8 +67,9 @@ const Simulation = {
     }
 
     this._interval = setInterval(async () => {
-      // Solo avanza si el jugador está en el entorno
-      // para que las actualizaciones sean visibles
+      // Solo se pausa en la pantalla de inicio; dentro de la partida,
+      // el tiempo sigue avanzando aunque el jugador visite otros apartados.
+      if (window.ScreenManager?.current() === 'splash') return
       await this.advanceDays(1)
     }, this.MS_PER_GAME_DAY)
 
@@ -98,6 +111,26 @@ const Simulation = {
         ? 'Día 1 — Adquiere tu primera planta'
         : `Día ${this._currentDay}`
     })
+  },
+
+  _showSimulationMessage(message, type = 'info') {
+    const toast = document.createElement('div')
+    toast.className = `care-toast care-toast-${type}`
+    toast.textContent = message
+    document.body.appendChild(toast)
+
+    setTimeout(() => toast.classList.add('visible'), 50)
+    setTimeout(() => {
+      toast.classList.remove('visible')
+      setTimeout(() => toast.remove(), 400)
+    }, 4200)
+  },
+
+  _countPlantsNeedingAttention(results = []) {
+    return results.filter(plant =>
+      plant.estado_planta === 'MARCHITA' ||
+      plant.estado_planta === 'ENFERMA'
+    ).length
   }
 
   

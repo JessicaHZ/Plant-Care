@@ -27,11 +27,13 @@ const MiniGameDefense = {
           }))
         }
 
-        if (onFinish) onFinish({
-          ...summary,
-          persisted: result.success,
-          xpGained: result.xpGained || 0
-        })
+        if (onFinish) {
+          onFinish({
+            ...summary,
+            persisted: result.success,
+            xpGained: result.xpGained || 0
+          })
+        }
       }
     })
 

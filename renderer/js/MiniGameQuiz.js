@@ -303,6 +303,7 @@ const MiniGameQuiz = {
   ],
 
   start(onFinish) {
+    this._overlay?.remove()
     this._onFinish = onFinish
     this._current = 0
     this._correct = 0
