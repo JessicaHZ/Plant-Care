@@ -3,25 +3,80 @@
   "version": "1.0.0",
   "description": "Serious game - simulador de cuidado de plantas",
   "main": "main/main.js",
-  "scripts": {
-    "start": "electron .",
-    "dev": "electron . --inspect",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier . --check"
-  },
-  "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "rebuild": "electron-rebuild",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "build": "npm run build:win",
+    "build:win": "set ELECTRON_CACHE=.cache\\electron&& set ELECTRON_BUILDER_CACHE=.cache\\electron-builder&& electron-builder --win",
+    "dist": "npm run lint && npm run build:win"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.9.0"
+  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "electron": "^41.3.0",
+    "electron-builder": "^26.8.1",
     "electron-rebuild": "^3.2.9",
     "eslint": "^10.4.0",
     "prettier": "^3.8.3"
   },
-  "dependencies": {
-    "better-sqlite3": "^12.9.0"
+  "build": {
+    "appId": "com.myplanthome.game",
+    "productName": "My Plant Home",
+    "directories": {
+      "output": "dist/build",
+      "buildResources": "assets"
+    },
+    "files": [
+      "main/**/*",
+      "renderer/**/*",
+      "assets/**/*",
+      "package.json",
+      "!docs/**/*",
+      "!tests/**/*",
+      "!.cache/**/*",
+      "!dist/**/*",
+      "!build/**/*",
+      "!coverage/**/*",
+      "!.git/**/*",
+      "!.tmp-*",
+      "!*.log",
+      "!README.md",
+      "!AGENTS.md",
+      "!eslint.config.cjs",
+      "!*.md"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**/*"
+    ],
+    "npmRebuild": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-Setup.${ext}",
+      "signAndEditExecutable": false
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "My Plant Home"
+    }
   }
 }

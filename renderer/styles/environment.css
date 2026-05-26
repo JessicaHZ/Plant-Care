@@ -6,7 +6,11 @@
   justify-content: flex-start;
   align-items: stretch;
   gap: 0;
-  background: #8b5632;
+  background:
+    linear-gradient(90deg, rgba(255, 227, 184, 0.04) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(42, 24, 16, 0.08) 1px, transparent 1px),
+    #8b5632;
+  background-size: 18px 18px, 18px 18px, auto;
 }
 
 .env-topbar {
@@ -14,13 +18,20 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.45rem 0.9rem;
-  border-bottom: 2px solid rgba(82, 45, 27, 0.42);
-  background: rgba(150, 92, 54, 0.82);
+  border-bottom: 3px solid rgba(42, 24, 16, 0.72);
+  background:
+    linear-gradient(180deg, rgba(180, 115, 68, 0.9), rgba(127, 75, 44, 0.94));
   width: 100%;
   height: 46px;          /* altura fija para el calc() */
   flex-shrink: 0;        /* no se comprime nunca */
   color: #fff1d5;
   backdrop-filter: blur(6px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  box-shadow:
+    inset 0 2px 0 rgba(255, 227, 184, 0.16),
+    0 4px 0 rgba(44, 26, 20, 0.52),
+    0 10px 18px rgba(70, 38, 22, 0.18);
 }
 
 .env-tabs {
@@ -28,39 +39,54 @@
   gap: 0.4rem;
   flex: 1;
   justify-content: center;
+  min-width: max-content;
 }
 
 .room-tab {
   padding: 4px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(82, 45, 27, 0.42);
-  background: rgba(244, 203, 145, 0.24);
+  border-radius: 5px;
+  border: 2px solid rgba(82, 45, 27, 0.62);
+  background:
+    linear-gradient(180deg, rgba(244, 203, 145, 0.3), rgba(82, 45, 27, 0.22));
   color: #fff1d5;
   font-size: 0.78rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: transform 0.1s ease, filter 0.1s ease, box-shadow 0.1s ease, background 0.1s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    0 3px 0 rgba(42, 24, 16, 0.46);
 }
 
 .room-tab.active, .room-tab:hover {
-  background-color: rgba(116, 83, 48, 0.95);
+  background:
+    linear-gradient(180deg, rgba(210, 161, 109, 0.72), rgba(116, 83, 48, 0.95));
   color: #fff8e8;
   border-color: rgba(64, 38, 24, 0.75);
+  transform: translateY(-1px);
+  filter: brightness(1.06);
 }
 
 .env-controls {
   display: flex;
   align-items: center;
   gap: 0.55rem;
+  flex: 0 0 auto;
 }
 
 #btn-advance-day {
   padding: 8px 16px;
-  border-radius: 14px;
-  background: rgba(244, 203, 145, 0.28);
+  border-radius: 5px;
+  background:
+    linear-gradient(180deg, rgba(244, 203, 145, 0.35), rgba(82, 45, 27, 0.25));
   color: #fff1d5;
-  border: 1px solid rgba(82, 45, 27, 0.42);
-  box-shadow: 0 4px 12px rgba(70, 38, 22, 0.18);
+  border: 2px solid rgba(82, 45, 27, 0.62);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    0 3px 0 rgba(42, 24, 16, 0.5),
+    0 8px 14px rgba(70, 38, 22, 0.18);
   font-size: 0.84rem;
+  font-weight: 800;
 }
 
 #btn-advance-day:hover {
@@ -72,7 +98,7 @@
   padding: 8px 12px;
   color: #fff1d5;
   background: rgba(244, 203, 145, 0.18);
-  border-radius: 14px;
+  border-radius: 5px;
 }
 
 .sim-day {
@@ -91,12 +117,29 @@
 .env-room-container {
   flex: 1;
   position: relative;
-  overflow: auto hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   min-height: 0;
+  scrollbar-color: rgba(241, 199, 125, 0.6) rgba(42, 24, 16, 0.42);
+  scrollbar-width: thin;
+}
+
+.env-room-container::-webkit-scrollbar {
+  height: 12px;
+}
+
+.env-room-container::-webkit-scrollbar-track {
+  background: rgba(42, 24, 16, 0.42);
+}
+
+.env-room-container::-webkit-scrollbar-thumb {
+  background: rgba(241, 199, 125, 0.62);
+  border: 2px solid rgba(42, 24, 16, 0.42);
+  border-radius: 6px;
 }
 
 .room-area {
-  width: max(100%, 760px);
+  width: max(100%, 1120px);
   height: 100%;
   background-size: cover;
   background-position: center;
@@ -108,12 +151,6 @@
   padding: 0.5rem;
   gap: 1rem;
   overflow: hidden;
-}
-
-@media (max-width: 900px) {
-  .room-area {
-    width: 820px;
-  }
 }
 
 .room-plants {
@@ -134,11 +171,13 @@
   transition: transform 0.15s ease;
 }
 
-.room-plant:hover { transform: scale(1.05); }
+.room-plant:hover {
+  transform: scale(1.05);
+}
 
 .room-plant-sprite {
-  width: 90px;
-  height: 90px;
+  width: 108px;
+  height: 108px;
   object-fit: contain;
   filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
 }
@@ -146,16 +185,20 @@
 .room-plant-label {
   font-size: 0.75rem;
   color: white;
-  background: rgba(91, 58, 28, 0.56);
-  padding: 2px 8px;
-  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(116, 83, 48, 0.86), rgba(55, 34, 25, 0.82));
+  padding: 3px 8px;
+  border: 2px solid rgba(42, 24, 16, 0.72);
+  border-radius: 4px;
+  box-shadow: 0 3px 0 rgba(42, 24, 16, 0.42);
 }
 
 /* Panel lateral del entorno */
 .env-side-panel {
   width: 176px;
-  background-color: rgba(126, 77, 45, 0.86);
-  border-left: 2px solid rgba(82, 45, 27, 0.46);
+  background:
+    linear-gradient(180deg, rgba(150, 92, 54, 0.9), rgba(95, 58, 36, 0.94));
+  border-left: 3px solid rgba(42, 24, 16, 0.72);
   padding: 0.7rem;
   display: flex;
   flex-direction: column;
@@ -163,6 +206,9 @@
   overflow-y: auto;
   color: #fff1d5;
   backdrop-filter: blur(6px);
+  box-shadow:
+    inset 2px 0 0 rgba(255, 227, 184, 0.1),
+    -4px 0 0 rgba(44, 26, 20, 0.38);
 }
 
 .env-room-info {
@@ -170,9 +216,13 @@
   align-items: center;
   gap: 0.55rem;
   padding: 0.55rem;
-  background: rgba(244, 203, 145, 0.18);
-  border: 1px solid rgba(82, 45, 27, 0.32);
-  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(244, 203, 145, 0.22), rgba(82, 45, 27, 0.18));
+  border: 2px solid rgba(82, 45, 27, 0.42);
+  border-radius: 5px;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 3px 0 rgba(42, 24, 16, 0.36);
 }
 
 .env-room-icon { font-size: 1.35rem; }
@@ -199,18 +249,24 @@
   width: 100%;
   padding: 8px 10px;
   margin-bottom: 0.4rem;
-  background: rgba(244, 203, 145, 0.18);
-  border: 1px solid rgba(82, 45, 27, 0.32);
-  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(244, 203, 145, 0.2), rgba(82, 45, 27, 0.18));
+  border: 2px solid rgba(82, 45, 27, 0.42);
+  border-radius: 5px;
   color: #fff1d5;
   font-size: 0.74rem;
   cursor: pointer;
   text-align: left;
-  transition: background 0.15s ease;
+  transition: transform 0.1s ease, background 0.15s ease, filter 0.1s ease, box-shadow 0.1s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    0 3px 0 rgba(42, 24, 16, 0.34);
 }
 
 .env-place-btn:hover {
   background: rgba(46, 125, 50, 0.3);
+  filter: brightness(1.08);
+  transform: translateY(-2px);
 }
 
 /* Panel de cuidado */
@@ -224,7 +280,7 @@
   background:
     linear-gradient(180deg, rgba(132, 78, 43, 0.96), rgba(83, 47, 29, 0.97));
   border: 3px solid rgba(55, 31, 20, 0.92);
-  border-radius: 10px;
+  border-radius: 7px;
   padding: 1rem 1.1rem 1.05rem;
   display: flex;
   flex-direction: column;
@@ -234,6 +290,7 @@
   box-shadow:
     inset 0 2px 0 rgba(255, 227, 184, 0.16),
     inset 0 -3px 0 rgba(0, 0, 0, 0.22),
+    0 7px 0 rgba(44, 26, 20, 0.74),
     0 10px 28px rgba(42, 24, 16, 0.55);
   backdrop-filter: blur(2px);
 }
@@ -291,7 +348,7 @@
   position: relative;
   height: 16px;
   border: 2px solid rgba(42, 24, 16, 0.92);
-  border-radius: 999px;
+  border-radius: 4px;
   box-shadow:
     inset 0 2px 3px rgba(0, 0, 0, 0.34),
     0 1px 0 rgba(255, 241, 213, 0.18);
@@ -370,11 +427,12 @@
 
 @media (max-width: 720px) {
   .care-panel {
-    width: min(380px, calc(100% - 1rem));
+    width: min(460px, calc(100% - 1rem));
+    padding: 0.85rem;
   }
 
   .care-panel-sprite {
-    height: 124px;
+    height: 138px;
   }
 
   .care-meter-row {
@@ -392,11 +450,58 @@
   }
 }
 
+@media (max-width: 1100px) {
+  .room-area {
+    width: max(100%, 1040px);
+  }
+
+  .room-plant-sprite {
+    width: 100px;
+    height: 100px;
+  }
+
+  .env-side-panel {
+    width: 164px;
+    padding: 0.6rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .room-area {
+    width: max(100%, 980px);
+  }
+
+  .room-plant-sprite {
+    width: 92px;
+    height: 92px;
+  }
+
+  .plant-slot {
+    width: 58px;
+    height: 58px;
+  }
+
+  .env-side-panel {
+    width: 152px;
+    padding: 0.55rem;
+  }
+
+  .env-topbar {
+    gap: 0.45rem;
+    padding-inline: 0.55rem;
+  }
+
+  #btn-advance-day,
+  .env-topbar .btn-back {
+    padding-inline: 10px;
+  }
+}
+
 /* ── Slots de plantas ──────────────────────────────────────── */
 .plant-slot {
   position:        absolute;
-  width:           60px;
-  height:          60px;
+  width:           64px;
+  height:          64px;
   transform:       translate(-50%, -50%);
   border:          2px dashed rgba(255, 241, 213, 0.32);
   border-radius:   50%;
@@ -438,17 +543,23 @@
   align-items:    center;
   gap:            0.5rem;
   padding:        0.42rem 0.5rem;
-  background:     rgba(244, 203, 145, 0.18);
-  border:         1px solid rgba(82, 45, 27, 0.32);
-  border-radius:  8px;
+  background:
+    linear-gradient(180deg, rgba(244, 203, 145, 0.2), rgba(82, 45, 27, 0.18));
+  border:         2px solid rgba(82, 45, 27, 0.42);
+  border-radius:  5px;
   cursor:         grab;
-  transition:     all 0.2s ease;
+  transition:     transform 0.1s ease, background 0.15s ease, filter 0.1s ease;
   user-select:    none;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    0 3px 0 rgba(42, 24, 16, 0.34);
 }
 
 .unplaced-plant-card:hover {
   background:   rgba(244, 203, 145, 0.32);
   border-color: rgba(255, 228, 184, 0.38);
+  transform: translateY(-2px);
+  filter: brightness(1.06);
 }
 
 .unplaced-plant-card.dragging {
@@ -458,8 +569,8 @@
 }
 
 .unplaced-plant-card img {
-  width:       30px;
-  height:      30px;
+  width:       34px;
+  height:      34px;
   object-fit:  contain;
 }
 

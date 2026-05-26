@@ -140,14 +140,6 @@ const Nursery = {
     const ownedCount = this._ownedPlantIds.get(plant.id_planta) || 0  // ✅
 
     panel.innerHTML = `
-      <div class="detail-image">
-        <img
-          src="../assets/sprites/plants/${plant.sprite_key}_sana.png"
-          alt="${plant.nombre_planta}"
-          onerror="this.src='../assets/sprites/plants/placeholder.png'"
-        />
-      </div>
-
       <div class="detail-header-block">
         <h2 class="detail-name">${plant.nombre_planta}</h2>
         <p class="detail-scientific-name">${plant.nombre_cientifico}</p>

@@ -1,5 +1,8 @@
-const { db, DB_PATH } = require('./database/connection')
+const { db, getDatabasePath } = require('./database/connection')
+const achievementRepository = require('./database/repositories/achievementRepository')
 const plantRepository = require('./database/repositories/plantRepository')
+const progressRepository = require('./database/repositories/progressRepository')
+const statsRepository = require('./database/repositories/statsRepository')
 const { initializeSchema, initializeSchemaIndexes } = require('./database/schema')
 const { clamp, toNonNegativeInteger } = require('./utils/number-utils')
 const MAX_PLAYER_LEVEL = 5
@@ -28,22 +31,18 @@ function initializeDatabase() {
   }
 
   for (const [nombre, clave] of Object.entries(legacyAchievementMap)) {
-    db.prepare(`
-      UPDATE logros
-      SET clave_logro = ?
-      WHERE nombre_logro = ? AND clave_logro = ''
-    `).run(clave, nombre)
+    achievementRepository.migrateLegacyAchievement(nombre, clave)
   }
 
   seedPlants()
 
-  console.log('Base de datos inicializada en:', DB_PATH)
+  console.log('Base de datos inicializada en:', getDatabasePath())
 }
 
 // Obtiene el estado global del jugador.
 // Crea la fila inicial si el juego se ejecuta por primera vez.
 function getProgress() {
-  const row = db.prepare(`SELECT * FROM progreso LIMIT 1`).get()
+  const row = progressRepository.getProgress()
   if (row) {
     if (row.nivel > MAX_PLAYER_LEVEL) {
       updateProgress({ nivel: MAX_PLAYER_LEVEL })
@@ -52,20 +51,17 @@ function getProgress() {
     return row
   }
 
-  db.prepare(`INSERT INTO progreso (nivel, experiencia, racha_dias) VALUES (1, 0, 0)`).run()
-  return db.prepare(`SELECT * FROM progreso LIMIT 1`).get()
+  return progressRepository.createInitialProgress()
 }
 
 // Actualiza uno o más campos del progreso del jugador.
 // Uso: updateProgress({ experiencia: 150, nivel: 2 })
 function updateProgress(fields) {
-  const keys = Object.keys(fields)
-  const setClause = keys.map(k => `${k} = @${k}`).join(', ')
-  db.prepare(`UPDATE progreso SET ${setClause}`).run(fields)
+  progressRepository.updateProgress(fields)
 }
 
 function migrateCurrentDayFromPlantState() {
-  const progress = db.prepare(`SELECT dia_actual FROM progreso LIMIT 1`).get()
+  const progress = progressRepository.getProgress()
   if (!progress || progress.dia_actual > 1) return
 
   const maxDayResult = db.prepare(`
@@ -462,25 +458,7 @@ function updateStats(updates) {
     }
   })
 
-  const allowed = [
-    'acciones_totales', 'acciones_correctas',
-    'acciones_correctas_hoy',
-    'errores_riego', 'errores_abono',
-    'errores_poda', 'errores_ubicacion',
-    'errores_riego_semana', 'errores_abono_semana',
-    'errores_poda_semana', 'errores_ubicacion_semana',
-    'diagnosticos_correctos', 'plantas_muertas',
-    'semana_simulada_actual'  // ✅ nombre corregido
-  ]
-
-  const setClauses = Object.keys(normalizedUpdates)
-    .filter(key => allowed.includes(key))
-    .map(key => `${key} = ${key} + @${key}`)
-    .join(', ')
-
-  if (!setClauses) return
-
-  db.prepare(`UPDATE estadisticas SET ${setClauses}`).run(normalizedUpdates)
+  statsRepository.incrementStats(normalizedUpdates)
 }
 
 // ── Actualiza XP y nivel del jugador ──────────────────────────────────────
@@ -507,11 +485,7 @@ function addExperience(xpAmount) {
 // Obtiene las estadísticas del jugador.
 // Crea la fila inicial si es la primera ejecución.
 function getStats() {
-  const row = db.prepare('SELECT * FROM estadisticas LIMIT 1').get()
-  if (row) return row
-
-  db.prepare('INSERT INTO estadisticas (semana_simulada_actual) VALUES (0)').run()
-  return db.prepare('SELECT * FROM estadisticas LIMIT 1').get()
+  return statsRepository.getStats()
 }
 
 // ── Simulación: avanza N días para todas las plantas del usuario ──────────
@@ -928,9 +902,7 @@ function shouldTriggerWeeklyReview(currentDay) {
 // Función de corrección para resetear semana_simulada_actual.
 // Útil cuando el contador se desfasó por bugs previos.
 function fixWeeklyCounter(value) {
-  db.prepare(`
-    UPDATE estadisticas SET semana_simulada_actual = ?
-  `).run(value)
+  statsRepository.fixWeeklyCounter(value)
 }
 
 function recordWeeklyReview(wasCorrect, reviewedWeek = null) {
@@ -948,32 +920,21 @@ function recordWeeklyReview(wasCorrect, reviewedWeek = null) {
   const lastReviewedWeek = stats?.semana_simulada_actual ?? 0
   currentWeek = Math.max(currentWeek, lastReviewedWeek)
 
-  db.prepare(`
-    UPDATE estadisticas
-    SET semana_simulada_actual = ?,
-        errores_riego_semana = 0,
-        errores_abono_semana = 0,
-        errores_poda_semana = 0,
-        errores_ubicacion_semana = 0
-  `).run(currentWeek)
+  statsRepository.resetWeeklyCounters(currentWeek)
 
   if (wasCorrect) {
     // ✅ Logro de evaluación correcta
-    const existingIds = db.prepare(`SELECT clave_logro FROM logros WHERE clave_logro != ''`)
-      .all().map(r => r.clave_logro)
+    const existingIds = achievementRepository.getAchievementIds()
 
     if (!existingIds.includes('evaluacion_correcta')) {
       const progress = getProgress()
-      db.prepare(`
-        INSERT INTO logros (clave_logro, nombre_logro, descripcion_logro, fecha_obtencion, tipo_logro)
-        VALUES (?, ?, ?, ?, ?)
-      `).run(
-        'evaluacion_correcta',
-        'Evaluador Reflexivo',
-        'Identifica correctamente la decisión más perjudicial en la revisión semanal',
-        String(progress.nivel),
-        'EVALUACION'
-      )
+      achievementRepository.insertAchievement({
+        id: 'evaluacion_correcta',
+        nombre: 'Evaluador Reflexivo',
+        descripcion: 'Identifica correctamente la decisión más perjudicial en la revisión semanal',
+        fecha: String(progress.nivel),
+        tipo: 'EVALUACION'
+      })
     }
     return addExperience(25)
   }
@@ -992,14 +953,14 @@ function returnPlantToPanel(id_registro) {
 // Guarda el timestamp actual como último cierre.
 // Se llama desde main.js cuando la app se cierra.
 function saveLastClose() {
-  db.prepare(`UPDATE progreso SET ultimo_cierre = ?`).run(Date.now())
+  progressRepository.saveLastClose(Date.now())
 }
 
 // Calcula cuántos días pasaron desde el último cierre.
 // Máximo 3 días para no castigar al jugador.
 // Retorna 0 si es la primera vez o si cerró hace menos de 10 minutos.
 function getOfflineDays() {
-  const progress = db.prepare('SELECT ultimo_cierre FROM progreso LIMIT 1').get()
+  const progress = progressRepository.getProgress()
   if (!progress || !progress.ultimo_cierre) return 0
 
   const msPerDay = 10 * 60 * 1000  // 10 minutos = 1 día de juego
@@ -1011,12 +972,7 @@ function getOfflineDays() {
 
 // Obtiene todos los logros obtenidos por el jugador.
 function getAchievements() {
-  return db.prepare(`
-    SELECT clave_logro AS id_logro, nombre_logro, descripcion_logro,
-           fecha_obtencion, tipo_logro
-    FROM logros
-    ORDER BY fecha_obtencion DESC
-  `).all()
+  return achievementRepository.getAchievements()
 }
 
 // Incrementa la racha si el jugador tuvo acciones correctas hoy.
@@ -1065,20 +1021,15 @@ function checkAndGrantAchievements() {
   const progress = getProgress()
   const stats = getStats()
   const plants = getUserPlants()
-  const existingIds = db.prepare(
-    `SELECT clave_logro FROM logros WHERE clave_logro != ''`
-  ).all().map(r => r.clave_logro)
+  const existingIds = achievementRepository.getAchievementIds()
 
   const grant = (id, nombre, descripcion, tipo) => {
     if (existingIds.includes(id)) return  // ya obtenido
-    db.prepare(`
-      INSERT INTO logros (clave_logro, nombre_logro, descripcion_logro, fecha_obtencion, tipo_logro)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(
+    achievementRepository.insertAchievement({
       id, nombre, descripcion,
-      String(progress.nivel),  // usamos nivel como fecha aproximada
+      fecha: String(progress.nivel),  // usamos nivel como fecha aproximada
       tipo
-    )
+    })
   }
 
   // ── Logros de progreso ──────────────────────────────────────────────
@@ -1122,42 +1073,37 @@ function checkAndGrantAchievements() {
 }
 
 function grantQuizPerfectAchievement() {
-  const existingIds = db.prepare(`SELECT clave_logro FROM logros WHERE clave_logro != ''`)
-    .all().map(r => r.clave_logro)
+  const existingIds = achievementRepository.getAchievementIds()
 
   if (existingIds.includes('quiz_perfecto')) return
 
   const progress = getProgress()
-  db.prepare(`
-    INSERT INTO logros (clave_logro, nombre_logro, descripcion_logro, fecha_obtencion, tipo_logro)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(
-    'quiz_perfecto',
-    'Maestro Botanista',
-    'Responde correctamente las 5 preguntas del quiz',
-    String(progress.nivel),
-    'EDUCATIVO'
-  )
+  achievementRepository.insertAchievement({
+    id: 'quiz_perfecto',
+    nombre: 'Maestro Botanista',
+    descripcion: 'Responde correctamente las 5 preguntas del quiz',
+    fecha: String(progress.nivel),
+    tipo: 'EDUCATIVO'
+  })
 }
 
 // Verifica si el jugador ya completó el tutorial.
 function isTutorialCompleted() {
-  const progress = db.prepare('SELECT tutorial_completado FROM progreso LIMIT 1').get()
-  return progress ? progress.tutorial_completado === 1 : false
+  return progressRepository.isTutorialCompleted()
 }
 
 // Marca el tutorial como completado.
 function completeTutorial() {
-  db.prepare('UPDATE progreso SET tutorial_completado = 1').run()
+  progressRepository.completeTutorial()
 }
 
 // Reinicia completamente el juego eliminando todo el progreso.
 // Útil para pruebas y como opción de "nueva partida" para el jugador.
 function resetGame() {
   clearUserPlants()
-  db.prepare('DELETE FROM estadisticas').run()
-  db.prepare('DELETE FROM logros').run()
-  db.prepare('UPDATE progreso SET nivel = 1, experiencia = 0, racha_dias = 0, dia_actual = 1, tutorial_completado = 0, ultimo_cierre = NULL').run()
+  statsRepository.clearStats()
+  achievementRepository.clearAchievements()
+  progressRepository.resetProgress()
   responsibleCareAwardedThisSession = false
   streakBlockedThisSession = false
 }
@@ -1165,7 +1111,7 @@ function resetGame() {
 // Resetea el tutorial para que vuelva a mostrarse.
 // Se usa en "Nueva Partida" y para pruebas de desarrollo.
 function resetTutorial() {
-  db.prepare('UPDATE progreso SET tutorial_completado = 0').run()
+  progressRepository.resetTutorial()
 }
 
 

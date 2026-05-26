@@ -8,6 +8,16 @@ contextBridge.exposeInMainWorld('gameAPI', {
 
   getVersion: () => process.versions.electron,
 
+  onCloseRequested: (callback) => {
+    ipcRenderer.on('app:close-requested', callback)
+    return () => ipcRenderer.removeListener('app:close-requested', callback)
+  },
+  confirmClose: () => ipcRenderer.send('app:confirm-close'),
+  cancelClose:  () => ipcRenderer.send('app:cancel-close'),
+  minimizeWindow:       () => ipcRenderer.send('app:minimize-window'),
+  toggleMaximizeWindow: () => ipcRenderer.send('app:toggle-maximize-window'),
+  requestClose:         () => ipcRenderer.send('app:request-close'),
+
   // ── Catálogo de plantas ───────────────────────────────────────────────
   getAllPlants:  ()          => ipcRenderer.invoke('plants:getAll'),
   getPlantById: (id_planta) => ipcRenderer.invoke('plants:getById', id_planta),

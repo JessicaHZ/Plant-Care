@@ -88,7 +88,8 @@
 .diagnosis-bars { display: flex; flex-direction: column; gap: 0.5rem; }
 
 .diag-bar-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 96px minmax(150px, 1fr) 72px;
   align-items: center;
   gap: 0.5rem;
 }
@@ -96,38 +97,71 @@
 .diag-bar-label {
   font-size: 0.72rem;
   color: var(--pixel-panel-muted);
-  width: 75px;
-  flex-shrink: 0;
+  font-weight: 700;
+  line-height: 1.25;
 }
 
 .diag-bar-bg {
-  flex: 1;
-  height: 8px;
-  background: rgba(42, 24, 16, 0.42);
+  position: relative;
+  height: 14px;
+  border: 2px solid rgba(42, 24, 16, 0.9);
   border-radius: 4px;
-  overflow: hidden;
+  box-shadow:
+    inset 0 2px 3px rgba(0, 0, 0, 0.34),
+    0 1px 0 rgba(255, 241, 213, 0.14);
 }
 
-.diag-bar-fill {
-  display: block;
-  height: 100%;
-  min-width: 1px;
-  border-radius: 4px;
-  transition: width 0.3s ease;
+.diag-bar-balanced {
+  background:
+    linear-gradient(90deg,
+      #b3302d 0%,
+      #d9533d 20%,
+      #dfb34f 34%,
+      #75c86a 40%,
+      #70c45f 72%,
+      #5f783d 80%,
+      #4f4a2c 91%,
+      #3f2d20 100%);
 }
 
-/* ✅ Después — color según nivel de humedad */
-.diag-bar-water-low      { background: #ef5350; }   /* rojo    — seca (0-30%)     */
-.diag-bar-water-optimal  { background: #42a5f5; }   /* azul    — óptima (30-75%)  */
-.diag-bar-water-high     { background: #ffa726; }   /* naranja — saturada (75%+)  */
+.diag-bar-health {
+  background:
+    linear-gradient(90deg,
+      #c93b38 0%,
+      #dfb34f 40%,
+      #79c86b 70%,
+      #5fa85b 100%);
+}
 
-.diag-bar-health { background: #66bb6a; }
+.diag-bar-marker {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 10px solid #fff8e8;
+  filter: drop-shadow(0 2px 0 rgba(42, 24, 16, 0.9));
+}
 
 .diag-bar-val {
   font-size: 0.72rem;
   color: var(--color-text);
-  width: 32px;
-  text-align: right;
+  font-weight: 700;
+  text-align: left;
+}
+
+@media (max-width: 620px) {
+  .diag-bar-row {
+    grid-template-columns: 82px minmax(120px, 1fr);
+  }
+
+  .diag-bar-val {
+    grid-column: 2;
+    margin-top: -0.15rem;
+  }
 }
 
 /* Pregunta y opciones */

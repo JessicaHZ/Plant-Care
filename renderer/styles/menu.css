@@ -11,8 +11,12 @@
 
 .main-menu-title {
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--color-secondary);
+  text-shadow:
+    2px 0 0 rgba(42, 24, 16, 0.84),
+    -2px 0 0 rgba(42, 24, 16, 0.84),
+    0 3px 0 rgba(42, 24, 16, 0.84);
 }
 
 .main-menu-subtitle {
@@ -27,25 +31,51 @@
 }
 
 .menu-card {
-  background-color: var(--color-surface);
-  border: 1px solid rgba(129, 199, 132, 0.2);
-  border-radius: 16px;
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 227, 184, 0.12), rgba(91, 58, 40, 0.94)),
+    var(--color-surface);
+  border: 3px solid var(--pixel-panel-border);
+  border-radius: 7px;
   padding: 1.5rem;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.4rem;
-  transition: transform 0.15s ease, border-color 0.15s ease;
+  transition: transform 0.12s ease, border-color 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
   color: var(--color-text);
+  box-shadow:
+    inset 0 2px 0 var(--pixel-panel-highlight),
+    inset 0 -3px 0 rgba(0,0,0,0.18),
+    0 6px 0 rgba(44, 26, 20, 0.72),
+    0 16px 26px rgba(42, 24, 16, 0.28);
+  image-rendering: pixelated;
+}
+
+.menu-card::after {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(255, 227, 184, 0.12);
+  pointer-events: none;
 }
 
 .menu-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(129, 199, 132, 0.6);
+  transform: translateY(-5px);
+  filter: brightness(1.06);
+  border-color: rgba(241, 199, 125, 0.76);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.22),
+    inset 0 -3px 0 rgba(0,0,0,0.18),
+    0 9px 0 rgba(44, 26, 20, 0.72),
+    0 20px 30px rgba(42, 24, 16, 0.34);
 }
 
-.menu-card-icon { font-size: 2.5rem; }
+.menu-card-icon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 3px 0 rgba(42, 24, 16, 0.62));
+}
 
 .menu-card-label {
   font-size: 1.1rem;
@@ -66,15 +96,19 @@
   top: 0; left: 0;
   width: 100vw;
   height: 46px;
-  background-color: rgba(139, 86, 50, 0.88);
-  border-bottom: 2px solid rgba(82, 45, 27, 0.55);
+  background:
+    linear-gradient(180deg, rgba(171, 111, 66, 0.92), rgba(120, 72, 43, 0.94));
+  border-bottom: 3px solid rgba(42, 24, 16, 0.76);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 1.2rem;
   z-index: 100;
   color: #fff1d5;
-  box-shadow: 0 4px 14px rgba(70, 38, 22, 0.18);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 227, 184, 0.18),
+    0 4px 0 rgba(44, 26, 20, 0.55),
+    0 10px 18px rgba(70, 38, 22, 0.22);
   backdrop-filter: blur(6px);
 }
 
@@ -110,9 +144,13 @@
   align-items: center;
   gap: 0.25rem;
   padding: 0.28rem 0.5rem;
-  border-radius: 999px;
-  background: rgba(244, 203, 145, 0.22);
-  border: 1px solid rgba(82, 45, 27, 0.3);
+  border-radius: 5px;
+  background:
+    linear-gradient(180deg, rgba(244, 203, 145, 0.26), rgba(82, 45, 27, 0.2));
+  border: 2px solid rgba(82, 45, 27, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    0 2px 0 rgba(42, 24, 16, 0.42);
 }
 
 .hud-stat-icon { font-size: 0.85rem; }

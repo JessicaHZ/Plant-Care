@@ -29,6 +29,10 @@ html,
   --pixel-panel-highlight: rgba(255, 227, 184, 0.18);
   --pixel-panel-shadow: rgba(42, 24, 16, 0.5);
   --pixel-panel-muted: #f0c99c;
+  --pixel-edge: #2c1a14;
+  --pixel-cream: #fff5df;
+  --pixel-shadow-step: #4b2e23;
+  --pixel-grid: rgba(255, 227, 184, 0.055);
 
   /* Paleta armonizada con fondos pixel art calidos. */
   --color-primary: #8f6246;
@@ -47,12 +51,87 @@ body {
   height: 100vh;
   overflow: hidden;              /* sin scroll: es un juego, no una web */
   background:
+    linear-gradient(90deg, var(--pixel-grid) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(42, 24, 16, 0.08) 1px, transparent 1px),
     radial-gradient(circle at 20% 18%, rgba(241, 199, 125, 0.12), transparent 28%),
     radial-gradient(circle at 82% 74%, rgba(241, 199, 125, 0.14), transparent 30%),
     linear-gradient(180deg, #5a3a2b 0%, #3f2a22 48%, #2b1f1a 100%);
+  background-size: 18px 18px, 18px 18px, auto, auto, auto;
   color: var(--color-text);
   font-family: var(--font-game);
   user-select: none;             /* el jugador no debe poder seleccionar texto */
+  image-rendering: pixelated;
+}
+
+/* Barra de ventana personalizada.
+   En una ventana frameless reemplaza la barra nativa de Windows. */
+.app-titlebar-shell {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  z-index: 4000;
+}
+
+.app-titlebar-shell:hover,
+.app-titlebar-shell:focus-within {
+  height: 36px;
+}
+
+.app-titlebar {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #fff5df;
+  background:
+    linear-gradient(180deg, rgba(150, 92, 54, 0.96), rgba(83, 47, 29, 0.98));
+  border-bottom: 3px solid rgba(42, 24, 16, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.14),
+    0 4px 0 rgba(42, 24, 16, 0.42);
+  transform: translateY(-34px);
+  transition: transform 0.14s ease;
+  -webkit-app-region: drag;
+}
+
+.app-titlebar-shell:hover .app-titlebar,
+.app-titlebar-shell:focus-within .app-titlebar {
+  transform: translateY(0);
+}
+
+.app-titlebar-title {
+  padding-left: 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-shadow: 0 2px 0 rgba(42, 24, 16, 0.72);
+}
+
+.app-window-controls {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.app-window-btn {
+  width: 44px;
+  height: 100%;
+  border: 0;
+  border-left: 1px solid rgba(42, 24, 16, 0.5);
+  background: rgba(255, 227, 184, 0.06);
+  color: #fff5df;
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.app-window-btn:hover {
+  background: rgba(241, 199, 125, 0.2);
+}
+
+.app-window-close:hover {
+  background: rgba(217, 83, 61, 0.88);
 }
 
 /* Sistema de pantallas: solo la que tiene clase "active" se ve */
@@ -74,10 +153,13 @@ body {
   height: 100vh;
   overflow: hidden;
   background:
+    linear-gradient(90deg, rgba(255, 227, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(42, 24, 16, 0.08) 1px, transparent 1px),
     linear-gradient(rgba(43, 31, 26, 0.38), rgba(43, 31, 26, 0.38)),
     radial-gradient(circle at 18% 20%, rgba(241, 199, 125, 0.1), transparent 27%),
     radial-gradient(circle at 86% 82%, rgba(241, 199, 125, 0.12), transparent 30%),
     linear-gradient(180deg, #5a3a2b 0%, #3f2a22 52%, #2b1f1a 100%);
+  background-size: 18px 18px, 18px 18px, auto, auto, auto, auto;
 }
 
 /* Estilos de la pantalla de inicio */
@@ -115,33 +197,56 @@ body {
 /* Botones del juego */
 .btn {
   padding: 14px 32px;
-  border: none;
-  border-radius: 8px;
+  border: 3px solid var(--pixel-edge);
+  border-radius: 5px;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 800;
   cursor: pointer;
-  transition: transform 0.1s ease, opacity 0.1s ease;
-  letter-spacing: 1px;
+  transition: transform 0.08s ease, opacity 0.1s ease, filter 0.1s ease, box-shadow 0.08s ease;
+  letter-spacing: 0;
+  image-rendering: pixelated;
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.24),
+    inset 0 -3px 0 rgba(0,0,0,0.2),
+    0 4px 0 var(--pixel-shadow-step),
+    0 10px 18px rgba(42, 24, 16, 0.22);
 }
 
 .btn:hover {
-  opacity: 0.9;
-  transform: scale(1.02);
+  opacity: 1;
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.3),
+    inset 0 -3px 0 rgba(0,0,0,0.2),
+    0 6px 0 var(--pixel-shadow-step),
+    0 14px 22px rgba(42, 24, 16, 0.25);
 }
 
 .btn:active {
-  transform: scale(0.98);
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.16),
+    inset 0 -2px 0 rgba(0,0,0,0.28),
+    0 1px 0 var(--pixel-shadow-step);
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
 }
 
 .btn-primary {
-  background-color: var(--color-primary);
-  color: white;
+  background:
+    linear-gradient(180deg, #b9825f 0%, var(--color-primary) 100%);
+  color: var(--pixel-cream);
 }
 
 .btn-secondary {
-  background-color: transparent;
+  background:
+    linear-gradient(180deg, rgba(255, 227, 184, 0.15), rgba(95, 58, 36, 0.74));
   color: var(--color-secondary);
-  border: 2px solid var(--color-secondary);
+  border-color: var(--color-secondary);
 }
 
 /* Variante pixel art para botones de juego.
@@ -234,14 +339,20 @@ body {
 /* ── Pantallas de autenticación ─────────────────────────── */
 
 .auth-card {
-  background-color: var(--color-surface);
-  border: 1px solid rgba(129, 199, 132, 0.2);
-  border-radius: 16px;
+  background:
+    linear-gradient(180deg, var(--pixel-panel-bg), var(--pixel-panel-bg-dark));
+  border: 3px solid var(--pixel-panel-border);
+  border-radius: 8px;
   padding: 2.5rem 2rem;
   width: 380px;
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
+  box-shadow:
+    inset 0 2px 0 var(--pixel-panel-highlight),
+    inset 0 -3px 0 rgba(0,0,0,0.22),
+    0 8px 0 rgba(44, 26, 20, 0.72),
+    0 18px 34px var(--pixel-panel-shadow);
 }
 
 .auth-title {
@@ -267,15 +378,19 @@ body {
 }
 
 .form-group input {
-  background-color: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(129, 199, 132, 0.3);
-  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(42, 24, 16, 0.34), rgba(42, 24, 16, 0.18));
+  border: 2px solid rgba(42, 24, 16, 0.78);
+  border-radius: 5px;
   padding: 10px 14px;
   color: var(--color-text);
   font-size: 0.95rem;
   font-family: var(--font-game);
   outline: none;
   transition: border-color 0.2s ease;
+  box-shadow:
+    inset 0 2px 0 rgba(0,0,0,0.18),
+    0 2px 0 rgba(255, 227, 184, 0.12);
 }
 
 .form-group input:focus {
@@ -299,14 +414,18 @@ body {
 
 .form-message.error {
   color: #ef9a9a;
-  background-color: rgba(239, 83, 80, 0.1);
+  background-color: rgba(239, 83, 80, 0.14);
+  border: 2px solid rgba(183, 28, 28, 0.42);
   padding: 8px 12px;
+  box-shadow: 0 3px 0 rgba(42, 24, 16, 0.36);
 }
 
 .form-message.success {
   color: #a5d6a7;
-  background-color: rgba(76, 175, 80, 0.1);
+  background-color: rgba(76, 175, 80, 0.14);
+  border: 2px solid rgba(46, 125, 50, 0.42);
   padding: 8px 12px;
+  box-shadow: 0 3px 0 rgba(42, 24, 16, 0.36);
 }
 
 /* ── Variantes de botones adicionales ──────────────────── */
@@ -317,15 +436,19 @@ body {
 }
 
 .btn-ghost {
-  background-color: transparent;
+  background:
+    linear-gradient(180deg, rgba(255, 227, 184, 0.08), rgba(55, 34, 25, 0.28));
   color: var(--color-text-muted);
-  border: 1px solid transparent;
+  border: 2px solid rgba(42, 24, 16, 0.45);
   font-size: 0.85rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 3px 0 rgba(42, 24, 16, 0.38);
 }
 
 .btn-ghost:hover {
   color: var(--color-secondary);
-  border-color: rgba(129, 199, 132, 0.3);
+  border-color: rgba(241, 199, 125, 0.55);
 }
 
 /* ── Tutorial ────────────────────────────────────────── */
@@ -494,4 +617,85 @@ body {
   background: rgba(255, 213, 79, 0.1);
   border:     1px solid rgba(42, 24, 16, 0.35);
   border-radius: 8px;
+}
+
+/* ── Confirmación de salida ───────────────────────────── */
+.exit-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(28, 18, 13, 0.78);
+  backdrop-filter: blur(3px);
+}
+
+.exit-confirm-modal {
+  width: min(440px, calc(100vw - 32px));
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background:
+    linear-gradient(180deg, var(--pixel-panel-bg), var(--pixel-panel-bg-dark));
+  border: 3px solid var(--pixel-panel-border);
+  border-radius: 8px;
+  color: var(--color-text);
+  box-shadow:
+    inset 0 2px 0 var(--pixel-panel-highlight),
+    inset 0 -3px 0 rgba(0,0,0,0.22),
+    0 8px 0 rgba(44, 26, 20, 0.72),
+    0 18px 34px var(--pixel-panel-shadow);
+}
+
+.exit-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.exit-confirm-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(255, 227, 184, 0.1);
+  border: 2px solid rgba(42, 24, 16, 0.55);
+  border-radius: 6px;
+  font-size: 1.7rem;
+}
+
+.exit-confirm-title {
+  margin: 0;
+  color: #9be36f;
+  font-size: 1.25rem;
+}
+
+.exit-confirm-subtitle,
+.exit-confirm-text {
+  color: var(--pixel-panel-muted);
+  line-height: 1.55;
+}
+
+.exit-confirm-subtitle {
+  margin-top: 0.2rem;
+  font-size: 0.82rem;
+}
+
+.exit-confirm-text {
+  font-size: 0.9rem;
+}
+
+.exit-confirm-actions {
+  display: flex;
+  gap: 0.8rem;
+}
+
+@media (max-width: 520px) {
+  .exit-confirm-actions {
+    flex-direction: column;
+  }
 }

@@ -1,12 +1,15 @@
-const { app, BrowserWindow, Menu, dialog } = require('electron')
+const { app, BrowserWindow, Menu, ipcMain } = require('electron')
 const path = require('path')
 const { initializeDatabase, saveLastClose } = require('./database')
 const { registerIpcHandlers } = require('./ipc-handlers')
 
+let gameWindow = null
+
 function createGameWindow() {
   let closeConfirmed = false
+  let closePromptOpen = false
 
-  const gameWindow = new BrowserWindow({
+  gameWindow = new BrowserWindow({
     width:           1280,
     height:          720,
     minWidth:        1024,
@@ -15,6 +18,7 @@ function createGameWindow() {
     maximizable:     true,
     fullscreenable:  true,
     title:           'My Plant Home',
+    frame:           false,
     menuBarVisible:  false,
     autoHideMenuBar: true,
     webPreferences: {
@@ -28,27 +32,58 @@ function createGameWindow() {
 
   gameWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
 
-  gameWindow.on('close', async (event) => {
+  const confirmClose = () => {
+    closeConfirmed = true
+    saveLastClose()
+    if (!gameWindow.isDestroyed()) gameWindow.close()
+  }
+
+  const cancelClose = () => {
+    closePromptOpen = false
+  }
+
+  const minimizeWindow = () => {
+    if (!gameWindow.isDestroyed()) gameWindow.minimize()
+  }
+
+  const toggleMaximizeWindow = () => {
+    if (gameWindow.isDestroyed()) return
+    if (gameWindow.isMaximized()) {
+      gameWindow.unmaximize()
+    } else {
+      gameWindow.maximize()
+    }
+  }
+
+  const requestClose = () => {
+    if (!gameWindow.isDestroyed()) gameWindow.close()
+  }
+
+  ipcMain.on('app:confirm-close', confirmClose)
+  ipcMain.on('app:cancel-close', cancelClose)
+  ipcMain.on('app:minimize-window', minimizeWindow)
+  ipcMain.on('app:toggle-maximize-window', toggleMaximizeWindow)
+  ipcMain.on('app:request-close', requestClose)
+
+  gameWindow.on('closed', () => {
+    ipcMain.removeListener('app:confirm-close', confirmClose)
+    ipcMain.removeListener('app:cancel-close', cancelClose)
+    ipcMain.removeListener('app:minimize-window', minimizeWindow)
+    ipcMain.removeListener('app:toggle-maximize-window', toggleMaximizeWindow)
+    ipcMain.removeListener('app:request-close', requestClose)
+    gameWindow = null
+  })
+
+  gameWindow.on('close', (event) => {
     if (closeConfirmed) return
 
     event.preventDefault()
 
-    const { response } = await dialog.showMessageBox(gameWindow, {
-      type: 'question',
-      buttons: ['Salir', 'Cancelar'],
-      defaultId: 1,
-      cancelId: 1,
-      noLink: true,
-      title: 'Salir del juego',
-      message: '¿Quieres salir del juego?',
-      detail: 'Tu progreso se conserva y podrás continuar después.'
-    })
+    if (closePromptOpen) return
 
-    if (response === 0) {
-      closeConfirmed = true
-      saveLastClose()
-      gameWindow.close()
-    }
+    closePromptOpen = true
+    gameWindow.webContents.send('app:close-requested')
+
   })
 
   // DevTools solo en desarrollo (no en build final)

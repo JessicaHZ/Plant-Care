@@ -35,11 +35,11 @@ const Environment = {
       { id: 'sala-6', x: 89.9, y: 94.5 },
     ],
     'DORMITORIO': [
-      { id: 'dorm-1', x: 39.0, y: 31.5 },
-      { id: 'dorm-2', x: 30.2, y: 59.7 },
-      { id: 'dorm-3', x: 93.0, y: 26.7 },
-      { id: 'dorm-4', x: 13.6, y: 78.8 },
-      { id: 'dorm-5', x: 48.2, y: 21.8 },
+      { id: 'dorm-1', x: 40.3, y: 33.6 },
+      { id: 'dorm-2', x: 33.8, y: 58.2 },
+      { id: 'dorm-3', x: 88.5, y: 53.7 },
+      { id: 'dorm-4', x: 16, y: 74.6 },
+      { id: 'dorm-5', x: 49.4, y: 26 },
     ],
   },
 
@@ -372,11 +372,7 @@ const Environment = {
   // Nivel 1-2: etiqueta descriptiva, sin %
   // Nivel 3+:  solo color, sin etiqueta descriptiva ni %
   _getHumidityBarHTML(humedad, playerLevel = 1) {
-    const colorClass =
-      humedad < 40 ? 'diag-bar-water-low' :
-        humedad <= 75 ? 'diag-bar-water-optimal' :
-          'diag-bar-water-high'
-
+    const safeHumidity = NumberUtils.clamp(Number(humedad) || 0, 0, 100)
     // ✅ Nivel 1-2: con descripción entre paréntesis
     // ✅ Nivel 3+: solo el nombre, sin paréntesis
     const label = playerLevel <= 2
@@ -388,20 +384,15 @@ const Environment = {
     return `
     <div class="diag-bar-row">
       <span class="diag-bar-label">${label}</span>
-      <div class="diag-bar-bg">
-        <div class="diag-bar-fill ${colorClass}"
-             style="width:${humedad}%"></div>
+      <div class="diag-bar-bg diag-bar-balanced" aria-label="Humedad: ${safeHumidity}">
+        <span class="diag-bar-marker" style="left:${safeHumidity}%"></span>
       </div>
     </div>
   `
   },
 
   _getNutrientBarHTML(nutrientes, playerLevel) {
-    const color =
-      nutrientes < 30 ? '#ef5350' :
-        nutrientes <= 75 ? '#66bb6a' :
-          '#ffa726'
-
+    const safeNutrients = NumberUtils.clamp(Number(nutrientes) || 0, 0, 100)
     // ✅ Nivel 1-2: con descripción entre paréntesis
     // ✅ Nivel 3+: solo el nombre, sin paréntesis
     const label = playerLevel <= 2
@@ -413,10 +404,8 @@ const Environment = {
     return `
     <div class="diag-bar-row">
       <span class="diag-bar-label">${label}</span>
-      <div class="diag-bar-bg">
-        <div class="diag-bar-fill"
-             style="width:${nutrientes}%; background:${color}">
-        </div>
+      <div class="diag-bar-bg diag-bar-balanced" aria-label="Nutrientes: ${safeNutrients}">
+        <span class="diag-bar-marker" style="left:${safeNutrients}%"></span>
       </div>
     </div>
   `

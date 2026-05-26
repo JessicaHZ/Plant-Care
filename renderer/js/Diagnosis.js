@@ -41,6 +41,28 @@ const Diagnosis = {
       correctIndex: 0,
       explanation:  'El exceso de nutrientes tambien es un error de cuidado. Observar antes de abonar evita estresar la raiz.'
     },
+    FERTILIZE_NUTRIENTES_ADECUADOS: {
+      question:    'Que conviene hacer antes de abonar?',
+      situation:   'El sustrato aun conserva nutrientes suficientes.',
+      options: [
+        'Esperar a que los nutrientes bajen o la planta muestre desgaste',
+        'Abonar ahora para acelerar siempre el crecimiento',
+        'Regar mas para activar el abono'
+      ],
+      correctIndex: 0,
+      explanation:  'El abono funciona mejor cuando la planta lo necesita. Aplicarlo por rutina puede saturar el sustrato.'
+    },
+    FERTILIZE_NO_CORRIGE_OTRO_PROBLEMA: {
+      question:    'Que debes revisar antes de usar abono?',
+      situation:   'La planta esta deteriorada, pero los nutrientes no parecen ser el problema principal.',
+      options: [
+        'Confirmar si el desgaste viene de luz, riego o salud antes de abonar',
+        'Abonar de todas formas porque cura cualquier problema',
+        'Podarla para que el abono funcione mas rapido'
+      ],
+      correctIndex: 0,
+      explanation:  'El abono no corrige todos los problemas. Si los nutrientes estan bien, conviene revisar otras senales.'
+    },
     PRUNE_NECESARIA: {
       question:    'Que senal justifica usar la poda?',
       situation:   'La planta muestra senales de que podria beneficiarse de un corte cuidadoso.',
@@ -62,6 +84,17 @@ const Diagnosis = {
       ],
       correctIndex: 0,
       explanation:  'Podar sin necesidad puede debilitar una planta sana. La observacion tambien es una decision de cuidado.'
+    },
+    WATER_TIERRA_OPTIMA: {
+      question:    'Que indica una humedad adecuada antes de regar?',
+      situation:   'La tierra aun esta en un rango saludable para esta planta.',
+      options: [
+        'Esperar y revisar mas tarde antes de agregar agua',
+        'Regar ahora para mantenerla siempre al maximo',
+        'Abonar para que absorba mejor el agua'
+      ],
+      correctIndex: 0,
+      explanation:  'Regar cuando la humedad ya es adecuada puede llevar a exceso de agua. Observar tambien es cuidar.'
     },
     SANA_EXCESO_AGUA: {
       question:    '¿Qué deberías hacer si la tierra está saturada?',
@@ -129,7 +162,8 @@ const Diagnosis = {
         'Falta de luz — debo cambiarla de lugar'
       ],
       correctIndex: 1,
-      explanation:  'Manchas y tierra saturada pueden indicar raíces dañadas. Retira el exceso de agua.'
+      explanation:  'Manchas y tierra saturada pueden indicar raíces dañadas. Retira el exceso de agua.',
+      onCorrect:    'drain'
     },
     ENFERMA: {
       question:    '¿Qué problema identificas en tu planta?',
@@ -170,40 +204,57 @@ const Diagnosis = {
   },
 
   _selectScenario(plant, actionType) {
+    if (plant.estado_planta === 'MUERTA') return this._scenarios.MUERTA
+
+    if (actionType === 'water') return this._selectWaterScenario(plant)
+    if (actionType === 'fertilize') return this._selectFertilizeScenario(plant)
+    if (actionType === 'prune') return this._selectPruneScenario(plant)
+
+    return this._selectWaterScenario(plant)
+  },
+
+  _selectWaterScenario(plant) {
     const { estado_planta, humedad } = plant
-    const nutrientes = plant.nutrientes ?? 50
 
-    if (estado_planta === 'MUERTA')   return this._scenarios.MUERTA
+    if (humedad > 75) {
+      if (estado_planta === 'ENFERMA') return this._scenarios.ENFERMA_EXCESO
+      if (estado_planta === 'MARCHITA') return this._scenarios.MARCHITA_EXCESO
+      return this._scenarios.SANA_EXCESO_AGUA
+    }
 
-    if ((actionType === 'water' || actionType === 'drain') && this._hasWrongLight(plant)) {
+    if (this._hasWrongLight(plant) && estado_planta !== 'SANA') {
       return this._scenarios.WATER_LUZ_INCORRECTA
     }
 
-    if (actionType === 'fertilize') {
-      if (nutrientes > 75) return this._scenarios.FERTILIZE_NUTRIENTES_EXCESO
-      if (nutrientes < 30) return this._scenarios.FERTILIZE_NUTRIENTES_BAJOS
+    if (humedad < 40) {
+      if (estado_planta === 'MARCHITA' || estado_planta === 'ENFERMA') {
+        return this._scenarios.MARCHITA
+      }
+      return this._scenarios.SANA_NECESITA_AGUA
     }
 
-    if (actionType === 'prune') {
-      return plant.requiere_poda_activa === 1
-        ? this._scenarios.PRUNE_NECESARIA
-        : this._scenarios.PRUNE_NO_NECESARIA
+    return this._scenarios.WATER_TIERRA_OPTIMA
+  },
+
+  _selectFertilizeScenario(plant) {
+    const nutrientes = plant.nutrientes ?? 50
+
+    if (nutrientes > 75) return this._scenarios.FERTILIZE_NUTRIENTES_EXCESO
+    if (nutrientes < 30) return this._scenarios.FERTILIZE_NUTRIENTES_BAJOS
+
+    if (plant.estado_planta === 'ENFERMA' ||
+        plant.estado_planta === 'MARCHITA' ||
+        this._hasWrongLight(plant)) {
+      return this._scenarios.FERTILIZE_NO_CORRIGE_OTRO_PROBLEMA
     }
 
-    if (estado_planta === 'ENFERMA') {
-      return humedad > 70
-        ? this._scenarios.ENFERMA_EXCESO
-        : this._scenarios.ENFERMA
-    }
-    if (estado_planta === 'MARCHITA') {
-      return humedad > 70
-        ? this._scenarios.MARCHITA_EXCESO
-        : this._scenarios.MARCHITA
-    }
+    return this._scenarios.FERTILIZE_NUTRIENTES_ADECUADOS
+  },
 
-    if (humedad > 75) return this._scenarios.SANA_EXCESO_AGUA
-    if (humedad < 40) return this._scenarios.SANA_NECESITA_AGUA
-    return this._scenarios.SANA
+  _selectPruneScenario(plant) {
+    return plant.requiere_poda_activa === 1
+      ? this._scenarios.PRUNE_NECESARIA
+      : this._scenarios.PRUNE_NO_NECESARIA
   },
 
   _roomLights: {
@@ -228,12 +279,13 @@ const Diagnosis = {
     return roomLight !== null && !this._isLightCompatible(plant.tipo_luz, roomLight)
   },
 
-  _getHumidityBarHTML(humedad) {
-    const colorClass =
-      humedad < 40  ? 'diag-bar-water-low'     :
-      humedad <= 75 ? 'diag-bar-water-optimal' :
-                      'diag-bar-water-high'
+  _clampMeterValue(value) {
+    const numericValue = Number(value) || 0
+    return Math.min(100, Math.max(0, numericValue))
+  },
 
+  _getHumidityBarHTML(humedad) {
+    const safeHumidity = this._clampMeterValue(humedad)
     const label =
       humedad < 40  ? '💧 Humedad (baja)'    :
       humedad <= 75 ? '💧 Humedad (óptima)'  :
@@ -249,9 +301,8 @@ const Diagnosis = {
     return `
       <div class="diag-bar-row">
         <span class="diag-bar-label">${label}</span>
-        <div class="diag-bar-bg">
-          <div class="diag-bar-fill ${colorClass}"
-               style="width: ${humedad}%"></div>
+        <div class="diag-bar-bg diag-bar-balanced" aria-label="Humedad: ${safeHumidity}">
+          <span class="diag-bar-marker" style="left:${safeHumidity}%"></span>
         </div>
         <span class="diag-bar-val">${state}</span>
       </div>
@@ -301,9 +352,8 @@ const Diagnosis = {
                 ${this._getHumidityBarHTML(plant.humedad)}
                 <div class="diag-bar-row">
                   <span class="diag-bar-label">❤️ Salud</span>
-                  <div class="diag-bar-bg">
-                    <div class="diag-bar-fill diag-bar-health"
-                         style="width: ${plant.salud}%"></div>
+                  <div class="diag-bar-bg diag-bar-health" aria-label="Salud: ${this._clampMeterValue(plant.salud)}">
+                    <span class="diag-bar-marker" style="left:${this._clampMeterValue(plant.salud)}%"></span>
                   </div>
                   <span class="diag-bar-val">${this._getHealthState(plant.salud)}</span>
                 </div>

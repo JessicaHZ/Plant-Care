@@ -39,9 +39,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 
   // ── Navegación inferior ───────────────────────────────────────────────
+  initWindowControls()
   initBottomNav()
   initBackButtons()
   SlotEditor.init()
+  window.gameAPI.onCloseRequested(() => _showExitConfirm())
 
   // ── Eventos globales ──────────────────────────────────────────────────
 
@@ -94,6 +96,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.log(`Poda practica: ${result.accuracy}% de precision`)
     })
   })
+
+  function initWindowControls() {
+    document.getElementById('btn-window-minimize')
+      ?.addEventListener('click', () => window.gameAPI.minimizeWindow())
+
+    document.getElementById('btn-window-maximize')
+      ?.addEventListener('click', () => window.gameAPI.toggleMaximizeWindow())
+
+    document.getElementById('btn-window-close')
+      ?.addEventListener('click', () => window.gameAPI.requestClose())
+  }
 
   function initBottomNav() {
     const nav = document.getElementById('bottom-nav')
@@ -299,6 +312,46 @@ document.addEventListener('DOMContentLoaded', async () => {
           overlay.remove()
           resolve(true)
         })
+    })
+  }
+
+  function _showExitConfirm() {
+    const existing = document.querySelector('.exit-confirm-overlay')
+    if (existing) return
+
+    const overlay = document.createElement('div')
+    overlay.className = 'exit-confirm-overlay'
+    overlay.innerHTML = `
+      <div class="exit-confirm-modal" role="dialog" aria-modal="true">
+        <div class="exit-confirm-header">
+          <span class="exit-confirm-icon">🌙</span>
+          <div>
+            <h2 class="exit-confirm-title">¿Salir del juego?</h2>
+            <p class="exit-confirm-subtitle">Tu jardín seguirá avanzando mientras descansas.</p>
+          </div>
+        </div>
+        <p class="exit-confirm-text">
+          Tu progreso se guardará y podrás continuar después.
+        </p>
+        <div class="exit-confirm-actions">
+          <button class="btn btn-ghost btn-full" id="btn-exit-cancel">
+            Seguir jugando
+          </button>
+          <button class="btn btn-primary btn-full" id="btn-exit-confirm">
+            Salir
+          </button>
+        </div>
+      </div>
+    `
+    document.body.appendChild(overlay)
+
+    overlay.querySelector('#btn-exit-cancel').addEventListener('click', () => {
+      overlay.remove()
+      window.gameAPI.cancelClose()
+    })
+
+    overlay.querySelector('#btn-exit-confirm').addEventListener('click', () => {
+      window.gameAPI.confirmClose()
     })
   }
 

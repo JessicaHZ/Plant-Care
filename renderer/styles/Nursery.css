@@ -196,24 +196,6 @@
   padding: 2rem;
 }
 
-.detail-image {
-  width: 100%;
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(255, 227, 184, 0.08);
-  border: 1px solid rgba(42, 24, 16, 0.35);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.detail-image img {
-  width: 70%;
-  height: 70%;
-  object-fit: contain;
-}
-
 .detail-name {
   font-size: 1.3rem;
   font-weight: 700;

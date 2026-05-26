@@ -5,3 +5,28 @@ dist/
 out/
 .DS_Store
 Thumbs.db
+# Dependencies
+node_modules/
+
+# Builds
+build/
+win-unpacked/
+release/
+
+# Electron builder
+.cache/
+electron-builder-cache/
+
+# Logs
+*.log
+
+# SQLite local
+
+*.sqlite
+
+# Temporary files
+tmp/
+temp/
+
+# OS
+.DS_Store
