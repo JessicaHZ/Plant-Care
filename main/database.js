@@ -1,4 +1,5 @@
 const { db, DB_PATH } = require('./database/connection')
+const plantRepository = require('./database/repositories/plantRepository')
 const { initializeSchema, initializeSchemaIndexes } = require('./database/schema')
 const { clamp, toNonNegativeInteger } = require('./utils/number-utils')
 const MAX_PLAYER_LEVEL = 5
@@ -349,80 +350,42 @@ function seedPlants() {
 
 // ── Consultas de plantas ──────────────────────────────────────────────────
 
-// Devuelve todas las plantas del catálogo
+// Devuelve todas las plantas del catalogo
 function getAllPlants() {
-  return db.prepare('SELECT * FROM plantas ORDER BY nivel_dificultad, nombre_planta').all()
+  return plantRepository.getAllPlants()
 }
 
 // Devuelve una planta por su id
 function getPlantById(id_planta) {
-  return db.prepare('SELECT * FROM plantas WHERE id_planta = ?').get(id_planta)
+  return plantRepository.getPlantById(id_planta)
 }
 
-// Devuelve las plantas que tiene un usuario, con datos de la planta incluidos
 // Devuelve todas las plantas adquiridas por el jugador.
-// Sin filtro de usuario: sesión local única (sin autenticación).
+// Sin filtro de usuario: sesion local unica (sin autenticacion).
 function getUserPlants() {
-  return db.prepare(`
-    SELECT
-      pu.*,
-      p.nombre_planta,    p.nombre_cientifico, p.tipo_planta,
-      p.tipo_luz,         p.frecuencia_riego,
-      p.nivel_dificultad, p.tipo_poda,
-      p.descripcion,      p.sprite_key
-    FROM plantas_usuario pu
-    JOIN plantas p ON pu.id_planta = p.id_planta
-  `).all()
+  return plantRepository.getUserPlants()
 }
 
-// Agrega una planta a la colección del usuario
+// Agrega una planta a la coleccion del usuario.
 function acquirePlant(id_planta) {
   const plant = getPlantById(id_planta)
   if (!plant) throw new Error(`Planta con id ${id_planta} no encontrada`)
 
-  const result = db.prepare(`
-    INSERT INTO plantas_usuario (id_planta) VALUES (?)
-  `).run(id_planta)
-
+  const registroId = plantRepository.acquirePlant(id_planta)
   checkAndGrantAchievements()
-  return result.lastInsertRowid
+  return registroId
 }
 
-// Elimina una planta de la colección del jugador por su id_registro.
-// Solo debe usarse cuando la planta está MUERTA (validación en frontend).
+// Elimina una planta de la coleccion del jugador por su id_registro.
+// Solo debe usarse cuando la planta esta MUERTA (validacion en frontend).
 function deletePlant(id_registro) {
-  const result = db.prepare(`
-    DELETE FROM plantas_usuario WHERE id_registro = ?
-  `).run(id_registro)
-
-  return result.changes > 0  // true si se eliminó correctamente
+  return plantRepository.deletePlant(id_registro)
 }
 
-
-// ── Actualiza el estado de una planta del usuario ─────────────────────────
-// Recibe el id del registro y un objeto con los campos a actualizar.
-// Usamos SET dinámico para actualizar solo lo que cambia.
+// Actualiza el estado de una planta del usuario.
 function updatePlantState(id_registro, fields) {
-  const allowed = [
-    'estado_planta', 'ubicacion', 'humedad', 'salud',
-    'dias_sin_regar', 'ultimo_riego', 'dias_transcurridos',
-    'requiere_poda_activa', 'ultimo_poda',
-    'pos_x', 'pos_y',
-    'nutrientes'
-  ]
-
-  const updates = Object.keys(fields)
-    .filter(key => allowed.includes(key))
-    .map(key => `${key} = @${key}`)
-    .join(', ')
-
-  if (!updates) return
-
-  db.prepare(`
-    UPDATE plantas_usuario SET ${updates} WHERE id_registro = @id_registro
-  `).run({ ...fields, id_registro })
+  plantRepository.updatePlantState(id_registro, fields)
 }
-
 const ROOM_LIGHT_CONDITIONS = {
   'SALA': 'INDIRECTA',
   'JARDÍN': 'DIRECTA',
@@ -467,15 +430,10 @@ function getPruningIntervalDays(tipo_poda) {
 
 // ── Coloca una planta en una ubicación del entorno ────────────────────────
 function placePlantInRoom(id_registro, ubicacion, pos_x = null, pos_y = null) {
-  const plant = db.prepare(`
-    SELECT pu.*, p.tipo_luz
-    FROM plantas_usuario pu
-    JOIN plantas p ON pu.id_planta = p.id_planta
-    WHERE pu.id_registro = ?
-  `).get(id_registro)
+  const plant = plantRepository.getUserPlantWithLight(id_registro)
   const roomLight = getRoomLightCondition(ubicacion)
 
-  updatePlantState(id_registro, { ubicacion, pos_x, pos_y })
+  plantRepository.updatePlantLocation(id_registro, ubicacion, pos_x, pos_y)
 
   if (plant && ubicacion && !isLightCompatible(plant.tipo_luz, roomLight)) {
     updateStats({ errores_ubicacion: 1, acciones_totales: 1 })
@@ -1023,16 +981,12 @@ function recordWeeklyReview(wasCorrect, reviewedWeek = null) {
 }
 
 function clearUserPlants() {
-  db.prepare('DELETE FROM plantas_usuario').run()
+  plantRepository.clearUserPlants()
 }
 
 // Regresa una planta al panel lateral limpiando ubicación y posición.
 function returnPlantToPanel(id_registro) {
-  db.prepare(`
-    UPDATE plantas_usuario
-    SET ubicacion = NULL, pos_x = NULL, pos_y = NULL
-    WHERE id_registro = ?
-  `).run(id_registro)
+  plantRepository.returnPlantToPanel(id_registro)
 }
 
 // Guarda el timestamp actual como último cierre.
@@ -1200,7 +1154,7 @@ function completeTutorial() {
 // Reinicia completamente el juego eliminando todo el progreso.
 // Útil para pruebas y como opción de "nueva partida" para el jugador.
 function resetGame() {
-  db.prepare('DELETE FROM plantas_usuario').run()
+  clearUserPlants()
   db.prepare('DELETE FROM estadisticas').run()
   db.prepare('DELETE FROM logros').run()
   db.prepare('UPDATE progreso SET nivel = 1, experiencia = 0, racha_dias = 0, dia_actual = 1, tutorial_completado = 0, ultimo_cierre = NULL').run()
