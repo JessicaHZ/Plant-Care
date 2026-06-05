@@ -55,34 +55,15 @@ const Nursery = {
     card.className   = 'plant-card'
     card.dataset.plantId = plant.id_planta
 
-    const difficultyColor = {
-      'FÁCIL':   '#66bb6a',
-      'MEDIO':   '#ffa726',
-      'DIFÍCIL': '#ef5350'
-    }
-    const lightIcon = {
-      'DIRECTA':   '☀️',
-      'INDIRECTA': '🌤️',
-      'SOMBRA':    '🌫️'
-    }
-    const tipoConfig = {
-      'SUCULENTA':  { icon: '🌵', color: '#80cbc4' },
-      'ORNAMENTAL': { icon: '🌸', color: '#ce93d8' },
-      'AROMATICA':  { icon: '🌿', color: '#a5d6a7' },
-      'FRUTAL':     { icon: '🍋', color: '#fff176' },
-      'CACTUS':     { icon: '🌵', color: '#80cbc4' },
-      'OTRO':       { icon: '🌱', color: '#b0bec5' }
-    }
-
-    const tipo       = tipoConfig[plant.tipo_planta] || tipoConfig['OTRO']
+    const tipo       = NurseryDisplayUtils.getPlantTypeConfig(plant.tipo_planta)
     const ownedCount = this._ownedPlantIds.get(plant.id_planta) || 0  // ✅
 
     card.innerHTML = `
       <div class="plant-card-image">
         <img
-          src="../assets/sprites/plants/${plant.sprite_key}_sana.png"
+          src="${CareDisplayUtils.getPlantSpritePath(plant.sprite_key, 'SANA')}"
           alt="${plant.nombre_planta}"
-          onerror="this.src='../assets/sprites/plants/placeholder.png'"
+          onerror="this.onerror=null; this.src='${CareDisplayUtils.getLegacyPlantSpritePath(plant.sprite_key, 'SANA')}'"
         />
         ${ownedCount > 0
           ? `<div class="plant-card-owned-badge">✓ Tienes ${ownedCount}</div>`
@@ -95,11 +76,11 @@ const Nursery = {
           <span class="badge badge-tipo" style="color: ${tipo.color}">
             ${tipo.icon} ${plant.tipo_planta}
           </span>
-          <span class="badge" style="color: ${difficultyColor[plant.nivel_dificultad] || '#fff'}">
+          <span class="badge" style="color: ${NurseryDisplayUtils.getDifficultyColor(plant.nivel_dificultad)}">
             ${plant.nivel_dificultad}
           </span>
           <span class="badge">
-            ${lightIcon[plant.tipo_luz] || '💡'} ${plant.tipo_luz}
+            ${NurseryDisplayUtils.getLightIcon(plant.tipo_luz)} ${plant.tipo_luz}
           </span>
           <span class="badge">
             💧 cada ${plant.frecuencia_riego} días
@@ -121,22 +102,7 @@ const Nursery = {
     const panel = document.getElementById('nursery-detail')
     if (!panel) return
 
-    const lightIcon = { 'DIRECTA': '☀️', 'INDIRECTA': '🌤️', 'SOMBRA': '🌫️' }
-    const podaLabel = {
-      'NUNCA':     'No requiere poda',
-      'OCASIONAL': 'Poda ocasional',
-      'FRECUENTE': 'Poda frecuente'
-    }
-    const tipoConfig = {
-      'SUCULENTA':  { icon: '🌵', color: '#80cbc4' },
-      'ORNAMENTAL': { icon: '🌸', color: '#ce93d8' },
-      'AROMATICA':  { icon: '🌿', color: '#a5d6a7' },
-      'FRUTAL':     { icon: '🍋', color: '#fff176' },
-      'CACTUS':     { icon: '🌵', color: '#80cbc4' },
-      'OTRO':       { icon: '🌱', color: '#b0bec5' }
-    }
-
-    const tipo       = tipoConfig[plant.tipo_planta] || tipoConfig['OTRO']
+    const tipo       = NurseryDisplayUtils.getPlantTypeConfig(plant.tipo_planta)
     const ownedCount = this._ownedPlantIds.get(plant.id_planta) || 0  // ✅
 
     panel.innerHTML = `
@@ -152,7 +118,7 @@ const Nursery = {
 
       <div class="detail-stats">
         <div class="detail-stat">
-          <span class="detail-stat-icon">${lightIcon[plant.tipo_luz]}</span>
+          <span class="detail-stat-icon">${NurseryDisplayUtils.getLightIcon(plant.tipo_luz)}</span>
           <div>
             <span class="detail-stat-label">Luz</span>
             <span class="detail-stat-value">${plant.tipo_luz}</span>
@@ -169,7 +135,7 @@ const Nursery = {
           <span class="detail-stat-icon">✂️</span>
           <div>
             <span class="detail-stat-label">Poda</span>
-            <span class="detail-stat-value">${podaLabel[plant.tipo_poda]}</span>
+            <span class="detail-stat-value">${NurseryDisplayUtils.getPruningLabel(plant.tipo_poda)}</span>
           </div>
         </div>
         <div class="detail-stat">

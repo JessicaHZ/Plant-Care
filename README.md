@@ -1,175 +1,363 @@
 # My Plant Home
-<img width="1408" height="768" alt="Gemini_Generated_Image_xa7rrxa7rrxa7rrx" src="https://github.com/user-attachments/assets/334e03e8-e8fa-4a86-9bf9-9f74050e90ac" />
 
-Serious game de escritorio desarrollado con Electron, JavaScript y SQLite local. El objetivo del juego es enseñar conceptos básicos de cuidado de plantas mediante observación, diagnóstico, toma de decisiones y consecuencias simuladas en el tiempo.
+Serious game de escritorio desarrollado con Electron, JavaScript vanilla y SQLite local. Su objetivo es ensenar conceptos basicos de cuidado de plantas mediante observacion, diagnostico, toma de decisiones y consecuencias simuladas en el tiempo.
 
-## Descripción General
+## Descripcion general
 
-El jugador puede adquirir plantas desde un vivero, colocarlas en distintas habitaciones, observar su estado y aplicar acciones de cuidado como regar, abonar, drenar o podar. El juego simula el paso de los días y modifica la salud de las plantas según humedad, nutrientes, ubicación, luz y errores de cuidado.
+El jugador puede adquirir plantas desde un vivero, colocarlas en distintas habitaciones, observar su estado y aplicar acciones de cuidado como regar, abonar, drenar o podar.
 
-El proyecto también incluye minijuegos, sistema de XP, niveles, logros, tutorial inicial, estadísticas y revisión semanal del desempeño.
+El juego simula el paso de los dias y modifica la salud de las plantas segun humedad, nutrientes, ubicacion, luz y errores de cuidado. Tambien incluye XP, niveles, logros, tutorial, estadisticas, revision semanal y minijuegos educativos.
 
-## Tecnologías Utilizadas
+## Tecnologias
 
 - Electron
-- JavaScript
+- JavaScript vanilla
 - HTML
 - CSS
 - SQLite local
 - better-sqlite3
+- electron-builder
+- ESLint
+- Prettier
 
-## Funcionalidades Principales
+## Funcionalidades principales
 
-- Catálogo de plantas con datos educativos.
-- Adquisición de plantas.
-- Colocación de plantas en habitaciones.
-- Impacto real de la ubicación según tipo de luz.
-- Simulación temporal por días.
+- Catalogo de plantas con datos educativos.
+- Compra/adquisicion de plantas.
+- Colocacion de plantas en habitaciones.
+- Impacto de la luz segun ubicacion.
+- Simulacion temporal por dias.
 - Humedad, salud y nutrientes por planta.
-- Acciones de cuidado:
-  - Regar
-  - Abonar
-  - Drenar
-  - Podar
-- Diagnóstico previo a acciones de cuidado.
+- Acciones de cuidado: regar, abonar, drenar y podar.
+- Diagnostico previo a acciones de cuidado.
 - Sistema de XP y niveles.
-- Logros y estadísticas.
-- Revisión semanal de errores.
-- Evaluación positiva cuando no se cometen errores.
-- Minijuegos de refuerzo:
-  - Quiz de plantas
-  - Defensa del brote
-  - Práctica de poda
+- Sistema de logros y estadisticas.
+- Revision semanal de errores.
+- Minijuegos de refuerzo: quiz, defensa del brote y practica de poda.
 
-## Requisitos Previos
+## Requisitos previos
 
-Antes de ejecutar el proyecto, instalar:
+Instalar Node.js y npm.
 
-- Node.js
-- npm
-
-Se recomienda usar una versión reciente de Node.js.
-
-Para verificar la instalación:
+Verificar instalacion:
 
 ```bash
 node -v
 npm -v
 ```
 
-## Cómo Descargar el Proyecto
+## Instalacion
 
-### Opción 1: Clonar desde Git
-
-```bash
-git clone URL_DEL_REPOSITORIO
-cd mi-proyecto/plant_simulator
-```
-
-### Opción 2: Descargar ZIP
-
-1. Descargar el proyecto como archivo `.zip`.
-2. Extraerlo en una carpeta local.
-3. Entrar a la carpeta:
+Entrar a la carpeta del proyecto:
 
 ```bash
 cd mi-proyecto/plant_simulator
 ```
 
-## Instalación
-
-Instalar las dependencias:
+Instalar dependencias:
 
 ```bash
 npm install
 ```
 
-## Ejecutar el Juego
-
-Para iniciar la aplicación:
+## Ejecutar la aplicacion
 
 ```bash
 npm start
 ```
 
-También puede ejecutarse en modo desarrollo:
+No existe un script `npm run dev` en la configuracion actual. Para desarrollo se usa `npm start`.
+
+## Validacion y calidad
+
+Ejecutar validaciones puras de reglas:
 
 ```bash
-npm run dev
+npm.cmd run validate
 ```
 
-## Base de Datos
+Ejecutar ESLint:
 
-El juego utiliza una base de datos SQLite local mediante `better-sqlite3`.
+```bash
+npm.cmd run lint
+```
 
-La base de datos se crea automáticamente al iniciar la aplicación. No es necesario crearla manualmente.
+Generar instalador de Windows:
 
-El archivo de base de datos se guarda en la carpeta de datos de usuario de Electron, no dentro del código fuente del proyecto.
+```bash
+npm.cmd run build
+```
 
-## Estructura General
+Ciclo recomendado antes de aceptar cambios:
+
+```bash
+npm.cmd run validate
+npm.cmd run lint
+npm.cmd run build
+```
+
+## Instalador
+
+El instalador se genera con `electron-builder`.
+
+Ruta de salida:
+
+```txt
+dist/build/My Plant Home-1.0.0-Setup.exe
+```
+
+La configuracion del build se encuentra en `package.json`, dentro de la propiedad `build`.
+
+## Base de datos
+
+El juego usa SQLite local mediante `better-sqlite3`.
+
+La base de datos se crea automaticamente al iniciar la aplicacion. El archivo no se guarda dentro del codigo fuente, sino en la carpeta de datos de usuario de Electron.
+
+La conexion y el esquema se organizan en:
+
+```txt
+main/database/connection.js
+main/database/schema.js
+```
+
+## Arquitectura resumida
+
+Flujo principal:
+
+```txt
+renderer -> preload.js -> ipc-handlers.js -> database.js -> repositories -> SQLite
+```
+
+`main/database.js` sigue funcionando como fachada publica del proceso main. La modularizacion se realiza de forma gradual para no romper IPC, preload, renderer ni el instalador.
+
+## Estructura relevante
 
 ```txt
 plant_simulator/
-├── main/
-│   ├── main.js
-│   ├── preload.js
-│   ├── ipc-handlers.js
-│   └── database.js
-├── renderer/
-│   ├── index.html
-│   ├── index.js
-│   ├── js/
-│   ├── styles/
-│   └── assets/
-├── package.json
-└── README.md
+  main/
+    main.js
+    preload.js
+    ipc-handlers.js
+    ipc/
+      registerHandler.js
+    database.js
+    database/
+      connection.js
+      schema.js
+      seeds/
+        plantCatalog.js
+      repositories/
+        achievementRepository.js
+        plantRepository.js
+        progressRepository.js
+        statsRepository.js
+    domain/
+      achievementDefinitions.js
+      achievementRules.js
+      careRules.js
+      plantRules.js
+      progressRules.js
+      simulationRules.js
+    services/
+      achievementService.js
+      plantCatalogService.js
+      plantCollectionService.js
+      plantPlacementService.js
+      careService.js
+      diagnosisService.js
+      minigameService.js
+      progressService.js
+      quizService.js
+      resetService.js
+      simulationService.js
+      statsService.js
+      streakService.js
+      weeklyReviewService.js
+    utils/
+      number-utils.js
+
+  renderer/
+    index.html
+    index.js
+    js/
+      config/
+        careMessagesConfig.js
+        defenseConfig.js
+        diagnosisConfig.js
+        profileConfig.js
+        quizQuestionBank.js
+        roomConfig.js
+        weeklyReviewRecommendations.js
+      utils/
+        care-display-utils.js
+        care-guide-display-utils.js
+        care-panel-display-utils.js
+        diagnosis-display-utils.js
+        diagnosis-rules.js
+        diagnosis-scenario-selector.js
+        environment-display-utils.js
+        nursery-display-utils.js
+        profile-display-utils.js
+        number-utils.js
+        quiz-display-utils.js
+        weekly-review-display-utils.js
+      Environment.js
+      CareActions.js
+      Diagnosis.js
+      Simulation.js
+      WeeklyReview.js
+      MiniGameQuiz.js
+      MiniGameDefense.js
+      MiniGamePruning.js
+    styles/
+
+  scripts/
+    validate-rules.js
+    validators/
+      plantCatalogValidator.js
+      plantCatalogServiceValidator.js
+      plantCollectionServiceValidator.js
+      plantPlacementServiceValidator.js
+      plantRulesValidator.js
+      careRulesValidator.js
+      careServiceValidator.js
+      diagnosisServiceValidator.js
+      minigameServiceValidator.js
+      achievementDefinitionsValidator.js
+      achievementRulesValidator.js
+      achievementServiceValidator.js
+      progressRulesValidator.js
+      progressServiceValidator.js
+      quizServiceValidator.js
+      resetServiceValidator.js
+      simulationRulesValidator.js
+      simulationServiceValidator.js
+      statsServiceValidator.js
+      streakServiceValidator.js
+      weeklyReviewServiceValidator.js
+      databaseFacadeValidator.js
+
+  docs/
+    arquitectura.md
+    contrato-database.md
+    seguridad-dependencias.md
 ```
 
-## Archivos Importantes
+## Archivos importantes
 
-- `main/database.js`: lógica de base de datos, simulación, progreso, estadísticas y cuidado de plantas.
-- `main/ipc-handlers.js`: comunicación entre Electron y la interfaz.
+- `main/database.js`: fachada principal; coordina persistencia, simulacion, progreso, estadisticas, racha y logros.
+- `main/database/repositories/`: consultas directas a SQLite.
+- `main/database/seeds/plantCatalog.js`: catalogo estatico de plantas.
+- `main/domain/achievementDefinitions.js`: definiciones estaticas y claves legacy de logros.
+- `main/domain/achievementRules.js`: reglas puras de elegibilidad de logros.
+- `main/services/achievementService.js`: migracion legacy, revision, construccion e insercion segura de logros.
+- `main/services/plantCatalogService.js`: consultas y seed coordinado del catalogo de plantas.
+- `main/services/plantCollectionService.js`: operaciones simples sobre coleccion de plantas.
+- `main/services/plantPlacementService.js`: resultado de ubicacion y compatibilidad de luz.
+- `main/services/careService.js`: coordinacion de acciones de cuidado: riego, abono, drenaje y poda.
+- `main/services/diagnosisService.js`: coordinacion del resultado de diagnostico educativo.
+- `main/services/minigameService.js`: coordinacion de recompensas de minijuegos.
+- `main/services/progressService.js`: progreso inicial, tutorial, normalizacion de nivel, suma de XP, migracion de dia actual, guardado de cierre y calculo de dias offline.
+- `main/services/quizService.js`: resultado y coordinacion de registro del quiz educativo.
+- `main/services/resetService.js`: coordinacion de reinicio completo de partida.
+- `main/services/statsService.js`: normalizacion de estadisticas semanales.
+- `main/services/streakService.js`: coordinacion de racha de cuidado responsable.
+- `main/domain/plantRules.js`: reglas puras de luz, ubicacion e intervalos de poda.
+- `main/domain/careRules.js`: reglas puras de riego, abono, drenaje y poda.
+- `main/domain/progressRules.js`: reglas puras de XP y nivel.
+- `main/domain/simulationRules.js`: reglas puras de simulacion diaria.
+- `main/services/simulationService.js`: coordinacion de avance de dias simulados.
+- `main/services/weeklyReviewService.js`: reglas, normalizacion de payload y registro de revision semanal.
+- `main/ipc-handlers.js`: canales IPC entre main y renderer.
+- `main/ipc/registerHandler.js`: helper comun para registrar handlers IPC con fallback de error.
 - `main/preload.js`: API segura expuesta al renderer.
-- `renderer/index.js`: inicialización de pantallas, navegación y eventos globales.
-- `renderer/js/Environment.js`: habitaciones, colocación de plantas y panel de cuidado.
-- `renderer/js/CareActions.js`: flujo de acciones de cuidado.
-- `renderer/js/Diagnosis.js`: diagnóstico previo.
-- `renderer/js/WeeklyReview.js`: revisión semanal.
-- `renderer/js/MiniGameQuiz.js`: quiz educativo.
-- `renderer/js/MiniGameDefense.js`: minijuego de defensa.
-- `renderer/js/MiniGamePruning.js`: práctica de poda.
+- `renderer/js/config/careMessagesConfig.js`: guias e indicaciones educativas para errores de cuidado.
+- `renderer/js/config/defenseConfig.js`: configuracion estatica del minijuego defensa del brote.
+- `renderer/js/config/diagnosisConfig.js`: etiquetas de acciones y escenarios educativos del diagnostico.
+- `renderer/js/config/profileConfig.js`: niveles, logros y recomendaciones estaticas del perfil.
+- `renderer/js/config/quizQuestionBank.js`: banco estatico de preguntas del quiz educativo.
+- `renderer/js/config/roomConfig.js`: habitaciones y slots visuales.
+- `renderer/js/config/weeklyReviewRecommendations.js`: recomendaciones estaticas de revision semanal.
+- `renderer/js/utils/care-display-utils.js`: estados y HTML de medidores del panel de cuidado.
+- `renderer/js/utils/care-guide-display-utils.js`: HTML del modal de guia contextual de cuidado.
+- `renderer/js/utils/care-panel-display-utils.js`: HTML del panel de cuidado y del panel de planta muerta.
+- `renderer/js/utils/diagnosis-display-utils.js`: medidores, estados y mensajes visuales del diagnostico educativo.
+- `renderer/js/utils/diagnosis-rules.js`: reglas puras de activacion y compatibilidad de luz del diagnostico.
+- `renderer/js/utils/diagnosis-scenario-selector.js`: seleccion contextual de escenarios del diagnostico.
+- `renderer/js/utils/environment-display-utils.js`: mensajes visuales y modales de ubicacion del entorno.
+- `renderer/js/utils/nursery-display-utils.js`: iconos, colores y etiquetas visuales del vivero.
+- `renderer/js/utils/profile-display-utils.js`: progreso, colores de logros y recomendacion visual del perfil.
+- `renderer/js/utils/quiz-display-utils.js`: resultado visual final del quiz educativo.
+- `renderer/js/utils/weekly-review-display-utils.js`: etiquetas y barras visuales de revision semanal.
+- `renderer/js/Environment.js`: pantalla de entorno, habitaciones, plantas colocadas y panel de cuidado.
+- `scripts/validate-rules.js`: orquestador de la validacion ligera.
+- `scripts/validators/`: validadores pequenos por dominio.
+- `docs/arquitectura.md`: descripcion tecnica de la arquitectura actual.
+- `docs/contrato-database.md`: contrato publico de la fachada `database.js`.
 
-## Posibles Problemas
+## Validacion ligera
 
-### Error con `better-sqlite3`
+`scripts/validate-rules.js` ejecuta validadores pequenos que verifican:
 
-Si aparece un error relacionado con `better-sqlite3`, intentar:
+- Catalogo de 20 plantas.
+- Campos obligatorios del catalogo.
+- `sprite_key` unicos.
+- Reglas de luz y ubicacion.
+- Estados visuales y medidores del panel de cuidado.
+- Mensajes visuales de luz y ubicacion del entorno.
+- Resultado visual final del quiz educativo.
+- Etiquetas y barras visuales de revision semanal.
+- Reglas puras de cuidado.
+- Service de riego, abono, drenaje y poda.
+- Service de diagnostico educativo.
+- Configuracion estatica del minijuego defensa del brote.
+- Banco estatico de preguntas del quiz educativo.
+- Recomendaciones estaticas de revision semanal.
+- Service de recompensas de minijuegos.
+- Reglas puras de progreso.
+- Reglas puras de simulacion.
+- Service de simulacion diaria.
+- Service de racha de cuidado responsable.
+- Service de revision semanal.
+- Service de insercion de logros.
+- Definiciones y claves legacy de logros.
+- Reglas puras de elegibilidad de logros.
+- Service de progreso offline.
+- Service de reinicio de partida.
+- Contrato publico de la fachada `database.js`.
+
+## Posibles problemas
+
+### Error con better-sqlite3
+
+Intentar:
 
 ```bash
 npm rebuild
 ```
 
-Si el problema continúa:
+Si el problema continua:
 
 ```bash
 npx electron-rebuild
 ```
 
-Luego volver a ejecutar:
+Luego ejecutar:
 
 ```bash
 npm start
 ```
 
-### La aplicación no inicia
+### La aplicacion no inicia
 
-Verificar que se instalaron las dependencias:
+Verificar dependencias:
 
 ```bash
 npm install
 ```
 
-Verificar que se está ejecutando desde la carpeta correcta:
+Verificar ubicacion:
 
 ```bash
 cd mi-proyecto/plant_simulator
@@ -178,46 +366,44 @@ npm start
 
 ### Cambios no reflejados
 
-Cerrar completamente la aplicación y volver a iniciarla:
+Cerrar completamente la aplicacion y volver a iniciar:
 
 ```bash
 npm start
 ```
 
-Algunos cambios en base de datos o migraciones se aplican al iniciar la app.
+Algunos cambios de base de datos o migraciones se aplican al iniciar la app.
 
-## Notas Para Desarrollo
+## Notas de desarrollo
 
-- No subir `node_modules` al repositorio.
-- No editar manualmente la base de datos local salvo que sea necesario para pruebas.
-- Antes de modificar mecánicas principales, revisar `database.js`.
-- Mantener coherencia entre requisitos, mecánicas educativas y comportamiento real del código.
+- No subir `node_modules`.
+- No editar manualmente la base de datos local salvo para pruebas controladas.
+- Mantener `database.js` como fachada mientras se estabilizan los modulos internos.
+- No cambiar canales IPC sin revisar `preload.js` y renderer.
+- Antes de tocar simulacion, XP, racha o logros, ejecutar `validate`, `lint` y `build`.
+- Mantener coherencia entre requisitos, documentacion, arquitectura y codigo.
 
-## Comandos Útiles
+## Estado actual
 
-Ejecutar la app:
+El proyecto es una version jugable funcional de un serious game educativo sobre cuidado de plantas. La arquitectura backend ya fue modularizada gradualmente: `database.js` permanece como fachada publica, mientras reglas, servicios y repositorios concentran la mayor parte de la logica interna.
 
-```bash
-npm start
-```
+## Diagnostico post-refactor
 
-Ejecutar en modo desarrollo:
+Partes estabilizadas:
 
-```bash
-npm run dev
-```
+- Repositories para persistencia SQLite.
+- Reglas puras en `main/domain/`.
+- Services para catalogo, coleccion, cuidado, progreso, simulacion, logros, racha, quiz, revision semanal y reinicio.
+- Validaciones ligeras por dominio en `scripts/validators/`.
+- Build del instalador Electron validado con `npm.cmd run build`.
 
-Verificar sintaxis de archivos importantes:
+Partes que conviene no tocar de golpe:
 
-```bash
-node --check main/database.js
-node --check main/ipc-handlers.js
-node --check main/preload.js
-node --check renderer/index.js
-```
+- `database.js`, porque sigue siendo contrato de fachada para IPC.
+- `ipc-handlers.js` y `preload.js`, porque definen la comunicacion main-renderer.
+- `simulateDays()` y sus reglas, salvo cambios pequenos y validados.
 
-## Estado Actual
+Siguiente etapa recomendada:
 
-El proyecto es una versión jugable funcional de un serious game educativo sobre cuidado de plantas. Incluye simulación, retroalimentación, progreso, errores semanales y minijuegos de apoyo.
-```
-
+- Validar manualmente la simulacion diaria extraida a `simulationService`.
+- Luego evaluar una reorganizacion gradual del renderer, empezando por archivos grandes como `Environment.js`, `Diagnosis.js` o los minijuegos.

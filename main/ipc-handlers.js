@@ -1,6 +1,5 @@
-const { ipcMain } = require('electron')
 const db = require('./database')
-const { clampInteger } = require('./utils/number-utils')
+const { registerHandler } = require('./ipc/registerHandler')
 
 // Registra todos los canales IPC entre el proceso main y el renderer.
 // Se invoca una sola vez desde main.js al iniciar la app.
@@ -9,351 +8,327 @@ function registerIpcHandlers() {
   // ── Catálogo de plantas ─────────────────────────────────────────────────
 
   // Devuelve todas las plantas del vivero.
-  ipcMain.handle('plants:getAll', async () => {
-    try {
+  registerHandler(
+    'plants:getAll',
+    () => {
       const plants = db.getAllPlants()
       return { success: true, plants }
-    } catch (error) {
-      console.error('Error obteniendo catálogo:', error)
-      return { success: false, error: 'No se pudo cargar el catálogo' }
-    }
-  })
+    },
+    { success: false, error: 'No se pudo cargar el catálogo' },
+    'Error obteniendo catálogo:'
+  )
 
   // Devuelve el detalle de una planta por id.
-  ipcMain.handle('plants:getById', async (event, id_planta) => {
-    try {
+  registerHandler(
+    'plants:getById',
+    (event, id_planta) => {
       const plant = db.getPlantById(id_planta)
       return { success: true, plant }
-    } catch (error) {
-      console.error('Error obteniendo planta:', error)
-      return { success: false, error: 'No se pudo cargar la planta' }
-    }
-  })
+    },
+    { success: false, error: 'No se pudo cargar la planta' },
+    'Error obteniendo planta:'
+  )
 
   // ── Colección del jugador ───────────────────────────────────────────────
 
   // Devuelve todas las plantas adquiridas por el jugador.
-  ipcMain.handle('plants:getUserPlants', async () => {
-    try {
+  registerHandler(
+    'plants:getUserPlants',
+    () => {
       const plants = db.getUserPlants()
       return { success: true, plants }
-    } catch (error) {
-      console.error('Error cargando colección:', error)
-      return { success: false, error: 'No se pudo cargar tu colección' }
-    }
-  })
+    },
+    { success: false, error: 'No se pudo cargar tu colección' },
+    'Error cargando colección:'
+  )
 
   // Adquiere una planta del vivero y la agrega a la colección.
-  ipcMain.handle('plants:acquire', async (event, id_planta) => {
-    try {
+  registerHandler(
+    'plants:acquire',
+    (event, id_planta) => {
       const registroId = db.acquirePlant(id_planta)
       return { success: true, registroId }
-    } catch (error) {
-      console.error('Error adquiriendo planta:', error)
-      return { success: false, error: 'No se pudo adquirir la planta' }
-    }
-  })
+    },
+    { success: false, error: 'No se pudo adquirir la planta' },
+    'Error adquiriendo planta:'
+  )
 
   // ── Entorno ─────────────────────────────────────────────────────────────
 
   // Coloca o mueve una planta a una ubicación del entorno (RF-02, RF-03).
   // Retorna la condición de luz calculada para esa ubicación.
-  ipcMain.handle('plant:place', async (event, { id_registro, ubicacion, pos_x, pos_y }) => {
-    try {
+  registerHandler(
+    'plant:place',
+    (event, { id_registro, ubicacion, pos_x, pos_y }) => {
       const lightCondition = db.placePlantInRoom(id_registro, ubicacion, pos_x, pos_y)
       return { success: true, lightCondition }
-    } catch (error) {
-      console.error('Error colocando planta:', error)
-      return { success: false, error: 'No se pudo colocar la planta' }
-    }
-  })
+    },
+    { success: false, error: 'No se pudo colocar la planta' },
+    'Error colocando planta:'
+  )
 
   // ── Simulación ──────────────────────────────────────────────────────────
 
   // Avanza N días simulados y actualiza el estado de todas las plantas.
-  ipcMain.handle('simulation:advance', async (event, days) => {
-    try {
+  registerHandler(
+    'simulation:advance',
+    (event, days) => {
       const simulation = db.simulateDays(days)
       return {
         success: true,
         results: simulation.results,
         streakEvent: simulation.streakEvent
       }
-    } catch (error) {
-      console.error('Error en simulación:', error)
-      return { success: false, error: 'Error en la simulación' }
-    }
-  })
+    },
+    { success: false, error: 'Error en la simulación' },
+    'Error en simulación:'
+  )
 
   // ── Acciones de cuidado ─────────────────────────────────────────────────
 
   // RF-07: Regar una planta.
-  ipcMain.handle('care:water', async (event, id_registro) => {
-    try {
-      return db.waterPlant(id_registro)
-    } catch (error) {
-      console.error('Error en riego:', error)
-      return { success: false, error: 'Error al regar' }
-    }
-  })
+  registerHandler(
+    'care:water',
+    (event, id_registro) => db.waterPlant(id_registro),
+    { success: false, error: 'Error al regar' },
+    'Error en riego:'
+  )
 
   // RF-08: Aplicar abono a una planta.
-  ipcMain.handle('care:fertilize', async (event, id_registro) => {
-    try {
-      return db.fertilizePlant(id_registro)
-    } catch (error) {
-      console.error('Error en abono:', error)
-      return { success: false, error: 'Error al abonar' }
-    }
-  })
+  registerHandler(
+    'care:fertilize',
+    (event, id_registro) => db.fertilizePlant(id_registro),
+    { success: false, error: 'Error al abonar' },
+    'Error en abono:'
+  )
 
   // RF-09: Podar una planta (requiere nivel >= 2, tipo_poda !== 'NUNCA',
   // requiere_poda_activa === true).
-  ipcMain.handle('care:prune', async (event, id_registro) => {
-    try {
-      return db.prunePlant(id_registro)
-    } catch (error) {
-      console.error('Error en poda:', error)
-      return { success: false, error: 'Error al podar' }
-    }
-  })
+  registerHandler(
+    'care:prune',
+    (event, id_registro) => db.prunePlant(id_registro),
+    { success: false, error: 'Error al podar' },
+    'Error en poda:'
+  )
 
   // ── Diagnóstico previo (RF-31 / LM4 — Analizar) ─────────────────────────
 
   // Registra el resultado del diagnóstico antes de una acción de cuidado.
   // Si fue correcto, otorga XP adicional y registra en diagnosticos_correctos.
-  ipcMain.handle('diagnosis:submit', async (event, wasCorrect) => {
-    try {
-      if (wasCorrect) {
-        db.updateStats({ diagnosticos_correctos: 1 })
-        const xpResult = db.addExperience(10)
-        const streakEvent = db.recordResponsibleCareSession()
-        db.checkAndGrantAchievements()
-        return { success: true, xpGained: 10, xpResult, streakEvent }
-      }
-      return { success: true, xpGained: 0 }
-    } catch (error) {
-      console.error('Error en diagnóstico:', error)
-      return { success: false, error: 'Error registrando diagnóstico' }
-    }
-  })
+  registerHandler(
+    'diagnosis:submit',
+    (event, wasCorrect) => {
+      const result = db.recordDiagnosisResult(wasCorrect)
+      return { success: true, ...result }
+    },
+    { success: false, error: 'Error registrando diagnóstico' },
+    'Error en diagnóstico:'
+  )
 
   // ── Progreso del jugador ────────────────────────────────────────────────
 
   // Devuelve nivel, experiencia y racha_dias del jugador.
-  ipcMain.handle('progress:get', async () => {
-    try {
+  registerHandler(
+    'progress:get',
+    () => {
       const progress = db.getProgress()
       return { success: true, progress }
-    } catch (error) {
-      console.error('Error cargando progreso:', error)
-      return { success: false, error: 'Error cargando progreso' }
-    }
-  })
+    },
+    { success: false, error: 'Error cargando progreso' },
+    'Error cargando progreso:'
+  )
 
   // Devuelve las estadísticas de desempeño del jugador.
-  ipcMain.handle('stats:get', async () => {
-    try {
+  registerHandler(
+    'stats:get',
+    () => {
       const stats = db.getStats()
       return { success: true, stats }
-    } catch (error) {
-      console.error('Error cargando estadísticas:', error)
-      return { success: false, error: 'Error cargando estadísticas' }
-    }
-  })
+    },
+    { success: false, error: 'Error cargando estadísticas' },
+    'Error cargando estadísticas:'
+  )
 
   // ── Minijuegos ──────────────────────────────────────────────────────────
 
   // Registra resultado del quiz (HU-14).
   // Una respuesta correcta cuenta para la racha diaria (RF-22).
-  ipcMain.handle('quiz:submit', async (event, correct) => {
-    try {
+  registerHandler(
+    'quiz:submit',
+    (event, correct) => {
       const xpResult = db.recordQuizResult(correct)
       return { success: true, xpResult }
-    } catch (error) {
-      console.error('Error en quiz:', error)
-      return { success: false, error: 'Error registrando resultado del quiz' }
-    }
-  })
+    },
+    { success: false, error: 'Error registrando resultado del quiz' },
+    'Error en quiz:'
+  )
 
   // Registra Defensa del Brote con recompensa calculada por desempeno.
-  ipcMain.handle('minigame:defense:complete', async (event, xpAmount) => {
-    try {
-      const safeXp = clampInteger(xpAmount, 0, 300)
-      const xpResult = safeXp > 0 ? db.addExperience(safeXp) : null
-
-      db.updateStats(
-        safeXp > 0
-          ? { acciones_correctas: 1, acciones_correctas_hoy: 1, acciones_totales: 1 }
-          : { acciones_totales: 1 }
-      )
-      db.checkAndGrantAchievements()
-
-      return { success: true, xpGained: safeXp, xpResult }
-    } catch (error) {
-      console.error('Error en Defensa del Brote:', error)
-      return { success: false, error: 'Error en Defensa del Brote' }
-    }
-  })
+  registerHandler(
+    'minigame:defense:complete',
+    (event, xpAmount) => {
+      const result = db.completeDefenseGame(xpAmount)
+      return { success: true, ...result }
+    },
+    { success: false, error: 'Error en Defensa del Brote' },
+    'Error en Defensa del Brote:'
+  )
 
   // ── Revisión semanal activa (RF-32 / LM5 — Evaluar) ────────────────────
 
   // Devuelve las 3 acciones con más errores para presentar al jugador.
 
-  ipcMain.handle('weekly:getTopActions', async () => {
-    try {
+  registerHandler(
+    'weekly:getTopActions',
+    () => {
       const actions = db.getTopActions()
       return { success: true, actions }
-    } catch (error) {
-      console.error('Error cargando acciones:', error)
-      return { success: false, error: 'Error cargando acciones de revisión' }
-    }
-  })
+    },
+    { success: false, error: 'Error cargando acciones de revisión' },
+    'Error cargando acciones:'
+  )
 
   // Registra si el jugador evaluó correctamente su peor decisión.
-  ipcMain.handle('weekly:submit', async (event, payload) => {
-    try {
-      const wasCorrect = typeof payload === 'object' ? payload.wasCorrect : payload
-      const reviewedWeek = typeof payload === 'object' ? payload.reviewedWeek : null
+  registerHandler(
+    'weekly:submit',
+    (event, payload) => {
+      const { wasCorrect, reviewedWeek } = db.normalizeWeeklyReview(payload)
       const xpResult = db.recordWeeklyReview(wasCorrect, reviewedWeek)
       return { success: true, xpResult, xpGained: wasCorrect ? 25 : 0 }
-    } catch (error) {
-      console.error('Error registrando revisión semanal:', error)
-      return { success: false, error: 'Error registrando revisión' }
-    }
-  })
+    },
+    { success: false, error: 'Error registrando revisión' },
+    'Error registrando revisión semanal:'
+  )
 
   // Verifica si el día simulado actual debe disparar la revisión semanal.
-  ipcMain.handle('weekly:shouldTrigger', async (event, currentDay) => {
-    try {
+  registerHandler(
+    'weekly:shouldTrigger',
+    (event, currentDay) => {
       const should = db.shouldTriggerWeeklyReview(currentDay)
       return { success: true, should }
-    } catch (error) {
-      console.error('Error verificando revisión semanal:', error)
-      return { success: false, should: false }
-    }
-  })
+    },
+    { success: false, should: false },
+    'Error verificando revisión semanal:'
+  )
 
   // Elimina una planta muerta de la colección del jugador.
-  ipcMain.handle('plants:delete', async (event, id_registro) => {
-    try {
+  registerHandler(
+    'plants:delete',
+    (event, id_registro) => {
       const deleted = db.deletePlant(id_registro)
       return { success: deleted }
-    } catch (error) {
-      console.error('Error eliminando planta:', error)
-      return { success: false, error: 'No se pudo eliminar la planta' }
-    }
-  })
+    },
+    { success: false, error: 'No se pudo eliminar la planta' },
+    'Error eliminando planta:'
+  )
 
-  ipcMain.handle('stats:fixWeekly', async (event, value) => {
-    try {
+  registerHandler(
+    'stats:fixWeekly',
+    (event, value) => {
       db.fixWeeklyCounter(value)
       return { success: true }
-    } catch (error) {
-      console.error('Error corrigiendo contador semanal:', error)
-      return { success: false }
-    }
-  })
+    },
+    { success: false },
+    'Error corrigiendo contador semanal:'
+  )
 
-  ipcMain.handle('plants:clear', async () => {
-    try {
+  registerHandler(
+    'plants:clear',
+    () => {
       db.clearUserPlants()
       return { success: true }
-    } catch (error) {
-      console.error('Error limpiando plantas del jugador:', error)
-      return { success: false }
-    }
-  })
+    },
+    { success: false },
+    'Error limpiando plantas del jugador:'
+  )
 
-  ipcMain.handle('plants:moveToRoom', async (event, { id_registro }) => {
-    try {
+  registerHandler(
+    'plants:moveToRoom',
+    (event, { id_registro }) => {
       db.returnPlantToPanel(id_registro)
       return { success: true }
-    } catch (error) {
-      console.error('Error regresando planta al panel:', error)
-      return { success: false }
-    }
-  })
+    },
+    { success: false },
+    'Error regresando planta al panel:'
+  )
 
   // Devuelve los días que pasaron mientras el juego estuvo cerrado.
-  ipcMain.handle('simulation:getOfflineDays', async () => {
-    try {
+  registerHandler(
+    'simulation:getOfflineDays',
+    () => {
       const days = db.getOfflineDays()
       return { success: true, days }
-    } catch (error) {
-      console.error('Error calculando dias offline:', error)
-      return { success: true, days: 0 }
-    }
-  })
+    },
+    { success: true, days: 0 },
+    'Error calculando dias offline:'
+  )
 
-  ipcMain.handle('achievements:get', async () => {
-    try {
+  registerHandler(
+    'achievements:get',
+    () => {
       const achievements = db.getAchievements()
       return { success: true, achievements }
-    } catch (error) {
-      console.error('Error cargando logros:', error)
-      return { success: false, achievements: [] }
-    }
-  })
+    },
+    { success: false, achievements: [] },
+    'Error cargando logros:'
+  )
 
-  ipcMain.handle('achievements:grantQuizPerfect', async () => {
-    try {
+  registerHandler(
+    'achievements:grantQuizPerfect',
+    () => {
       db.grantQuizPerfectAchievement()
       return { success: true }
-    } catch (error) {
-      console.error('Error otorgando logro de quiz perfecto:', error)
-      return { success: false }
-    }
-  })
+    },
+    { success: false },
+    'Error otorgando logro de quiz perfecto:'
+  )
 
-  ipcMain.handle('tutorial:isCompleted', async () => {
-    try {
+  registerHandler(
+    'tutorial:isCompleted',
+    () => {
       const completed = db.isTutorialCompleted()
       return { success: true, completed }
-    } catch (error) {
-      console.error('Error consultando estado del tutorial:', error)
-      return { success: true, completed: false }
-    }
-  })
+    },
+    { success: true, completed: false },
+    'Error consultando estado del tutorial:'
+  )
 
-  ipcMain.handle('tutorial:complete', async () => {
-    try {
+  registerHandler(
+    'tutorial:complete',
+    () => {
       db.completeTutorial()
       return { success: true }
-    } catch (error) {
-      console.error('Error completando tutorial:', error)
-      return { success: false }
-    }
-  })
+    },
+    { success: false },
+    'Error completando tutorial:'
+  )
 
-  ipcMain.handle('game:reset', async () => {
-    try {
+  registerHandler(
+    'game:reset',
+    () => {
       db.resetGame()
       return { success: true }
-    } catch (error) {
-      console.error('Error reiniciando partida:', error)
-      return { success: false }
-    }
-  })
+    },
+    { success: false },
+    'Error reiniciando partida:'
+  )
 
-  ipcMain.handle('tutorial:reset', async () => {
-    try {
+  registerHandler(
+    'tutorial:reset',
+    () => {
       db.resetTutorial()
       return { success: true }
-    } catch (error) {
-      console.error('Error reiniciando tutorial:', error)
-      return { success: false }
-    }
-  })
+    },
+    { success: false },
+    'Error reiniciando tutorial:'
+  )
 
-  ipcMain.handle('care:drain', async (event, id_registro) => {
-    try {
-      return db.drainPlant(id_registro)
-    } catch (error) {
-      console.error('Error en drenaje:', error)
-      return { success: false, error: 'Error al drenar' }
-    }
-  })
+  registerHandler(
+    'care:drain',
+    (event, id_registro) => db.drainPlant(id_registro),
+    { success: false, error: 'Error al drenar' },
+    'Error en drenaje:'
+  )
 
 }
 

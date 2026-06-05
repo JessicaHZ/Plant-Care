@@ -8,7 +8,7 @@
   <title>My Plant Home</title>
   <link rel="stylesheet" href="styles/global.css" />
   <link rel="stylesheet" href="styles/menu.css" />
-  <link rel="stylesheet" href="styles/nursery.css" />
+  <link rel="stylesheet" href="styles/Nursery.css" />
   <link rel="stylesheet" href="styles/environment.css" />
   <link rel="stylesheet" href="styles/diagnosis.css" />
   <link rel="stylesheet" href="styles/guide.css" />
@@ -19,7 +19,7 @@
   <link rel="stylesheet" href="styles/minigame-defense.css" />
   <link rel="stylesheet" href="styles/minigame-pruning.css" />
   <link rel="stylesheet" href="styles/profile.css" />
-  <link rel="stylesheet" href="styles/splash.css" />
+  <link rel="stylesheet" href="styles/Splash.css" />
   <link rel="stylesheet" href="styles/navbar.css" />
 </head>
 
@@ -262,42 +262,42 @@
         <div class="profile-panel" id="tab-stats">
           <div class="stats-grid">
             <div class="stat-card">
-              <span class="stat-card-icon">💧</span>
+              <span class="stat-card-icon" data-profile-icon="water">💧</span>
               <span class="stat-card-label">Errores de riego</span>
               <span class="stat-card-value" id="stat-errores-riego">0</span>
             </div>
             <div class="stat-card">
-              <span class="stat-card-icon">🌿</span>
+              <span class="stat-card-icon" data-profile-icon="fertilizer">🌿</span>
               <span class="stat-card-label">Errores de abono</span>
               <span class="stat-card-value" id="stat-errores-abono">0</span>
             </div>
             <div class="stat-card">
-              <span class="stat-card-icon">✂️</span>
+              <span class="stat-card-icon" data-profile-icon="prune">✂️</span>
               <span class="stat-card-label">Errores de poda</span>
               <span class="stat-card-value" id="stat-errores-poda">0</span>
             </div>
             <div class="stat-card">
-              <span class="stat-card-icon">📍</span>
+              <span class="stat-card-icon" data-profile-icon="location">📍</span>
               <span class="stat-card-label">Errores de ubicación</span>
               <span class="stat-card-value" id="stat-errores-ubicacion">0</span>
             </div>
             <div class="stat-card">
-              <span class="stat-card-icon">✅</span>
+              <span class="stat-card-icon" data-profile-icon="correct">✅</span>
               <span class="stat-card-label">Acciones correctas</span>
               <span class="stat-card-value" id="stat-acciones-correctas">0</span>
             </div>
             <div class="stat-card">
-              <span class="stat-card-icon">🔍</span>
+              <span class="stat-card-icon" data-profile-icon="diagnosis">🔍</span>
               <span class="stat-card-label">Diagnósticos correctos</span>
               <span class="stat-card-value" id="stat-diagnosticos">0</span>
             </div>
             <div class="stat-card">
-              <span class="stat-card-icon">☠️</span>
+              <span class="stat-card-icon" data-profile-icon="dead-plant">☠️</span>
               <span class="stat-card-label">Plantas perdidas</span>
               <span class="stat-card-value" id="stat-plantas-muertas">0</span>
             </div>
             <div class="stat-card">
-              <span class="stat-card-icon">🔥</span>
+              <span class="stat-card-icon" data-profile-icon="streak">🔥</span>
               <span class="stat-card-label">Racha actual</span>
               <span class="stat-card-value" id="stat-racha">0</span>
             </div>
@@ -345,14 +345,33 @@
 </nav>
 
   <!-- Scripts en orden de dependencia. -->
+  <script src="js/utils/asset-paths.js"></script>
   <script src="js/utils/number-utils.js"></script>
+  <script src="js/utils/care-display-utils.js"></script>
+  <script src="js/utils/care-panel-display-utils.js"></script>
+  <script src="js/utils/care-guide-display-utils.js"></script>
+  <script src="js/utils/diagnosis-display-utils.js"></script>
+  <script src="js/utils/diagnosis-rules.js"></script>
+  <script src="js/utils/diagnosis-scenario-selector.js"></script>
+  <script src="js/utils/environment-display-utils.js"></script>
+  <script src="js/utils/nursery-display-utils.js"></script>
+  <script src="js/utils/profile-display-utils.js"></script>
+  <script src="js/utils/quiz-display-utils.js"></script>
+  <script src="js/utils/weekly-review-display-utils.js"></script>
   <script src="js/ScreenManager.js"></script>
   <script src="js/PlayerHUD.js"></script>
   <script src="js/Nursery.js"></script>
   <script src="js/Simulation.js"></script>
   <script src="js/Diagnosis.js"></script>
   <script src="js/Guide.js"></script>
+  <script src="js/config/careMessagesConfig.js"></script>
   <script src="js/CareActions.js"></script>
+  <script src="js/config/roomConfig.js"></script>
+  <script src="js/config/diagnosisConfig.js"></script>
+  <script src="js/config/defenseConfig.js"></script>
+  <script src="js/config/profileConfig.js"></script>
+  <script src="js/config/quizQuestionBank.js"></script>
+  <script src="js/config/weeklyReviewRecommendations.js"></script>
   <script src="js/Environment.js"></script>
   <script src="js/SlotEditor.js"></script>
   <script src="js/MiniGameDefense.js"></script>

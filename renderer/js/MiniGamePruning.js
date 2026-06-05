@@ -113,7 +113,7 @@ class PruningPracticeGame {
             <img
               class="pruning-plant"
               src="${this._plantImage()}"
-              onerror="this.src='../assets/sprites/plants/tradescantia_sana.png'"
+              onerror="this.onerror=null; this.src='${CareDisplayUtils.getLegacyPlantSpritePath(this.plant?.sprite_key || 'tradescantia', 'SANA')}'"
               alt="${this.plant.nombre_planta || 'Planta de practica'}"
             />
             <svg class="pruning-leaves" viewBox="0 0 360 340" aria-label="Hojas para podar">
@@ -327,7 +327,7 @@ class PruningPracticeGame {
 
   _plantImage() {
     const spriteKey = this.plant.sprite_key || 'tradescantia'
-    return `../assets/sprites/plants/${spriteKey}_sana.png`
+    return CareDisplayUtils.getPlantSpritePath(spriteKey, 'SANA')
   }
 
   _badLeavesRemaining() {

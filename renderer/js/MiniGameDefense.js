@@ -43,32 +43,6 @@ const MiniGameDefense = {
 }
 
 class DefenseSproutGame {
-  static MAX_SPEED = 2.5
-
-  static PESTS = [
-    { name: 'Pulgon',     label: '🪲', xp: 4, speed: 1.0, size: 38, behavior: 'direct' },
-    { name: 'Cochinilla', label: '🪳', xp: 6, speed: 0.5, size: 46, behavior: 'direct' },
-    { name: 'Acaro',      label: '🕷️', xp: 5, speed: 1.8, size: 32, behavior: 'direct' },
-    { name: 'Mosca',      label: '🪰', xp: 5, speed: 2.2, size: 30, behavior: 'zigzag' },
-    { name: 'Oruga',      label: '🐛', xp: 8, speed: 0.3, size: 48, behavior: 'direct' },
-    { name: 'Hormiga',    label: '🐜', xp: 3, speed: 2.0, size: 28, behavior: 'direct' }
-  ]
-
-  static ALLIES = [
-    { name: 'Mariquita', label: '🐞', speed: 1.2, size: 36 },
-    { name: 'Abeja',     label: '🐝', speed: 1.8, size: 32 },
-    { name: 'Mariposa',  label: '🦋', speed: 2.4, size: 40 },
-    { name: 'Mantis',    label: '🦗', speed: 0.9, size: 38 }
-  ]
-
-  static WAVES = [
-    { pests: 5,  spawnMs: 1300 },
-    { pests: 7,  spawnMs: 1050 },
-    { pests: 9,  spawnMs: 860 },
-    { pests: 11, spawnMs: 720 },
-    { pests: 14, spawnMs: 580 }
-  ]
-
   constructor({ level, plant, onFinish }) {
     this.level = Math.max(1, level || 1)
     this.plant = plant
@@ -126,7 +100,7 @@ class DefenseSproutGame {
             class="defense-plant"
             data-ref="plant"
             src="${this._plantImage()}"
-            onerror="this.src='../assets/sprites/plants/cactus_sana.png'"
+            onerror="this.onerror=null; this.src='${CareDisplayUtils.getLegacyPlantSpritePath(this.plant?.sprite_key || 'cactus', 'SANA')}'"
             alt="Brote defendido"
           />
           <div class="defense-effects" data-ref="effects"></div>
@@ -209,16 +183,16 @@ class DefenseSproutGame {
   }
 
   _plantImage() {
-    if (!this.plant?.sprite_key) return '../assets/sprites/plants/cactus_sana.png'
-    return `../assets/sprites/plants/${this.plant.sprite_key}_sana.png`
+    if (!this.plant?.sprite_key) return window.AssetPaths.fallbackPlantSpritePath
+    return CareDisplayUtils.getPlantSpritePath(this.plant.sprite_key, 'SANA')
   }
 
   _waveConfig() {
-    return DefenseSproutGame.WAVES[Math.min(this.wave, DefenseSproutGame.WAVES.length - 1)]
+    return DefenseConfig.waves[Math.min(this.wave, DefenseConfig.waves.length - 1)]
   }
 
   _calculateSpeed() {
-    return Math.min(DefenseSproutGame.MAX_SPEED, 1 + Math.log(this.score + 2) * 0.25)
+    return Math.min(DefenseConfig.maxSpeed, 1 + Math.log(this.score + 2) * 0.25)
   }
 
   _schedulePest() {
@@ -249,7 +223,7 @@ class DefenseSproutGame {
   _spawnPest() {
     const width = this._arenaWidth()
     const height = this._arenaHeight()
-    const definition = this._randomFrom(DefenseSproutGame.PESTS)
+    const definition = this._randomFrom(DefenseConfig.pests)
     const edge = Math.floor(Math.random() * 4)
     let x
     let y
@@ -315,7 +289,7 @@ class DefenseSproutGame {
   _spawnAlly() {
     const width = this._arenaWidth()
     const height = this._arenaHeight()
-    const definition = this._randomFrom(DefenseSproutGame.ALLIES)
+    const definition = this._randomFrom(DefenseConfig.allies)
     const fromLeft = Math.random() < 0.5
     const x = fromLeft ? -definition.size : width + definition.size
     const y = 30 + Math.random() * (height - 60)

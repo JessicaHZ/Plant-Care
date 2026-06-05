@@ -38,21 +38,39 @@ const browserGlobals = {
 
 const rendererAppGlobals = {
   CareActions: 'readonly',
+  CareDisplayUtils: 'readonly',
+  CareGuideDisplayUtils: 'readonly',
+  CarePanelDisplayUtils: 'readonly',
+  CareMessagesConfig: 'readonly',
+  DefenseConfig: 'readonly',
   Diagnosis: 'readonly',
+  DiagnosisConfig: 'readonly',
+  DiagnosisDisplayUtils: 'readonly',
+  DiagnosisRules: 'readonly',
+  DiagnosisScenarioSelector: 'readonly',
   Environment: 'readonly',
+  EnvironmentDisplayUtils: 'readonly',
   Guide: 'readonly',
   MiniGameDefense: 'readonly',
   MiniGamePruning: 'readonly',
   MiniGameQuiz: 'readonly',
   Nursery: 'readonly',
+  NurseryDisplayUtils: 'readonly',
   NumberUtils: 'readonly',
   PlayerHUD: 'readonly',
   ProfileScreen: 'readonly',
+  ProfileConfig: 'readonly',
+  ProfileDisplayUtils: 'readonly',
+  QuizDisplayUtils: 'readonly',
+  QuizQuestionBank: 'readonly',
+  RoomConfig: 'readonly',
   ScreenManager: 'readonly',
   Simulation: 'readonly',
   SlotEditor: 'readonly',
   Tutorial: 'readonly',
-  WeeklyReview: 'readonly'
+  WeeklyReview: 'readonly',
+  WeeklyReviewDisplayUtils: 'readonly',
+  WeeklyReviewRecommendations: 'readonly'
 }
 
 const baseRules = {
@@ -89,7 +107,7 @@ module.exports = [
   },
   js.configs.recommended,
   {
-    files: ['main/**/*.js', 'eslint.config.cjs'],
+    files: ['main/**/*.js', 'scripts/**/*.js', 'eslint.config.cjs'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',

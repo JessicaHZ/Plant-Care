@@ -11,6 +11,7 @@
     "rebuild": "electron-rebuild",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
+    "validate": "node scripts/validate-rules.js",
     "format": "prettier . --write",
     "build": "npm run build:win",
     "build:win": "set ELECTRON_CACHE=.cache\\electron&& set ELECTRON_BUILDER_CACHE=.cache\\electron-builder&& electron-builder --win",

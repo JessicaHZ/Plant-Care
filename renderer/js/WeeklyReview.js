@@ -4,12 +4,7 @@ const WeeklyReview = {
   _currentWeek: 0,
   _running: false,   // ✅ evita ejecuciones simultáneas
 
-  _recommendations: {
-    riego: 'Antes de regar, confirma si la humedad esta baja. Si la tierra sigue humeda o saturada, espera o drena.',
-    abono: 'Usa abono cuando los nutrientes esten bajos. Abonar una planta estable puede estresar las raices.',
-    poda: 'Poda solo cuando la planta lo necesite. Observa hojas secas o crecimiento desordenado antes de cortar.',
-    ubicacion: 'Compara la luz requerida por la planta con la luz de la habitacion antes de colocarla.'
-  },
+  _recommendations: WeeklyReviewRecommendations.messages,
 
   async checkAndRun(currentDay) {
     // ✅ Si ya hay una revisión activa, ignorar llamadas adicionales
@@ -47,13 +42,6 @@ const WeeklyReview = {
       0
     )
     const mostHarmfulAction = visibleActions[mostHarmfulIndex]
-    const getFrequencyLabel = (action, index) => {
-      const times = action.errorCount === 1 ? '1 vez' : `${action.errorCount} veces`
-      if (index === 0) return `Más frecuente: ${times}`
-      if (index === 1) return `Frecuente: ${times}`
-      return `Ocasional: ${times}`
-    }
-
     const overlay = document.createElement('div')
     overlay.id        = 'weekly-overlay'
     overlay.className = 'minigame-overlay'
@@ -80,10 +68,10 @@ const WeeklyReview = {
                   <span class="weekly-action-label">${action.label}</span>
                   <div class="weekly-action-bar-bg">
                     <div class="weekly-action-bar-fill"
-                         style="width: ${Math.min(100, (action.errorCount / mostHarmfulAction.errorCount) * 100)}%">
+                         style="width: ${WeeklyReviewDisplayUtils.getActionBarWidth(action.errorCount, mostHarmfulAction.errorCount)}%">
                     </div>
                   </div>
-                  <span class="weekly-action-count">${getFrequencyLabel(action, i)}</span>
+                  <span class="weekly-action-count">${WeeklyReviewDisplayUtils.getFrequencyLabel(action, i)}</span>
                 </div>
               </div>
             `).join('')}

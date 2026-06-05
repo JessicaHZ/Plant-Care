@@ -4,90 +4,6 @@
 
 const ProfileScreen = {
 
-  // Definición de niveles con título y XP requerido
-  _levels: [
-    { nivel: 1,  titulo: 'Aprendiz',       xpMin: 0   },
-    { nivel: 2,  titulo: 'Cuidador',        xpMin: 100 },
-    { nivel: 3,  titulo: 'Jardinero',       xpMin: 250 },
-    { nivel: 4,  titulo: 'Botánico',        xpMin: 500 },
-    { nivel: 5,  titulo: 'Experto Verde',   xpMin: 900 },
-  ],
-
-  // Catálogo completo de logros del juego
-  // bloqueado: true = aún no obtenido, se muestra como ???
-  _achievementCatalog: [
-    {
-      id:          'primera_planta',
-      nombre:      'Primer Brote',
-      descripcion: 'Adquiere tu primera planta',
-      icono:       '🌱',
-      tipo:        'PROGRESO'
-    },
-    {
-      id:          'cinco_plantas',
-      nombre:      'Pequeño Jardín',
-      descripcion: 'Ten 5 plantas en tu colección',
-      icono:       '🪴',
-      tipo:        'PROGRESO'
-    },
-    {
-      id:          'primer_nivel',
-      nombre:      'Cuidador Novato',
-      descripcion: 'Alcanza el nivel 2',
-      icono:       '⭐',
-      tipo:        'PROGRESO'
-    },
-    {
-      id:          'diagnostico_perfecto',
-      nombre:      'Ojo Clínico',
-      descripcion: 'Acierta 10 diagnósticos previos',
-      icono:       '🔍',
-      tipo:        'EDUCATIVO'
-    },
-    {
-      id:          'racha_5',
-      nombre:      'Constante',
-      descripcion: 'Mantén una racha de 5 días',
-      icono:       '🔥',
-      tipo:        'RACHA'
-    },
-    {
-      id:          'racha_10',
-      nombre:      'Dedicado',
-      descripcion: 'Mantén una racha de 10 días',
-      icono:       '🔥',
-      tipo:        'RACHA'
-    },
-    {
-      id:          'evaluacion_correcta',
-      nombre:      'Evaluador Reflexivo',
-      descripcion: 'Identifica correctamente la decisión más perjudicial en la revisión semanal',
-      icono:       '📊',
-      tipo:        'EVALUACION'
-    },
-    {
-      id:          'sin_errores_semana',
-      nombre:      'Semana Perfecta',
-      descripcion: 'Completa una semana sin errores de cuidado',
-      icono:       '🌟',
-      tipo:        'EDUCATIVO'
-    },
-    {
-      id:          'planta_nivel3',
-      nombre:      'Verde Experto',
-      descripcion: 'Alcanza el nivel 3',
-      icono:       '🏅',
-      tipo:        'PROGRESO'
-    },
-    {
-      id:          'quiz_perfecto',
-      nombre:      'Maestro Botanista',
-      descripcion: 'Responde correctamente las 5 preguntas del quiz',
-      icono:       '🎓',
-      tipo:        'EDUCATIVO'
-    },
-  ],
-
   async init() {
     this._bindTabs()
     await this._loadAll()
@@ -108,42 +24,33 @@ const ProfileScreen = {
     this._renderProgress(progress)
     this._renderStats(stats, progress)
     this._renderAchievements(achievements)
+    this._renderProfileIcons()
   },
 
   // ── Pestaña Progreso ──────────────────────────────────────────────────────
 
   _renderProgress(progress) {
-    const maxLevel   = this._levels[this._levels.length - 1]
-    const nivel      = Math.min(progress.nivel || 1, maxLevel.nivel)
-    const xp         = progress.experiencia || 0
-    const levelData  = this._levels.find(l => l.nivel === nivel) || maxLevel
-    const nextLevel  = this._levels.find(l => l.nivel === nivel + 1)
+    const progressView = ProfileDisplayUtils.getProgressViewModel({
+      progress,
+      levels: ProfileConfig.levels
+    })
 
     // Badge y título
-    document.getElementById('profile-level-badge').textContent = nivel
-    document.getElementById('profile-level-title').textContent = levelData.titulo
+    document.getElementById('profile-level-badge').textContent = progressView.level
+    document.getElementById('profile-level-title').textContent = progressView.levelData.titulo
 
     // Barra de XP
-    const xpForCurrent = levelData.xpMin
-    const xpForNext    = nextLevel ? nextLevel.xpMin : xpForCurrent + 100
-    const xpProgress   = nextLevel
-      ? ((xp - xpForCurrent) / (xpForNext - xpForCurrent)) * 100
-      : 100
-
-    document.getElementById('profile-xp-current').textContent = `${xp} XP`
-    document.getElementById('profile-xp-next').textContent    = nextLevel
-      ? `${xpForNext} XP para nivel ${nextLevel.nivel}`
-      : '¡Nivel máximo alcanzado!'
-
+    document.getElementById('profile-xp-current').textContent = `${progressView.xp} XP`
+    document.getElementById('profile-xp-next').textContent    = progressView.nextXpText
     document.getElementById('profile-xp-fill').style.width =
-      `${NumberUtils.clamp(xpProgress, 0, 100)}%`
+      `${NumberUtils.clamp(progressView.xpProgress, 0, 100)}%`
 
     // Lista de niveles
     const list = document.getElementById('profile-levels-list')
-    list.innerHTML = this._levels.map(l => {
-      const isCompleted = nivel > l.nivel
-      const isCurrent   = nivel === l.nivel
-      const isLocked    = nivel < l.nivel
+    list.innerHTML = ProfileConfig.levels.map(l => {
+      const isCompleted = progressView.level > l.nivel
+      const isCurrent   = progressView.level === l.nivel
+      const isLocked    = progressView.level < l.nivel
 
       return `
         <div class="level-row ${isCompleted ? 'completed' : ''} ${isCurrent ? 'current' : ''} ${isLocked ? 'locked' : ''}">
@@ -183,29 +90,19 @@ const ProfileScreen = {
     const textEl = document.getElementById('profile-recommendation-text')
     if (!textEl) return
 
-    const patterns = [
-      {
-        count: stats.errores_riego || 0,
-        message: 'Tu principal patron de error es el riego. Antes de regar, revisa si la humedad esta baja; si la tierra sigue humeda o saturada, espera o drena.'
-      },
-      {
-        count: stats.errores_abono || 0,
-        message: 'Tu principal patron de error es el abono. Usalo cuando los nutrientes esten bajos; abonar demasiado puede estresar las raices.'
-      },
-      {
-        count: stats.errores_poda || 0,
-        message: 'Tu principal patron de error es la poda. Poda solo cuando la planta lo necesite y evita cortar plantas que no requieren esta herramienta.'
-      },
-      {
-        count: stats.errores_ubicacion || 0,
-        message: 'Tu principal patron de error es la ubicacion. Compara la luz requerida por la planta con la luz de cada habitacion antes de colocarla.'
-      }
-    ].sort((a, b) => b.count - a.count)
+    textEl.textContent = ProfileDisplayUtils.getRecommendationText(
+      stats,
+      ProfileConfig.recommendationPatterns,
+      ProfileConfig.defaultRecommendation
+    )
+  },
 
-    const mainPattern = patterns[0]
-    textEl.textContent = mainPattern.count > 0
-      ? mainPattern.message
-      : 'Aun no hay errores registrados. Manten el habito de observar humedad, nutrientes, luz y necesidad de poda antes de actuar.'
+  _renderProfileIcons() {
+    document.querySelectorAll('[data-profile-icon]').forEach(iconEl => {
+      const iconKey = iconEl.dataset.profileIcon
+      const fallback = iconEl.textContent.trim()
+      iconEl.innerHTML = window.AssetPaths.getProfileIconHTML(iconKey, fallback, 'profile-pixel-icon')
+    })
   },
 
   // ── Pestaña Logros ────────────────────────────────────────────────────────
@@ -214,18 +111,16 @@ const ProfileScreen = {
     const obtainedIds = new Set(obtainedAchievements.map(a => a.id_logro))
     const list        = document.getElementById('achievements-list')
 
-    list.innerHTML = this._achievementCatalog.map(achievement => {
+    list.innerHTML = ProfileConfig.achievementCatalog.map(achievement => {
       const isObtained = obtainedIds.has(achievement.id)
-      const tipoColor  = {
-        'PROGRESO':   '#66bb6a',
-        'EDUCATIVO':  '#42a5f5',
-        'RACHA':      '#ffa726',
-        'EVALUACION': '#ab47bc'
-      }
 
       return `
         <div class="achievement-card ${isObtained ? 'obtained' : 'locked'}">
-          <div class="achievement-icon">${isObtained ? achievement.icono : '🔒'}</div>
+          <div class="achievement-icon">
+            ${isObtained
+              ? window.AssetPaths.getProfileIconHTML(achievement.iconKey, achievement.icono, 'profile-pixel-icon')
+              : window.AssetPaths.getProfileIconHTML('achievement-locked', '🔒', 'profile-pixel-icon')}
+          </div>
           <div class="achievement-info">
             <p class="achievement-name">
               ${isObtained ? achievement.nombre : '???'}
@@ -235,7 +130,7 @@ const ProfileScreen = {
             </p>
           </div>
           <div class="achievement-tipo"
-               style="color: ${tipoColor[achievement.tipo] || '#fff'}">
+               style="color: ${ProfileDisplayUtils.getAchievementTypeColor(achievement.tipo)}">
             ${achievement.tipo}
           </div>
         </div>

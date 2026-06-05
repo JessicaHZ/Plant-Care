@@ -4,8 +4,46 @@ function getAllPlants() {
   return db.prepare('SELECT * FROM plantas ORDER BY nivel_dificultad, nombre_planta').all()
 }
 
+function countCatalogPlants() {
+  return db.prepare('SELECT COUNT(*) as total FROM plantas').get().total
+}
+
 function getPlantById(id_planta) {
   return db.prepare('SELECT * FROM plantas WHERE id_planta = ?').get(id_planta)
+}
+
+function insertCatalogPlants(plants) {
+  const insert = db.prepare(`
+    INSERT INTO plantas
+      (nombre_planta, nombre_cientifico, tipo_planta, tipo_luz,
+       frecuencia_riego, nivel_dificultad, tipo_poda, descripcion, sprite_key)
+    VALUES
+      (@nombre_planta, @nombre_cientifico, @tipo_planta, @tipo_luz,
+       @frecuencia_riego, @nivel_dificultad, @tipo_poda, @descripcion, @sprite_key)
+  `)
+
+  db.transaction((plantCatalog) => {
+    for (const plant of plantCatalog) insert.run(plant)
+  })(plants)
+}
+
+function updateCatalogPlants(plants) {
+  const updateStmt = db.prepare(`
+    UPDATE plantas
+    SET nombre_cientifico = @nombre_cientifico,
+        tipo_planta       = @tipo_planta,
+        nombre_planta     = @nombre_planta,
+        descripcion       = @descripcion,
+        tipo_luz          = @tipo_luz,
+        frecuencia_riego  = @frecuencia_riego,
+        nivel_dificultad  = @nivel_dificultad,
+        tipo_poda         = @tipo_poda
+    WHERE sprite_key = @sprite_key
+  `)
+
+  db.transaction((plantCatalog) => {
+    for (const plant of plantCatalog) updateStmt.run(plant)
+  })(plants)
 }
 
 function getUserPlants() {
@@ -21,9 +59,27 @@ function getUserPlants() {
   `).all()
 }
 
+function getMaxUserPlantElapsedDays() {
+  const result = db.prepare(`
+    SELECT MAX(dias_transcurridos) AS maxDay
+    FROM plantas_usuario
+  `).get()
+
+  return result?.maxDay || 0
+}
+
 function getUserPlantWithLight(id_registro) {
   return db.prepare(`
     SELECT pu.*, p.tipo_luz
+    FROM plantas_usuario pu
+    JOIN plantas p ON pu.id_planta = p.id_planta
+    WHERE pu.id_registro = ?
+  `).get(id_registro)
+}
+
+function getUserPlantForCare(id_registro) {
+  return db.prepare(`
+    SELECT pu.*, p.nombre_planta, p.frecuencia_riego, p.tipo_poda
     FROM plantas_usuario pu
     JOIN plantas p ON pu.id_planta = p.id_planta
     WHERE pu.id_registro = ?
@@ -84,10 +140,15 @@ function returnPlantToPanel(id_registro) {
 }
 
 module.exports = {
+  countCatalogPlants,
   getAllPlants,
   getPlantById,
+  insertCatalogPlants,
   getUserPlants,
+  getMaxUserPlantElapsedDays,
   getUserPlantWithLight,
+  getUserPlantForCare,
+  updateCatalogPlants,
   acquirePlant,
   deletePlant,
   updatePlantState,
