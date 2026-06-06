@@ -5,10 +5,25 @@ El proyecto simula el cuidado de plantas en un entorno domestico y busca reforza
 conceptos basicos de observacion, diagnostico, toma de decisiones y consecuencias
 simuladas en el tiempo.
 
-El jugador adquiere plantas, las coloca en distintas habitaciones, revisa sus
-necesidades y aplica acciones de cuidado como regar, abonar
-salud de cada planta cambia segun humedad, nutrientes, ubicacion, luz y decisiones
-del jugador.
+El jugador adquiere plantas, las coloca en distintas habitaciones, revisa sus necesidades y aplica acciones de cuidado como regar, abonar, podar o drenar.
+
+La salud de cada planta evoluciona según factores como la humedad, los nutrientes, la ubicación, el tipo de luz disponible y las decisiones tomadas por el jugador a lo largo del tiempo.
+
+## Video demostrativo
+
+Video de funcionamiento del proyecto:
+
+[https://youtube.com/...](https://youtu.be/CZfYX7T5a0s)
+
+En el video se muestra el flujo completo de una partida, la adquisición de plantas, el sistema de ubicación, las herramientas de cuidado, el diagnóstico previo, los minijuegos y el sistema de progreso.
+
+## Mecánica Educativa
+
+Antes de realizar acciones importantes, el jugador debe analizar el estado de la planta mediante un sistema de diagnóstico previo.
+
+Este sistema plantea preguntas relacionadas con el cuidado vegetal y promueve la reflexión antes de actuar, reforzando conceptos como frecuencia de riego, exceso de humedad, uso adecuado de nutrientes, poda y condiciones de iluminación.
+
+El objetivo es fomentar el aprendizaje mediante la observación, la experimentación y la retroalimentación inmediata.
 
 ## Objetivo Del Proyecto
 
