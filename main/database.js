@@ -1,14 +1,10 @@
-const { db, getDatabasePath } = require('./database/connection')
+const { db } = require('./database/connection')
 const achievementRepository = require('./database/repositories/achievementRepository')
 const plantRepository = require('./database/repositories/plantRepository')
 const progressRepository = require('./database/repositories/progressRepository')
 const statsRepository = require('./database/repositories/statsRepository')
-const PLANT_CATALOG = require('./database/seeds/plantCatalog')
-const { initializeSchema, initializeSchemaIndexes } = require('./database/schema')
-const {
-  ACHIEVEMENTS,
-  LEGACY_ACHIEVEMENT_KEYS
-} = require('./domain/achievementDefinitions')
+const { initializeDatabase, saveLastClose } = require('./database/lifecycle')
+const { ACHIEVEMENTS } = require('./domain/achievementDefinitions')
 const {
   getTopWeeklyActions,
   normalizeWeeklyReviewPayload,
@@ -19,8 +15,7 @@ const {
   checkAndGrantAchievements: checkAndGrantAchievementsFromService,
   getAchievements: getAchievementsFromService,
   grantAchievement,
-  grantQuizPerfectAchievement: grantQuizPerfectAchievementFromService,
-  migrateLegacyAchievements
+  grantQuizPerfectAchievement: grantQuizPerfectAchievementFromService
 } = require('./services/achievementService')
 const plantCatalogService = require('./services/plantCatalogService')
 const plantCollectionService = require('./services/plantCollectionService')
@@ -34,24 +29,7 @@ const resetService = require('./services/resetService')
 const simulationService = require('./services/simulationService')
 const statsService = require('./services/statsService')
 const streakService = require('./services/streakService')
-const sessionState = {
-  responsibleCareAwardedThisSession: false,
-  streakBlockedThisSession: false
-}
-
-function initializeDatabase() {
-  initializeSchema(db)
-
-  migrateCurrentDayFromPlantState()
-
-  initializeSchemaIndexes(db)
-
-  migrateLegacyAchievements(achievementRepository, LEGACY_ACHIEVEMENT_KEYS)
-
-  seedPlants()
-
-  console.log('Base de datos inicializada en:', getDatabasePath())
-}
+const { resetSessionState, sessionState } = require('./services/sessionState')
 
 // Obtiene el estado global del jugador.
 // Crea la fila inicial si el juego se ejecuta por primera vez.
@@ -64,23 +42,6 @@ function getProgress() {
 function updateProgress(fields) {
   progressService.updateProgress(progressRepository, fields)
 }
-
-function migrateCurrentDayFromPlantState() {
-  progressService.migrateCurrentDayFromPlantState({
-    progressRepository,
-    plantRepository
-  })
-}
-
-// Solo se ejecuta una vez: la primera vez que corre la app.
-function seedPlants() {
-  const result = plantCatalogService.seedPlants(plantRepository, PLANT_CATALOG)
-  console.log(result.action === 'updated'
-    ? 'Catálogo actualizado'
-    : 'Catálogo insertado: 20 especies reales')
-}
-
-// ── Consultas de plantas ──────────────────────────────────────────────────
 
 // Devuelve todas las plantas del catalogo
 function getAllPlants() {
@@ -310,10 +271,6 @@ function returnPlantToPanel(id_registro) {
 
 // Guarda el timestamp actual como último cierre.
 // Se llama desde main.js cuando la app se cierra.
-function saveLastClose() {
-  progressService.saveLastClose(progressRepository)
-}
-
 // Calcula cuántos días pasaron desde el último cierre.
 // Máximo 3 días para no castigar al jugador.
 // Retorna 0 si es la primera vez o si cerró hace menos de 10 minutos.
@@ -386,10 +343,7 @@ function resetGame() {
     statsRepository,
     achievementRepository,
     progressRepository,
-    resetSessionState: () => {
-      sessionState.responsibleCareAwardedThisSession = false
-      sessionState.streakBlockedThisSession = false
-    }
+    resetSessionState
   })
 }
 

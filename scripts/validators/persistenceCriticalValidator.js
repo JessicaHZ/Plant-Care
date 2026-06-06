@@ -16,6 +16,13 @@ function validatePersistenceCriticalContracts() {
   const progressRepository = readProjectFile('main', 'database', 'repositories', 'progressRepository.js')
   const databaseFacade = readProjectFile('main', 'database.js')
   const ipcHandlers = readProjectFile('main', 'ipc-handlers.js')
+  const achievementHandlers = readProjectFile('main', 'ipc', 'handlers', 'achievementHandlers.js')
+  const careHandlers = readProjectFile('main', 'ipc', 'handlers', 'careHandlers.js')
+  const minigameHandlers = readProjectFile('main', 'ipc', 'handlers', 'minigameHandlers.js')
+  const plantHandlers = readProjectFile('main', 'ipc', 'handlers', 'plantHandlers.js')
+  const simulationProgressHandlers = readProjectFile('main', 'ipc', 'handlers', 'simulationProgressHandlers.js')
+  const tutorialResetHandlers = readProjectFile('main', 'ipc', 'handlers', 'tutorialResetHandlers.js')
+  const weeklyHandlers = readProjectFile('main', 'ipc', 'handlers', 'weeklyHandlers.js')
   const preload = readProjectFile('main', 'preload.js')
 
   const requiredUserPlantColumns = [
@@ -105,11 +112,37 @@ function validatePersistenceCriticalContracts() {
     'progress:get',
     'plants:delete',
     'plants:moveToRoom',
-    'simulation:getOfflineDays'
+    'simulation:getOfflineDays',
+    'weekly:getTopActions',
+    'weekly:submit',
+    'weekly:shouldTrigger',
+    'achievements:get',
+    'achievements:grantQuizPerfect',
+    'tutorial:isCompleted',
+    'tutorial:complete',
+    'tutorial:reset',
+    'game:reset',
+    'quiz:submit',
+    'minigame:defense:complete'
   ]
 
+  const ipcRegistrationSources = [
+    ipcHandlers,
+    plantHandlers,
+    careHandlers,
+    simulationProgressHandlers,
+    weeklyHandlers,
+    achievementHandlers,
+    tutorialResetHandlers,
+    minigameHandlers
+  ].join('\n')
+
   for (const channel of criticalIpcChannels) {
-    assertIncludes(ipcHandlers, channel, `ipc-handlers debe registrar ${channel}`)
+    assertIncludes(
+      ipcRegistrationSources,
+      channel,
+      `IPC debe registrar ${channel}`
+    )
     assertIncludes(preload, channel, `preload debe exponer wrapper para ${channel}`)
   }
 }

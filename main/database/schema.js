@@ -5,7 +5,9 @@ function initializeSchema(db) {
       nivel          INTEGER NOT NULL DEFAULT 1,
       experiencia    INTEGER NOT NULL DEFAULT 0,
       racha_dias     INTEGER NOT NULL DEFAULT 0,
-      dia_actual      INTEGER NOT NULL DEFAULT 1
+      dia_actual      INTEGER NOT NULL DEFAULT 1,
+      ultimo_cierre   INTEGER DEFAULT NULL,
+      tutorial_completado INTEGER NOT NULL DEFAULT 0
     )
   `)
 
@@ -73,17 +75,6 @@ function initializeSchema(db) {
       descripcion_logro TEXT    NOT NULL,
       fecha_obtencion   TEXT    NOT NULL,
       tipo_logro        TEXT    NOT NULL DEFAULT 'PROGRESO'
-    )
-  `)
-
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS progreso (
-      nivel          INTEGER NOT NULL DEFAULT 1,
-      experiencia    INTEGER NOT NULL DEFAULT 0,
-      racha_dias     INTEGER NOT NULL DEFAULT 0,
-      dia_actual      INTEGER NOT NULL DEFAULT 1,
-      ultimo_cierre  INTEGER DEFAULT NULL,
-      tutorial_completado  INTEGER NOT NULL DEFAULT 0
     )
   `)
 

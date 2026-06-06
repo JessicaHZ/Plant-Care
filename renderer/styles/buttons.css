@@ -1,0 +1,150 @@
+/* Botones base del juego */
+.btn {
+  padding: 14px 32px;
+  border: 3px solid var(--pixel-edge);
+  border-radius: 5px;
+  font-size: 1.06rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.08s ease, opacity 0.1s ease, filter 0.1s ease, box-shadow 0.08s ease;
+  letter-spacing: 0;
+  image-rendering: pixelated;
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.24),
+    inset 0 -3px 0 rgba(0,0,0,0.2),
+    0 4px 0 var(--pixel-shadow-step),
+    0 10px 18px rgba(42, 24, 16, 0.22);
+}
+
+.btn:hover {
+  opacity: 1;
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.3),
+    inset 0 -3px 0 rgba(0,0,0,0.2),
+    0 6px 0 var(--pixel-shadow-step),
+    0 14px 22px rgba(42, 24, 16, 0.25);
+}
+
+.btn:active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.16),
+    inset 0 -2px 0 rgba(0,0,0,0.28),
+    0 1px 0 var(--pixel-shadow-step);
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--color-secondary);
+  outline-offset: 3px;
+}
+
+.btn-primary {
+  background:
+    linear-gradient(180deg, #b9825f 0%, var(--color-primary) 100%);
+  color: var(--pixel-cream);
+}
+
+.btn-secondary {
+  background:
+    linear-gradient(180deg, rgba(255, 227, 184, 0.15), rgba(95, 58, 36, 0.74));
+  color: var(--color-secondary);
+  border-color: var(--color-secondary);
+}
+
+/* Variante pixel art para botones de juego. */
+.btn-pixel {
+  --pixel-btn-bg: #8f6246;
+  --pixel-btn-bg-light: #b9825f;
+  --pixel-btn-border: #2c1a14;
+  --pixel-btn-shadow: #4b2e23;
+  --pixel-btn-text: #fff5df;
+
+  position: relative;
+  border: 3px solid var(--pixel-btn-border);
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, var(--pixel-btn-bg-light) 0%, var(--pixel-btn-bg) 100%);
+  color: var(--pixel-btn-text);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.28),
+    inset 0 -3px 0 rgba(0,0,0,0.22),
+    0 4px 0 var(--pixel-btn-shadow);
+  font-weight: 800;
+  text-shadow:
+    2px 0 0 #1a100d,
+    -2px 0 0 #1a100d,
+    0 2px 0 #1a100d,
+    0 -2px 0 #1a100d;
+  letter-spacing: 0;
+  image-rendering: pixelated;
+  transform: translateY(0);
+  transition: transform 0.08s ease, filter 0.08s ease, box-shadow 0.08s ease;
+}
+
+.btn-pixel:hover:not(:disabled) {
+  opacity: 1;
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.32),
+    inset 0 -3px 0 rgba(0,0,0,0.22),
+    0 6px 0 var(--pixel-btn-shadow);
+}
+
+.btn-pixel:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 2px 0 rgba(255,255,255,0.18),
+    inset 0 -2px 0 rgba(0,0,0,0.28),
+    0 1px 0 var(--pixel-btn-shadow);
+}
+
+.btn-pixel:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.65) brightness(0.72);
+  opacity: 0.85;
+}
+
+.btn-pixel.btn-primary {
+  --pixel-btn-bg: #a66b43;
+  --pixel-btn-bg-light: #d2a16d;
+  --pixel-btn-shadow: #5b371f;
+}
+
+.btn-pixel.btn-secondary {
+  --pixel-btn-bg: #7a5238;
+  --pixel-btn-bg-light: #b9825f;
+  --pixel-btn-shadow: #4b2e23;
+  border-color: var(--pixel-btn-border);
+}
+
+.btn-pixel.btn-ghost {
+  --pixel-btn-bg: #6f513c;
+  --pixel-btn-bg-light: #9c7353;
+  --pixel-btn-shadow: #3f2c22;
+  border-color: var(--pixel-btn-border);
+  color: var(--pixel-btn-text);
+}
+
+.btn-full {
+  width: 100%;
+  text-align: center;
+}
+
+.btn-ghost {
+  background:
+    linear-gradient(180deg, rgba(255, 227, 184, 0.08), rgba(55, 34, 25, 0.28));
+  color: var(--color-text-muted);
+  border: 2px solid rgba(42, 24, 16, 0.45);
+  font-size: 0.95rem;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 3px 0 rgba(42, 24, 16, 0.38);
+}
+
+.btn-ghost:hover {
+  color: var(--color-secondary);
+  border-color: rgba(241, 199, 125, 0.55);
+}

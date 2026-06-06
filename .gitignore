@@ -30,3 +30,8 @@ temp/
 
 # OS
 .DS_Store
+
+coverage/
+.env
+.env.*
+*.sqlite-journal

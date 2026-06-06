@@ -1,0 +1,81 @@
+/* Slots de plantas */
+.plant-slot {
+  position:        absolute;
+  width:           64px;
+  height:          64px;
+  transform:       translate(-50%, -50%);
+  border:          2px dashed rgba(255, 241, 213, 0.32);
+  border-radius:   50%;
+  background:      rgba(244, 203, 145, 0.08);
+  cursor:          crosshair;
+  transition:      all 0.2s ease;
+  pointer-events:  all;
+}
+
+.plant-slot.slot-highlight {
+  border-color:    #66bb6a;
+  background:      rgba(102, 187, 106, 0.25);
+  transform:       translate(-50%, -50%) scale(1.15);
+  box-shadow:      0 0 12px rgba(102, 187, 106, 0.5);
+}
+
+/* Plantas posicionadas en slots */
+.room-plant.positioned {
+  position:   absolute;
+  transform:  translate(-50%, -100%);
+  cursor:     pointer;
+  transition: transform 0.15s ease;
+}
+
+.room-plant.positioned:hover {
+  transform: translate(-50%, -100%) scale(1.08);
+}
+
+/* Tarjetas de plantas sin colocar en el panel lateral */
+.unplaced-list {
+  display:        flex;
+  flex-direction: column;
+  gap:            0.5rem;
+  margin-top:     0.5rem;
+}
+
+.unplaced-plant-card {
+  display:        flex;
+  align-items:    center;
+  gap:            0.5rem;
+  padding:        0.42rem 0.5rem;
+  cursor:         grab;
+  transition:     transform 0.1s ease, background 0.15s ease, filter 0.1s ease;
+  user-select:    none;
+}
+
+.unplaced-plant-card:hover {
+  background:   rgba(244, 203, 145, 0.32);
+  border-color: rgba(255, 228, 184, 0.38);
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+}
+
+.unplaced-plant-card.dragging {
+  opacity:    0.5;
+  cursor:     grabbing;
+  transform:  scale(0.95);
+}
+
+.unplaced-plant-card img {
+  width:       34px;
+  height:      34px;
+  object-fit:  contain;
+}
+
+.unplaced-plant-card span {
+  font-size:  0.9rem;
+  color:      #fff1d5;
+}
+
+@media (max-width: 760px) {
+  .plant-slot {
+    width: 58px;
+    height: 58px;
+  }
+}

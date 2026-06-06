@@ -58,8 +58,10 @@
     "asarUnpack": [
       "node_modules/better-sqlite3/**/*"
     ],
+    "afterPack": "scripts/after-pack.js",
     "npmRebuild": true,
     "win": {
+      "icon": "icon.ico",
       "target": [
         {
           "target": "nsis",

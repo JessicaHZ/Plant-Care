@@ -240,7 +240,7 @@ const Environment = {
   // Coloca una planta en un slot específico con pregunta proactiva LM2
   async _placePlantInSlot(id_registro, plantName, slot) {
     const room = this._rooms[this._currentRoom]
-    const answer = await this._showLocationQuestion(plantName, room)
+    await window.EnvironmentLocationModal.askPlacementQuestion(plantName, room)
 
     const result = await window.gameAPI.placePlant(
       id_registro,
@@ -250,41 +250,17 @@ const Environment = {
     )
 
     if (result.success) {
-      this._showLocationResult(plantName, room, answer, result.lightCondition)
+      window.EnvironmentLocationModal.showPlacementResult({
+        plantName,
+        room,
+        actualLight: result.lightCondition
+      })
       await this._loadUserPlants()
       this._renderCurrentRoom()
       window.dispatchEvent(new CustomEvent('tutorial:plant:placed', {
         detail: { id_registro, room: this._currentRoom }
       }))
     }
-  },
-
-  _showLocationQuestion(plantName, room) {
-    return new Promise((resolve) => {
-      const overlay = document.createElement('div')
-      overlay.className = 'diagnosis-overlay'
-      overlay.innerHTML = EnvironmentDisplayUtils.getLocationQuestionHTML(plantName, room)
-      document.body.appendChild(overlay)
-      overlay.querySelectorAll('button[data-answer]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          overlay.remove()
-          resolve(btn.dataset.answer)
-        })
-      })
-    })
-  },
-
-  _showLocationResult(plantName, room, _playerAnswer, actualLight) {
-    const overlay = document.createElement('div')
-    overlay.className = 'diagnosis-overlay'
-    overlay.innerHTML = EnvironmentDisplayUtils.getLocationResultHTML({
-      plantName,
-      room,
-      actualLight
-    })
-    document.body.appendChild(overlay)
-    overlay.querySelector('#btn-close-location-result')
-      .addEventListener('click', () => overlay.remove())
   },
 
   async _openCarePanel(plant) {

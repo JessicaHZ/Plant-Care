@@ -1,7 +1,24 @@
 const DiagnosisDisplayUtils = {
+  guideSprites: {
+    normal: '../assets/guide/guide_normal.png',
+    thinking: '../assets/guide/guide_thinking.png',
+    worried: '../assets/guide/guide_worried.png',
+    happy: '../assets/guide/guide_happy.png'
+  },
+
   clampMeterValue(value) {
     const numericValue = Number(value) || 0
     return Math.min(100, Math.max(0, numericValue))
+  },
+
+  getInitialGuideMood(plant) {
+    if (plant?.estado_planta && plant.estado_planta !== 'SANA') return 'worried'
+    if (Number(plant?.salud) <= 50) return 'worried'
+    return 'thinking'
+  },
+
+  getGuideSpritePath(mood = 'normal') {
+    return this.guideSprites[mood] || this.guideSprites.normal
   },
 
   getHumidityLabel(humidity) {
@@ -60,8 +77,8 @@ const DiagnosisDisplayUtils = {
       resultText = 'Correcto. Aplicaste drenaje antes de regar.'
     } else {
       resultText = answeredCorrectly
-        ? 'Correcto. Observaste bien las seÃ±ales.'
-        : 'No era la causa principal. Revisa las seÃ±ales de la planta.'
+        ? 'Correcto. Observaste bien las señales.'
+        : 'No era la causa principal. Revisa las señales de la planta.'
     }
 
     if (streakEvent?.changed) {

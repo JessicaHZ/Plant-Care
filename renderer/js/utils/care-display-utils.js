@@ -57,7 +57,7 @@ const CareDisplayUtils = {
   },
 
   getHealthState(salud) {
-    if (salud <= 25) return 'CrÃ­tica'
+    if (salud <= 25) return 'Crítica'
     if (salud <= 50) return 'Delicada'
     if (salud <= 75) return 'Estable'
     return 'Saludable'

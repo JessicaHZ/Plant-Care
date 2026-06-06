@@ -1,0 +1,107 @@
+/* Tutorial inicial */
+.tutorial-overlay {
+  position:        fixed;
+  inset:           0;
+  background:      rgba(28, 18, 13, 0.78);
+  z-index:         500;
+  display:         flex;
+  align-items:     center;
+  justify-content: center;
+  backdrop-filter: blur(3px);
+}
+
+.tutorial-modal {
+  background:
+    linear-gradient(180deg, var(--pixel-panel-bg), var(--pixel-panel-bg-dark));
+  border:        2px solid var(--pixel-panel-border);
+  border-radius: 12px;
+  padding:       2rem;
+  width:         520px;
+  max-width:     90vw;
+  display:       flex;
+  flex-direction: column;
+  gap:           1.25rem;
+  box-shadow:
+    inset 0 2px 0 var(--pixel-panel-highlight),
+    inset 0 -3px 0 rgba(0,0,0,0.22),
+    0 8px 0 rgba(44, 26, 20, 0.72),
+    0 18px 34px var(--pixel-panel-shadow);
+}
+
+.tutorial-header {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+}
+
+.tutorial-icon {
+  font-size: 2rem;
+}
+
+.tutorial-dots {
+  display: flex;
+  gap:     0.4rem;
+}
+
+.tutorial-dot {
+  width:         8px;
+  height:        8px;
+  border-radius: 50%;
+  background:    rgba(255, 227, 184, 0.22);
+  transition:    all 0.2s ease;
+}
+
+.tutorial-dot.active {
+  background: #9be36f;
+  transform:  scale(1.3);
+}
+
+.tutorial-dot.done {
+  background: rgba(129, 199, 132, 0.4);
+}
+
+.tutorial-skip-btn {
+  background:  transparent;
+  border:      none;
+  color:       var(--color-text-muted);
+  font-size:   0.8rem;
+  cursor:      pointer;
+  transition:  color 0.2s ease;
+}
+
+.tutorial-skip-btn:hover {
+  color: var(--color-text);
+}
+
+.tutorial-title {
+  font-size:   1.4rem;
+  font-weight: 700;
+  color:       #9be36f;
+  text-align:  center;
+}
+
+.tutorial-content {
+  font-size:   0.9rem;
+  color:       var(--color-text);
+  line-height: 1.7;
+  text-align:  center;
+}
+
+.tutorial-footer {
+  display:         flex;
+  justify-content: space-between;
+  align-items:     center;
+  margin-top:      0.5rem;
+}
+
+.tutorial-highlight {
+  outline:     3px solid var(--color-secondary);
+  outline-offset: 4px;
+  border-radius:  16px;
+  animation:   tutorial-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes tutorial-pulse {
+  0%, 100% { outline-color: rgba(129, 199, 132, 0.9); }
+  50%       { outline-color: rgba(129, 199, 132, 0.3); }
+}

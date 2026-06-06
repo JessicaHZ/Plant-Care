@@ -1,9 +1,14 @@
 const { app, BrowserWindow, Menu, ipcMain } = require('electron')
 const path = require('path')
-const { initializeDatabase, saveLastClose } = require('./database')
+const { initializeDatabase, saveLastClose } = require('./database/lifecycle')
 const { registerIpcHandlers } = require('./ipc-handlers')
 
 let gameWindow = null
+const APP_USER_MODEL_ID = 'com.myplanthome.game'
+
+if (process.platform === 'win32') {
+  app.setAppUserModelId(APP_USER_MODEL_ID)
+}
 
 function createGameWindow() {
   let closeConfirmed = false
@@ -18,6 +23,7 @@ function createGameWindow() {
     maximizable:     true,
     fullscreenable:  true,
     title:           'My Plant Home',
+    icon:            path.join(__dirname, '../assets/icon.ico'),
     frame:           false,
     menuBarVisible:  false,
     autoHideMenuBar: true,

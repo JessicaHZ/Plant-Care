@@ -4,17 +4,37 @@
 
 El proyecto mantiene una arquitectura Electron + JavaScript + SQLite local. La refactorizacion se esta realizando de forma gradual para mejorar modularidad sin modificar el comportamiento funcional del juego ni romper el instalador.
 
-El modulo `main/database.js` sigue siendo la fachada publica principal usada por IPC y por el proceso main. Esta decision es intencional: permite reorganizar responsabilidades internas sin cambiar todavia el contrato consumido por `ipc-handlers.js`, `preload.js` y el renderer.
+El modulo `main/database.js` se conserva como fachada publica de compatibilidad, pero el flujo principal ya no depende de ella para registrar IPC ni para iniciar/cerrar la base de datos. Esta decision permite mantener un contrato estable mientras el backend avanza hacia una organizacion por dominios.
+
+## Estado de refactorizacion al 2026-06-05
+
+- `main/database/lifecycle.js` concentra inicializacion de esquema, migraciones de arranque, seed del catalogo, migracion de logros legacy y guardado de ultimo cierre.
+- `main/main.js` usa directamente `database/lifecycle.js`.
+- Los handlers IPC estan separados en `main/ipc/handlers/` por dominio.
+- `main/ipc-handlers.js` solo registra handlers; ya no importa `main/database.js`.
+- Los handlers principales consumen services y repositories directamente, manteniendo los mismos canales IPC.
+- `main/database.js` queda como fachada legacy/de compatibilidad y conserva sus exports publicos protegidos por validadores.
+- `scripts/validators/databaseArchitectureValidator.js` protege que el flujo principal no vuelva a depender accidentalmente de la fachada.
 
 ## Estructura actual relevante
 
 ```text
 main/
   database.js
+  main.js
   ipc/
+    handlers/
+      achievementHandlers.js
+      careHandlers.js
+      minigameHandlers.js
+      plantHandlers.js
+      simulationProgressHandlers.js
+      tutorialResetHandlers.js
+      weeklyHandlers.js
     registerHandler.js
   database/
     connection.js
+    lifecycle.js
     schema.js
     seeds/
       plantCatalog.js
@@ -108,11 +128,12 @@ scripts/
 
 ```text
 renderer -> preload.js -> ipc-handlers.js -> database.js -> repositories -> SQLite
+renderer -> preload.js -> ipc-handlers.js -> ipc/handlers/* -> services -> repositories -> SQLite
 ```
 
-El renderer no accede directamente a Node.js ni a SQLite. Las operaciones pasan por la API expuesta en `preload.js`, los canales registrados en `ipc-handlers.js` y la fachada `database.js`.
+El renderer no accede directamente a Node.js ni a SQLite. Las operaciones pasan por la API expuesta en `preload.js`, los canales registrados en `ipc-handlers.js` y handlers especializados por dominio.
 
-`main/ipc/registerHandler.js` centraliza el patron comun de registro IPC con manejo de errores y respuesta fallback. `ipc-handlers.js` conserva los canales concretos.
+`main/ipc/registerHandler.js` centraliza el patron comun de registro IPC con manejo de errores y respuesta fallback. `ipc-handlers.js` conserva la orquestacion de registro, mientras los canales concretos viven en `main/ipc/handlers/`.
 
 ## Modulos de persistencia
 
@@ -141,6 +162,20 @@ Responsabilidad:
 
 Este modulo define estructura de datos. No decide XP, salud, logros, simulacion ni acciones de cuidado.
 
+### lifecycle.js
+
+Archivo: `main/database/lifecycle.js`
+
+Responsabilidad:
+
+- Inicializar esquema e indices.
+- Ejecutar migraciones seguras de arranque.
+- Migrar logros legacy.
+- Sincronizar el catalogo inicial de plantas.
+- Guardar el timestamp de ultimo cierre.
+
+Este modulo representa el ciclo de vida tecnico de la base de datos. No registra canales IPC ni contiene reglas de cuidado, simulacion o logros.
+
 ### seeds/plantCatalog.js
 
 Archivo: `main/database/seeds/plantCatalog.js`
@@ -149,9 +184,9 @@ Responsabilidad:
 
 - Contener el catalogo estatico de 20 plantas.
 - Mantener los datos educativos y botanicos fuera de `database.js`.
-- Proveer los datos usados por `seedPlants()`.
+- Proveer los datos usados por el seed de catalogo durante `database/lifecycle.js`.
 
-`database.js` conserva la fachada `seedPlants()` durante la inicializacion, pero la decision de insertar o actualizar el catalogo ya se delega a `services/plantCatalogService.js`; las consultas SQL viven en `plantRepository.js`.
+`database/lifecycle.js` coordina el seed durante la inicializacion, pero la decision de insertar o actualizar el catalogo se delega a `services/plantCatalogService.js`; las consultas SQL viven en `plantRepository.js`.
 
 ## Repositories
 
@@ -488,14 +523,14 @@ Responsabilidad:
 
 Archivo: `main/database.js`
 
-`database.js` sigue siendo la fachada de aplicacion del proceso main. Conserva la API publica que usan los handlers IPC. Esto evita cambios simultaneos en IPC, preload y renderer.
+`database.js` sigue existiendo como fachada de compatibilidad del proceso main. Conserva la API publica historica para evitar rupturas de contrato, pero el flujo principal de la aplicacion ya no la usa para iniciar la base de datos ni para registrar IPC.
 
 El contrato publico vigente esta documentado en `docs/contrato-database.md`.
 
 Actualmente delega en:
 
 - `repositories/` para persistencia.
-- `seeds/plantCatalog.js` para datos estaticos del catalogo.
+- `database/lifecycle.js` para inicializacion y guardado de ultimo cierre.
 - `domain/plantRules.js` para reglas puras de luz y poda temporal.
 - `domain/careRules.js` para calculos puros de acciones de cuidado.
 - `domain/achievementDefinitions.js` para definiciones estaticas y claves legacy de logros.
@@ -519,18 +554,15 @@ Actualmente delega en:
 
 ## Responsabilidades que aun permanecen en database.js
 
-Por estabilidad, todavia permanecen en `database.js`:
+Por estabilidad, todavia permanecen en `database.js` como fachadas de compatibilidad:
 
-- Inicializacion general de base de datos.
-- Fachada de migracion legacy de logros delegada en `achievementService`.
-- Fachada de seed del catalogo delegada en `plantCatalogService`.
 - Coordinacion de XP y nivel.
 - Fachada de simulacion diaria delegada en `simulationService`.
 - Avance offline.
 - Coordinacion de nueva partida mediante `resetService`.
-- Fachada publica usada por IPC.
+- Fachadas publicas historicas usadas por validadores y por compatibilidad.
 
-Estas areas no deben moverse en bloque. Cada extraccion futura debe ser pequena, validable y sin cambiar el contrato publico.
+Estas areas no deben eliminarse en bloque. Cada reduccion futura debe ser pequena, validable y sin cambiar canales IPC ni forma de respuesta.
 
 ## Validacion tecnica
 
@@ -569,6 +601,7 @@ La validacion verifica:
 - Service de racha de cuidado responsable.
 - Service de reinicio de partida.
 - Contrato publico de la fachada `database.js`.
+- Arquitectura de base de datos: `main.js` usa `database/lifecycle.js`, `ipc-handlers.js` no importa la fachada y `database.js` conserva delegacion de ciclo de vida.
 
 Comando:
 
@@ -586,7 +619,10 @@ npm.cmd run build
 
 ## Beneficios actuales
 
-- `database.js` redujo responsabilidades sin perder su rol de fachada.
+- `database.js` redujo responsabilidades y quedo como fachada legacy/de compatibilidad.
+- El ciclo de vida de base de datos quedo separado en `database/lifecycle.js`.
+- Los handlers IPC quedaron separados por dominio.
+- El flujo principal ya no depende de la fachada `database.js`.
 - Las reglas puras ya pueden validarse sin iniciar Electron.
 - Los datos estaticos dejaron de vivir mezclados con coordinacion de base de datos.
 - El renderer comenzo a separar configuracion visual de logica de pantalla.
@@ -594,9 +630,9 @@ npm.cmd run build
 
 ## Riesgos vigentes
 
-- `database.js` sigue siendo una fachada amplia usada por IPC; aunque delega casi toda la logica, conserva muchas funciones publicas por compatibilidad.
+- `database.js` sigue siendo una fachada amplia; aunque ya no sostiene el flujo principal, conserva muchas funciones publicas por compatibilidad.
 - El renderer depende de variables globales (`window.*`) y del orden de carga de scripts en `index.html`.
-- `ipc-handlers.js` sigue siendo monolitico.
+- Los handlers IPC comparten helpers repetidos para progreso, estadisticas, XP y logros; esta duplicacion puede centralizarse mas adelante.
 - La cobertura automatica aun es ligera; no reemplaza pruebas manuales del flujo completo.
 - `careService.js` y algunos validadores ya son los modulos mas largos del backend; futuras extracciones deben evitar crear nuevos monolitos de servicios.
 
@@ -604,10 +640,11 @@ npm.cmd run build
 
 Prioridad sugerida:
 
-1. Validar manualmente la simulacion diaria despues de la extraccion a `simulationService.js`.
-2. Mantener `database.js` como fachada publica hasta que IPC, preload y renderer puedan migrarse por dominio.
-3. Evaluar una separacion gradual de `ipc-handlers.js` por dominios solo despues de estabilizar el backend.
-4. Reorganizar el renderer gradualmente, empezando por pantallas grandes como `Environment.js`, `Diagnosis.js` o minijuegos.
+1. Mantener quietas las partes criticas ya validadas: persistencia, simulacion, cuidado, IPC y build.
+2. Documentar `database.js` como fachada legacy/de compatibilidad hasta que deje de ser necesaria.
+3. Extraer helpers repetidos de handlers a un modulo pequeno, por ejemplo `main/ipc/handlerDependencies.js`, de forma gradual.
+4. Reorganizar el renderer gradualmente, empezando por pantallas criticas como `Environment.js`, `CareActions.js` o diagnostico.
+5. Dejar minijuegos y CSS grande para una fase posterior, salvo bugs concretos.
 
 No se recomienda por ahora:
 

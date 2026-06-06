@@ -2,15 +2,24 @@
 
 ## Proposito
 
-`main/database.js` actua como fachada publica del proceso main. Su contrato es relevante porque `main/ipc-handlers.js` consume sus funciones y el renderer accede a ellas indirectamente mediante `preload.js`.
+`main/database.js` actua como fachada publica de compatibilidad del proceso main. Su contrato sigue siendo relevante porque protege la transicion gradual hacia services, repositories y handlers por dominio.
 
-Durante la modularizacion gradual, este archivo puede delegar mas responsabilidades a repositorios, reglas puras o services, pero debe conservar su API publica hasta que se planifique una migracion coordinada de IPC, preload y renderer.
+Durante la modularizacion gradual, este archivo puede delegar mas responsabilidades a repositorios, reglas puras o services, pero debe conservar su API publica mientras existan validadores, referencias legacy o riesgo de ruptura por eliminacion prematura.
+
+## Estado actual
+
+- `main/main.js` ya no importa `main/database.js`; usa `main/database/lifecycle.js` para inicializar la base de datos y guardar el ultimo cierre.
+- `main/ipc-handlers.js` ya no importa `main/database.js`; solo registra handlers especializados.
+- Los handlers IPC en `main/ipc/handlers/` consumen services y repositories directamente.
+- `database.js` conserva `initializeDatabase` y `saveLastClose` reexportando la delegacion de `database/lifecycle.js`.
+- `scripts/validators/databaseFacadeValidator.js` mantiene el contrato publico de la fachada.
+- `scripts/validators/databaseArchitectureValidator.js` evita que `main.js` o `ipc-handlers.js` vuelvan a depender accidentalmente de la fachada.
 
 ## Regla de estabilidad
 
-Antes de mover o renombrar una funcion exportada por `database.js`, se debe verificar:
+Antes de mover, renombrar o eliminar una funcion exportada por `database.js`, se debe verificar:
 
-- Si existe un canal IPC que la consume.
+- Si existe algun handler IPC, validador o modulo legacy que la consume.
 - Si `preload.js` expone ese canal al renderer.
 - Si el renderer espera una forma especifica de respuesta.
 - Si `scripts/validators/databaseFacadeValidator.js` debe actualizarse.
@@ -22,7 +31,7 @@ Antes de mover o renombrar una funcion exportada por `database.js`, se debe veri
 
 | Funcion | Consumidor principal | Responsabilidad |
 | --- | --- | --- |
-| `initializeDatabase` | `main/main.js` | Inicializar esquema, migraciones, indices, catalogo y logros legacy mediante servicios internos. |
+| `initializeDatabase` | Compatibilidad; implementacion en `database/lifecycle.js` | Inicializar esquema, migraciones, indices, catalogo y logros legacy mediante servicios internos. |
 
 ### Catalogo de plantas
 
@@ -30,7 +39,6 @@ Antes de mover o renombrar una funcion exportada por `database.js`, se debe veri
 | --- | --- | --- |
 | `getAllPlants` | `plants:getAll` | Obtener todas las plantas disponibles en el vivero mediante `plantCatalogService`. |
 | `getPlantById` | `plants:getById` | Obtener detalle de una planta del catalogo mediante `plantCatalogService`. |
-| `seedPlants` | Inicializacion interna | Insertar o actualizar catalogo mediante `plantCatalogService`. |
 
 ### Plantas del jugador
 
@@ -51,7 +59,6 @@ Antes de mover o renombrar una funcion exportada por `database.js`, se debe veri
 | `getProgress` | `progress:get` | Obtener o crear progreso del jugador mediante `progressService`. |
 | `updateProgress` | Uso interno actual | Actualizar campos de progreso mediante `progressService`. |
 | `addExperience` | Uso por IPC indirecto | Sumar XP, recalcular nivel y devolver resultado compatible mediante `progressService`. |
-| `migrateCurrentDayFromPlantState` | Inicializacion interna | Migrar `dia_actual` desde plantas existentes mediante `progressService`. |
 | `getStats` | `stats:get` | Obtener o crear estadisticas del jugador mediante `statsService`. |
 | `updateStats` | Uso por IPC indirecto | Incrementar estadisticas y contadores semanales asociados mediante `statsService`. |
 | `fixWeeklyCounter` | `stats:fixWeekly` | Corregir contador semanal mediante `statsService`. |
@@ -61,7 +68,7 @@ Antes de mover o renombrar una funcion exportada por `database.js`, se debe veri
 | Funcion | Canal IPC asociado | Responsabilidad |
 | --- | --- | --- |
 | `simulateDays` | `simulation:advance` | Avanzar dias simulados mediante `simulationService`, actualizar plantas, progreso, racha y logros. |
-| `saveLastClose` | Uso desde ciclo de vida Electron | Guardar la fecha de ultimo cierre mediante `progressService`. |
+| `saveLastClose` | Compatibilidad; implementacion en `database/lifecycle.js` | Guardar la fecha de ultimo cierre mediante `progressService`. |
 | `getOfflineDays` | `simulation:getOfflineDays` | Calcular dias transcurridos fuera de la aplicacion mediante `progressService`. |
 
 ### Acciones de cuidado
@@ -108,6 +115,8 @@ Antes de mover o renombrar una funcion exportada por `database.js`, se debe veri
 
 El archivo `scripts/validators/databaseFacadeValidator.js` valida que `database.js` conserve exactamente las funciones publicas esperadas. Esta validacion no prueba el comportamiento completo de cada funcion, pero protege contra cambios accidentales de contrato durante refactors graduales.
 
+El archivo `scripts/validators/databaseArchitectureValidator.js` valida que el flujo principal use `database/lifecycle.js` y que `ipc-handlers.js` no vuelva a importar la fachada.
+
 Comando recomendado:
 
 ```bash
@@ -119,16 +128,18 @@ npm.cmd run validate
 ### Bajo riesgo
 
 - Extraer calculos puros adicionales siempre que no accedan a SQLite.
+- Centralizar helpers repetidos de handlers IPC en un modulo pequeno y compartido.
+- Documentar funciones legacy sin cambiar su comportamiento.
 
 ### Riesgo medio
 
-- Ampliar `progressService.js` de forma gradual manteniendo `database.js` como fachada.
-- Ampliar `achievementRules.js` hacia logros especiales, sin cambiar canales IPC.
-- Ampliar `weeklyReviewService.js` de forma gradual, manteniendo `database.js` como fachada.
+- Reducir funciones de `database.js` solo cuando no existan consumidores reales y se actualicen validadores.
+- Ampliar `achievementRules.js` hacia logros especiales, sin cambiar canales IPC ni respuestas.
+- Ampliar `weeklyReviewService.js` de forma gradual, manteniendo compatibilidad.
 
 ### Riesgo alto
 
-- Mover `simulateDays()` completo.
+- Eliminar `database.js`.
 - Cambiar la forma de respuesta de acciones de cuidado.
 - Cambiar nombres de funciones exportadas.
 - Cambiar canales IPC o API expuesta por `preload.js`.

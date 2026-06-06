@@ -1,0 +1,86 @@
+/* Pantallas de autenticacion y formularios legacy */
+.auth-card {
+  background:
+    linear-gradient(180deg, var(--pixel-panel-bg), var(--pixel-panel-bg-dark));
+  border: 3px solid var(--pixel-panel-border);
+  border-radius: 8px;
+  padding: 2.5rem 2rem;
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  box-shadow:
+    inset 0 2px 0 var(--pixel-panel-highlight),
+    inset 0 -3px 0 rgba(0,0,0,0.22),
+    0 8px 0 rgba(44, 26, 20, 0.72),
+    0 18px 34px var(--pixel-panel-shadow);
+}
+
+.auth-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-secondary);
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.form-group input {
+  background:
+    linear-gradient(180deg, rgba(42, 24, 16, 0.34), rgba(42, 24, 16, 0.18));
+  border: 2px solid rgba(42, 24, 16, 0.78);
+  border-radius: 5px;
+  padding: 10px 14px;
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-family: var(--font-game);
+  outline: none;
+  transition: border-color 0.2s ease;
+  box-shadow:
+    inset 0 2px 0 rgba(0,0,0,0.18),
+    0 2px 0 rgba(255, 227, 184, 0.12);
+}
+
+.form-group input:focus {
+  border-color: var(--color-secondary);
+}
+
+.form-group input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+}
+
+.form-message {
+  min-height: 20px;
+  font-size: 0.85rem;
+  text-align: center;
+  border-radius: 6px;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.form-message.error {
+  color: #ef9a9a;
+  background-color: rgba(239, 83, 80, 0.14);
+  border: 2px solid rgba(183, 28, 28, 0.42);
+  padding: 8px 12px;
+  box-shadow: 0 3px 0 rgba(42, 24, 16, 0.36);
+}
+
+.form-message.success {
+  color: #a5d6a7;
+  background-color: rgba(76, 175, 80, 0.14);
+  border: 2px solid rgba(46, 125, 50, 0.42);
+  padding: 8px 12px;
+  box-shadow: 0 3px 0 rgba(42, 24, 16, 0.36);
+}

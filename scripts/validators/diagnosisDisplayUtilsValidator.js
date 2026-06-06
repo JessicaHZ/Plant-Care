@@ -28,6 +28,11 @@ function validateDiagnosisDisplayUtils() {
   assert.strictEqual(DiagnosisDisplayUtils.getHealthState(50), 'delicada')
   assert.strictEqual(DiagnosisDisplayUtils.getHealthState(75), 'estable')
   assert.strictEqual(DiagnosisDisplayUtils.getHealthState(90), 'saludable')
+  assert.strictEqual(DiagnosisDisplayUtils.getInitialGuideMood({ estado_planta: 'SANA', salud: 80 }), 'thinking')
+  assert.strictEqual(DiagnosisDisplayUtils.getInitialGuideMood({ estado_planta: 'MARCHITA', salud: 80 }), 'worried')
+  assert.strictEqual(DiagnosisDisplayUtils.getInitialGuideMood({ estado_planta: 'SANA', salud: 45 }), 'worried')
+  assert.ok(DiagnosisDisplayUtils.getGuideSpritePath('happy').includes('guide_happy.png'))
+  assert.ok(DiagnosisDisplayUtils.getGuideSpritePath('missing').includes('guide_normal.png'))
 
   const meter = DiagnosisDisplayUtils.getHumidityBarHTML(130)
   assert.ok(meter.includes('diag-bar-balanced'))
@@ -44,7 +49,7 @@ function validateDiagnosisDisplayUtils() {
       answeredCorrectly: true,
       requiresDrain: false
     }),
-    'Correcto. Observaste bien las seÃ±ales.'
+    'Correcto. Observaste bien las señales.'
   )
   assert.strictEqual(
     DiagnosisDisplayUtils.getResultText({
@@ -59,7 +64,7 @@ function validateDiagnosisDisplayUtils() {
       requiresDrain: false,
       streakEvent: { changed: true, message: 'Racha reiniciada' }
     }),
-    'No era la causa principal. Revisa las seÃ±ales de la planta. Racha reiniciada.'
+    'No era la causa principal. Revisa las señales de la planta. Racha reiniciada.'
   )
 }
 

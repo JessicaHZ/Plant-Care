@@ -4,7 +4,7 @@ const CareGuideDisplayUtils = {
       <div class="diagnosis-modal contextual-guide-modal">
         <div class="diagnosis-header">
           <span class="diagnosis-icon">${guide.icon}</span>
-          <h2 class="diagnosis-title">GuÃ­a de cuidado</h2>
+          <h2 class="diagnosis-title">Guía de cuidado</h2>
           <p class="diagnosis-subtitle">${guide.title}</p>
         </div>
 
@@ -19,11 +19,11 @@ const CareGuideDisplayUtils = {
 
         <div class="guide-footer">
           <p class="guide-reminder">
-            Esta guÃ­a aparece porque este patrÃ³n se repitiÃ³ varias veces.
+            Esta guía aparece porque este patrón se repitió varias veces.
             Observa la causa antes de actuar.
           </p>
           <button class="btn btn-primary btn-full" id="btn-close-guide">
-            Entendido â†’
+            Entendido →
           </button>
         </div>
       </div>

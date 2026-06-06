@@ -7,6 +7,7 @@ const { validateCarePanelDisplayUtils } = require('./validators/carePanelDisplay
 const { validateAchievementDefinitions } = require('./validators/achievementDefinitionsValidator')
 const { validateAchievementRules } = require('./validators/achievementRulesValidator')
 const { validateAchievementService } = require('./validators/achievementServiceValidator')
+const { validateDatabaseArchitecture } = require('./validators/databaseArchitectureValidator')
 const { validateDatabaseFacade } = require('./validators/databaseFacadeValidator')
 const { validateDefenseConfig } = require('./validators/defenseConfigValidator')
 const { validateDiagnosisConfig } = require('./validators/diagnosisConfigValidator')
@@ -83,6 +84,7 @@ async function main() {
   validateResetService()
   validateStatsService()
   validateStreakService()
+  validateDatabaseArchitecture()
   validateDatabaseFacade()
 
   console.log('Validacion ligera de reglas completada correctamente.')

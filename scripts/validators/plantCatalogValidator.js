@@ -1,4 +1,6 @@
 const assert = require('assert/strict')
+const fs = require('fs')
+const path = require('path')
 
 const plantCatalog = require('../../main/database/seeds/plantCatalog')
 
@@ -17,6 +19,7 @@ function validatePlantCatalog() {
     'sprite_key'
   ]
   const spriteKeys = new Set()
+  const spriteStates = ['sana', 'enferma', 'marchita', 'muerta']
 
   for (const [index, plant] of plantCatalog.entries()) {
     for (const field of requiredFields) {
@@ -30,6 +33,25 @@ function validatePlantCatalog() {
     assert.equal(plant.frecuencia_riego > 0, true, `${plant.nombre_planta}: frecuencia_riego debe ser positivo`)
     assert.equal(spriteKeys.has(plant.sprite_key), false, `sprite_key duplicado: ${plant.sprite_key}`)
     spriteKeys.add(plant.sprite_key)
+
+    for (const state of spriteStates) {
+      const spritePath = path.join(
+        __dirname,
+        '..',
+        '..',
+        'assets',
+        'sprites',
+        'plants',
+        plant.sprite_key,
+        `${state}.png`
+      )
+
+      assert.equal(
+        fs.existsSync(spritePath),
+        true,
+        `${plant.nombre_planta}: falta sprite ${plant.sprite_key}/${state}.png`
+      )
+    }
   }
 }
 

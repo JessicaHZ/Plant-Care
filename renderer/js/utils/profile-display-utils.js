@@ -43,7 +43,7 @@ const ProfileDisplayUtils = {
       xpProgress,
       nextXpText: nextLevel
         ? `${xpForNext} XP para nivel ${nextLevel.nivel}`
-        : 'Â¡Nivel mÃ¡ximo alcanzado!'
+        : '¡Nivel máximo alcanzado!'
     }
   }
 }

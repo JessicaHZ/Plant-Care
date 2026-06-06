@@ -18,19 +18,19 @@
 }
 
 .nursery-title {
-  font-size: 1.3rem;
+  font-size: 1.45rem;
   font-weight: 600;
   color: #9be36f;
 }
 
 .nursery-subtitle {
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   color: var(--pixel-panel-muted);
   margin-left: auto;
 }
 
 .btn-back {
-  font-size: 0.85rem;
+  font-size: 0.98rem;
   padding: 6px 12px;
 }
 
@@ -46,13 +46,7 @@
 .nursery-filter-btn {
   padding: 5px 16px;
   border-radius: 4px;
-  border: 2px solid var(--pixel-panel-border);
-  background: rgba(132, 82, 49, 0.5);
-  color: var(--pixel-panel-muted);
-  font-size: 0.8rem;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  box-shadow: 0 3px 0 rgba(63, 40, 28, 0.8);
+  font-size: 0.94rem;
 }
 
 .nursery-filter-btn.active,
@@ -94,30 +88,19 @@
 /* ── Tarjeta de planta ───────────────────────────────── */
 
 .plant-card {
-  background:
-    linear-gradient(180deg, rgba(132, 82, 49, 0.94), rgba(79, 49, 34, 0.94));
-  border: 2px solid var(--pixel-panel-border);
-  border-radius: 8px;
   padding: 0.75rem;
   cursor: pointer;
   transition: transform 0.1s ease, filter 0.1s ease, box-shadow 0.1s ease;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  box-shadow:
-    inset 0 2px 0 rgba(255,255,255,0.14),
-    inset 0 -3px 0 rgba(0,0,0,0.18),
-    0 5px 0 #3f281c;
 }
 
 .plant-card:hover {
   transform: translateY(-3px);
   filter: brightness(1.06);
   border-color: #f1c77d;
-  box-shadow:
-    inset 0 2px 0 rgba(255,255,255,0.18),
-    inset 0 -3px 0 rgba(0,0,0,0.18),
-    0 7px 0 #3f281c;
+  box-shadow: var(--pixel-card-shadow-raised);
 }
 
 .plant-card-image {
@@ -139,7 +122,7 @@
 }
 
 .plant-card-name {
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #fff5df;
 }
@@ -151,7 +134,7 @@
 }
 
 .badge {
-  font-size: 0.65rem;
+  font-size: 0.78rem;
   padding: 2px 7px;
   border-radius: 4px;
   background-color: rgba(255, 227, 184, 0.12);
@@ -185,13 +168,13 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   padding: 4px 8px;
 }
 
 .detail-placeholder {
   color: var(--color-text-muted);
-  font-size: 0.85rem;
+  font-size: 0.98rem;
   text-align: center;
   padding: 2rem;
 }
@@ -203,7 +186,7 @@
 }
 
 .detail-description {
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   color: var(--pixel-panel-muted);
   line-height: 1.6;
 }
@@ -227,19 +210,19 @@
 
 .detail-stat-label {
   display: block;
-  font-size: 0.7rem;
+  font-size: 0.84rem;
   color: var(--color-text-muted);
 }
 
 .detail-stat-value {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.98rem;
   font-weight: 600;
   color: var(--color-text);
 }
 
 .detail-message {
-  font-size: 0.82rem;
+  font-size: 0.95rem;
   text-align: center;
   border-radius: 6px;
   min-height: 16px;
@@ -260,7 +243,7 @@
 /* ── Nombre científico en panel de detalle ─────────── */
 
 .detail-scientific-name {
-  font-size: 0.78rem;
+  font-size: 0.9rem;
   font-style: italic;
   color: var(--color-text-muted);
   opacity: 0.75;
@@ -278,7 +261,7 @@
 /* ── Badge de tipo en tarjetas y panel ─────────────── */
 
 .badge-tipo {
-  font-size: 0.68rem;
+  font-size: 0.8rem;
   font-weight: 600;
   background-color: rgba(255, 255, 255, 0.06);
   letter-spacing: 0.02em;

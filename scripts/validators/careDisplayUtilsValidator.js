@@ -62,7 +62,7 @@ function validateCareDisplayUtils() {
   assert.strictEqual(availablePruneButton.buttonClass, 'btn-secondary')
   assert.strictEqual(availablePruneButton.disabledAttribute, '')
   assert.ok(availablePruneButton.label.includes('Podar'))
-  assert.strictEqual(CareDisplayUtils.getHealthState(20), 'CrÃ­tica')
+  assert.strictEqual(CareDisplayUtils.getHealthState(20), 'Crítica')
   assert.strictEqual(CareDisplayUtils.getHealthState(50), 'Delicada')
   assert.strictEqual(CareDisplayUtils.getHealthState(75), 'Estable')
   assert.strictEqual(CareDisplayUtils.getHealthState(90), 'Saludable')

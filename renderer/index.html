@@ -7,9 +7,16 @@
     content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'" />
   <title>My Plant Home</title>
   <link rel="stylesheet" href="styles/global.css" />
+  <link rel="stylesheet" href="styles/buttons.css" />
+  <link rel="stylesheet" href="styles/forms.css" />
+  <link rel="stylesheet" href="styles/titlebar.css" />
+  <link rel="stylesheet" href="styles/exit-confirm.css" />
+  <link rel="stylesheet" href="styles/tutorial.css" />
   <link rel="stylesheet" href="styles/menu.css" />
   <link rel="stylesheet" href="styles/Nursery.css" />
   <link rel="stylesheet" href="styles/environment.css" />
+  <link rel="stylesheet" href="styles/environment-care-panel.css" />
+  <link rel="stylesheet" href="styles/environment-placement.css" />
   <link rel="stylesheet" href="styles/diagnosis.css" />
   <link rel="stylesheet" href="styles/guide.css" />
   <link rel="stylesheet" href="styles/slot-editor.css" />
@@ -19,6 +26,9 @@
   <link rel="stylesheet" href="styles/minigame-defense.css" />
   <link rel="stylesheet" href="styles/minigame-pruning.css" />
   <link rel="stylesheet" href="styles/profile.css" />
+  <link rel="stylesheet" href="styles/profile-progress.css" />
+  <link rel="stylesheet" href="styles/profile-stats.css" />
+  <link rel="stylesheet" href="styles/profile-achievements.css" />
   <link rel="stylesheet" href="styles/Splash.css" />
   <link rel="stylesheet" href="styles/navbar.css" />
 </head>
@@ -37,10 +47,7 @@
 
 
 
-  <!-- ══════════════════════════════════════════════════════
-     PANTALLA: INICIO
-     Punto de entrada del juego. Permite continuar o nueva partida.
-     ══════════════════════════════════════════════════════ -->
+  <!-- Pantalla: INICIO -->
   <div id="screen-splash" class="screen">
   <div class="splash-container">
     <div class="splash-buttons">
@@ -50,12 +57,7 @@
   </div>
 </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       PANTALLA: MENÚ PRINCIPAL
-       Sin autenticación: es la pantalla de entrada del juego.
-       ScreenManager.init() la activa al arrancar (class="active"
-       se asigna por JS, no en el HTML).
-       ══════════════════════════════════════════════════════ -->
+  <!-- Pantalla: MENÚ PRINCIPAL -->
   <div id="screen-main-menu" class="screen">
     <div class="main-menu-container">
       <h1 class="main-menu-title">🌿 Mi Jardín</h1>
@@ -91,10 +93,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       PANTALLA: VIVERO
-       RF-04, RF-05, RF-06: catálogo, detalle y adquisición.
-       ══════════════════════════════════════════════════════ -->
+  <!-- Pantalla: VIVERO -->
   <div id="screen-nursery" class="screen">
     <div class="nursery-header">
       <button class="btn btn-ghost btn-back" id="btn-nursery-back">← Volver</button>
@@ -120,10 +119,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       PANTALLA: ENTORNO DOMÉSTICO
-       RF-01, RF-02, RF-03: espacios, colocación, luz/ambiente.
-       ══════════════════════════════════════════════════════ -->
+  <!-- Pantalla: ENTORNO DOMÉSTICO -->
   <div id="screen-environment" class="screen">
     <div class="env-topbar">
       <button class="btn btn-ghost btn-back" id="btn-env-back">← Volver</button>
@@ -148,11 +144,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-       PANTALLA: MINIJUEGOS
-       HU-13: plagas. HU-14: quiz.
-       La poda se conserva como herramienta real y se ofrece aqui como practica.
-       ══════════════════════════════════════════════════════ -->
+  <!-- Pantalla: MINIJUEGOS -->
   <div id="screen-minigames" class="screen">
     <div class="minigames-hub">
       <div class="minigames-hub-header">
@@ -210,10 +202,7 @@
   </div>
 
 
-  <!-- ══════════════════════════════════════════════════════
-     PANTALLA: MI PERFIL
-     RF-26: estadísticas, nivel, logros.
-     ══════════════════════════════════════════════════════ -->
+  <!-- Pantalla: MI PERFIL -->
   <div id="screen-profile" class="screen">
     <div class="profile-container">
 
@@ -233,7 +222,7 @@
       <!-- Contenido de pestañas -->
       <div class="profile-content">
 
-        <!-- ── Pestaña: Progreso ── -->
+        <!-- Pestaña: Progreso -->
         <div class="profile-panel active" id="tab-progress">
           <div class="progress-hero">
             <div class="progress-level-badge" id="profile-level-badge">1</div>
@@ -258,7 +247,7 @@
           </div>
         </div>
 
-        <!-- ── Pestaña: Estadísticas ── -->
+        <!-- Pestaña: Estadísticas -->
         <div class="profile-panel" id="tab-stats">
           <div class="stats-grid">
             <div class="stat-card">
@@ -310,7 +299,7 @@
           </div>
         </div>
 
-        <!-- ── Pestaña: Logros ── -->
+        <!-- Pestaña: Logros -->
         <div class="profile-panel" id="tab-achievements">
           <div class="achievements-list" id="achievements-list">
             <!-- generado por JS -->
@@ -321,10 +310,7 @@
     </div>
   </div>
 
-  <!-- ══════════════════════════════════════════════════════
-     BARRA DE NAVEGACIÓN INFERIOR
-     Visible en todas las pantallas del juego (excepto splash)
-     ══════════════════════════════════════════════════════ -->
+  <!-- Barra de navegacion inferior -->
 <nav id="bottom-nav" class="bottom-nav hidden">
   <!-- <button class="nav-btn active" id="nav-btn-environment" data-screen="environment" hidden>
     <span class="nav-btn-icon">🏡</span>
@@ -354,6 +340,7 @@
   <script src="js/utils/diagnosis-rules.js"></script>
   <script src="js/utils/diagnosis-scenario-selector.js"></script>
   <script src="js/utils/environment-display-utils.js"></script>
+  <script src="js/utils/environment-location-modal.js"></script>
   <script src="js/utils/nursery-display-utils.js"></script>
   <script src="js/utils/profile-display-utils.js"></script>
   <script src="js/utils/quiz-display-utils.js"></script>

@@ -35,9 +35,11 @@ function validateEnvironmentDisplayUtils() {
     { label: 'Jardin', luz: 'DIRECTA' }
   )
   assert.ok(questionHTML.includes('&iquest;Buena ubicacion?'))
+  assert.ok(questionHTML.includes('location-guide-sprite'))
+  assert.ok(questionHTML.includes('location-speech-bubble'))
   assert.ok(questionHTML.includes('data-answer="yes"'))
   assert.ok(questionHTML.includes('data-answer="no"'))
-  assert.ok(questionHTML.includes('data-answer="dunno"'))
+  assert.ok(!questionHTML.includes('data-answer="dunno"'))
 
   const resultHTML = EnvironmentDisplayUtils.getLocationResultHTML({
     plantName: 'Cactus',
